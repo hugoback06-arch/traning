@@ -1,8 +1,33 @@
+@import "tailwindcss";
+
+@theme {
+  --color-accent: #1d9e75;
+  --color-accent-foreground: #ffffff;
+  --color-accent-light: #e4f5ee;
+  --color-warning: #d03b3b;
+  --color-warning-light: #fbeaea;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f7f8f7;
+  --color-ink-primary: #1a1a1a;
+  --color-ink-secondary: #5a5f5c;
+  --color-border: #e7ebe9;
+
+  /* validated as a set (incl. --color-accent) via dataviz skill's validate_palette.js,
+     --pairs all, light surface #ffffff — see the M3 conversation for the full report */
+  --color-macro-protein: #2a78d6;
+  --color-macro-carbs: #eda100;
+  --color-macro-fat: #4a3aa7;
+
+  --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+}
+
 :root {
-  color-scheme: light dark;
-  font: 18px/145% system-ui, 'Segoe UI', Roboto, sans-serif;
+  color-scheme: light;
 }
 
 body {
   margin: 0;
+  background-color: var(--color-surface-muted);
+  color: var(--color-ink-primary);
+  font-family: var(--font-sans);
 }

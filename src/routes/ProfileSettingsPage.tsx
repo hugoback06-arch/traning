@@ -1,0 +1,135 @@
+import { useState } from 'react'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Card } from '../components/common/Card'
+import { Button } from '../components/common/Button'
+import { Spinner } from '../components/common/Spinner'
+import { useAuth } from '../hooks/useAuth'
+import { useProfile } from '../hooks/useProfile'
+import { supabase } from '../lib/supabase'
+import { queryKeys } from '../lib/queryKeys'
+
+function NumberField({
+  label,
+  value,
+  onChange,
+}: {
+  label: string
+  value: number
+  onChange: (value: number) => void
+}) {
+  return (
+    <label className="block text-sm text-ink-secondary">
+      {label}
+      <input
+        type="number"
+        inputMode="decimal"
+        min={0}
+        value={value}
+        onChange={(e) => onChange(Number(e.target.value))}
+        className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-ink-primary outline-none focus:border-accent"
+      />
+    </label>
+  )
+}
+
+export function ProfileSettingsPage() {
+  const { session } = useAuth()
+  const { data: profile, isLoading } = useProfile()
+  const queryClient = useQueryClient()
+  const [editing, setEditing] = useState(false)
+  const [calorieGoal, setCalorieGoal] = useState(0)
+  const [proteinG, setProteinG] = useState(0)
+  const [carbsG, setCarbsG] = useState(0)
+  const [fatG, setFatG] = useState(0)
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          daily_calorie_goal: calorieGoal,
+          protein_goal_g: proteinG,
+          carbs_goal_g: carbsG,
+          fat_goal_g: fatG,
+        })
+        .eq('id', session?.user.id as string)
+      if (error) throw error
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.profile(session?.user.id) })
+      setEditing(false)
+    },
+  })
+
+  if (isLoading || !profile) return <Spinner />
+
+  function startEditing() {
+    if (!profile) return
+    setCalorieGoal(profile.daily_calorie_goal ?? 0)
+    setProteinG(profile.protein_goal_g ?? 0)
+    setCarbsG(profile.carbs_goal_g ?? 0)
+    setFatG(profile.fat_goal_g ?? 0)
+    setEditing(true)
+  }
+
+  return (
+    <div className="space-y-4">
+      <h1 className="text-lg font-semibold">Profil</h1>
+
+      <Card className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-medium text-ink-primary">Dagligt mål</h2>
+          {!editing && (
+            <button onClick={startEditing} className="text-sm font-medium text-accent">
+              Redigera
+            </button>
+          )}
+        </div>
+
+        {!editing ? (
+          <div className="space-y-3">
+            <p className="text-3xl font-semibold text-ink-primary">{profile.daily_calorie_goal ?? 0} kcal</p>
+            <div className="grid grid-cols-3 gap-2 text-center text-sm">
+              <div>
+                <span className="mx-auto mb-1 block h-2 w-2 rounded-full bg-macro-protein" />
+                <p className="font-semibold text-ink-primary">{profile.protein_goal_g ?? 0}g</p>
+                <p className="text-xs text-ink-secondary">Protein</p>
+              </div>
+              <div>
+                <span className="mx-auto mb-1 block h-2 w-2 rounded-full bg-macro-carbs" />
+                <p className="font-semibold text-ink-primary">{profile.carbs_goal_g ?? 0}g</p>
+                <p className="text-xs text-ink-secondary">Kolhydrater</p>
+              </div>
+              <div>
+                <span className="mx-auto mb-1 block h-2 w-2 rounded-full bg-macro-fat" />
+                <p className="font-semibold text-ink-primary">{profile.fat_goal_g ?? 0}g</p>
+                <p className="text-xs text-ink-secondary">Fett</p>
+              </div>
+            </div>
+            <p className="text-xs text-ink-secondary">
+              Beräknades automatiskt vid onboarding. Justera manuellt vid behov.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <NumberField label="Kalorier (kcal)" value={calorieGoal} onChange={setCalorieGoal} />
+              <NumberField label="Protein (g)" value={proteinG} onChange={setProteinG} />
+              <NumberField label="Kolhydrater (g)" value={carbsG} onChange={setCarbsG} />
+              <NumberField label="Fett (g)" value={fatG} onChange={setFatG} />
+            </div>
+            {saveMutation.isError && <p className="text-sm text-warning">Något gick fel, försök igen.</p>}
+            <div className="flex gap-2">
+              <Button variant="secondary" className="flex-1" onClick={() => setEditing(false)}>
+                Avbryt
+              </Button>
+              <Button className="flex-1" disabled={saveMutation.isPending} onClick={() => saveMutation.mutate()}>
+                {saveMutation.isPending ? 'Sparar…' : 'Spara'}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Card>
+    </div>
+  )
+}

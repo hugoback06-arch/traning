@@ -1,0 +1,45 @@
+-- Seed data for the 'generic' food source. Run AFTER 0002_generic_food_source.sql
+-- has committed (see that file's comment for why they're split).
+-- Kept in sync by hand with src/lib/genericFoods.ts.
+insert into public.food_items
+  (source, external_id, name, brand, calories_per_100g, protein_per_100g, carbs_per_100g, fat_per_100g, created_by)
+values
+  ('generic', 'banan', 'Banan', null, 89, 1.1, 22.8, 0.3, null),
+  ('generic', 'apple', 'Äpple', null, 52, 0.3, 13.8, 0.2, null),
+  ('generic', 'apelsin', 'Apelsin', null, 47, 0.9, 11.8, 0.1, null),
+  ('generic', 'jordgubbar', 'Jordgubbar', null, 32, 0.7, 7.7, 0.3, null),
+  ('generic', 'avokado', 'Avokado', null, 160, 2, 8.5, 14.7, null),
+  ('generic', 'mjolk-standard', 'Mjölk, standardmjölk 3%', null, 61, 3.4, 4.7, 3.3, null),
+  ('generic', 'mjolk-lattmjolk', 'Lättmjölk 0.5%', null, 35, 3.4, 4.9, 0.5, null),
+  ('generic', 'filmjolk', 'Filmjölk', null, 62, 3.5, 4.7, 3, null),
+  ('generic', 'yoghurt-naturell', 'Yoghurt, naturell', null, 61, 3.5, 4.7, 3.3, null),
+  ('generic', 'keso', 'Keso', null, 98, 12, 3.4, 4.3, null),
+  ('generic', 'ost-hushall', 'Hushållsost', null, 350, 25, 2, 27, null),
+  ('generic', 'smor', 'Smör', null, 717, 0.9, 0.1, 81, null),
+  ('generic', 'agg', 'Ägg', null, 155, 13, 1.1, 11, null),
+  ('generic', 'kycklingbrost', 'Kycklingbröst, tillagat', null, 165, 31, 0, 3.6, null),
+  ('generic', 'notfars', 'Nötfärs 10%, tillagad', null, 217, 26, 0, 12, null),
+  ('generic', 'flaskfile', 'Fläskfilé, tillagad', null, 143, 26, 0, 3.5, null),
+  ('generic', 'lax', 'Lax, tillagad', null, 208, 20, 0, 13, null),
+  ('generic', 'rakor', 'Räkor', null, 99, 24, 0.2, 0.3, null),
+  ('generic', 'falukorv', 'Falukorv', null, 220, 12, 3, 18, null),
+  ('generic', 'tofu', 'Tofu', null, 76, 8, 1.9, 4.8, null),
+  ('generic', 'ris-kokt', 'Ris, kokt', null, 130, 2.7, 28, 0.3, null),
+  ('generic', 'pasta-kokt', 'Pasta, kokt', null, 131, 5, 25, 1.1, null),
+  ('generic', 'potatis-kokt', 'Potatis, kokt', null, 87, 1.9, 20, 0.1, null),
+  ('generic', 'havregryn', 'Havregryn', null, 389, 16.9, 66, 6.9, null),
+  ('generic', 'brod-vitt', 'Bröd, vitt', null, 265, 9, 49, 3.2, null),
+  ('generic', 'brod-fullkorn', 'Bröd, fullkorn', null, 247, 13, 41, 4.2, null),
+  ('generic', 'linser-kokta', 'Linser, kokta', null, 116, 9, 20, 0.4, null),
+  ('generic', 'kikartor-kokta', 'Kikärtor, kokta', null, 164, 8.9, 27, 2.6, null),
+  ('generic', 'mandel', 'Mandel', null, 579, 21, 22, 50, null),
+  ('generic', 'jordnotssmor', 'Jordnötssmör', null, 588, 25, 20, 50, null),
+  ('generic', 'olivolja', 'Olivolja', null, 884, 0, 0, 100, null),
+  ('generic', 'broccoli-kokt', 'Broccoli, kokt', null, 35, 2.4, 7.2, 0.4, null),
+  ('generic', 'morot', 'Morot', null, 41, 0.9, 9.6, 0.2, null),
+  ('generic', 'tomat', 'Tomat', null, 18, 0.9, 3.9, 0.2, null),
+  ('generic', 'gurka', 'Gurka', null, 15, 0.7, 3.6, 0.1, null),
+  ('generic', 'kottbullar', 'Köttbullar', null, 220, 13, 8, 15, null),
+  ('generic', 'pannkakor', 'Pannkakor', null, 227, 6, 28, 9, null),
+  ('generic', 'pizza', 'Pizza', null, 266, 11, 33, 10, null)
+on conflict (source, external_id) do nothing;

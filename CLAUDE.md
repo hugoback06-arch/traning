@@ -5,34 +5,42 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Träningsapp
 
 ## Projektbeskrivning
-En tränings- och kostapp byggd som en PWA (Progressive Web App),
-installerbar på mobilen. Ingen inloggning – all data sparas lokalt
-på enheten.
+Kost- och träningsapp (webbapp/PWA, mobil-först). MVP = kost-spårning: onboarding med auto-beräknat kalori-/makromål, dagsöversikt, kalender, tre loggningssätt (sökning, streckkod, fotoanalys), måltidshistorik, profilinställningar. Fullständig spec: `app-spec-mvp.md`.
+
+Träningsspårning (Strava, AI-tränarschema) är **inte** med i MVP.
 
 ## Tech-stack
-- React + Vite + TypeScript
-- vite-plugin-pwa för PWA-funktionalitet (manifest, service worker, offline)
-- Lokal lagring (IndexedDB/Dexie.js) – ingen backend eller molnsynk
+- React + Vite + TypeScript, react-router, @tanstack/react-query
+- Tailwind CSS v4 (`@tailwindcss/vite`, tokens i `src/index.css` via `@theme`, ingen config-fil)
+- vite-plugin-pwa (manifest, service worker, offline)
+- **Supabase** (Postgres + Auth + Edge Functions): magic-link login, RLS per användare
+- Open Food Facts API (publik, ingen nyckel) för sökning/streckkod
+- Claude API (vision) för fotoanalys, via Edge Function `supabase/functions/analyze-meal-photo` (håller `ANTHROPIC_API_KEY` server-side)
+- `barcode-detector` (native + WASM-fallback för Safari/iOS)
+- Dexie installerat men **oanvänt** (relik från tidigare lokal-first-idé) — kan tas bort ur `package.json`
+
+## Arkitekturbeslut
+Ursprungligt scaffold var lokalt (IndexedDB/Dexie, ingen auth). Nu gäller istället Supabase-arkitekturen i `app-spec-mvp.md`, med Edge Function som proxy för Claude vision-anrop. Fullständigt planeringsdokument: `/Users/hugoback/.claude/plans/groovy-booping-neumann.md`.
 
 ## Konventioner
-- TypeScript föredras framför JavaScript
-- Funktionella komponenter med hooks
-- (fyll på efterhand som ni bestämmer mer)
+- TypeScript, funktionella komponenter med hooks
+- (fylls på efterhand)
 
-## Project status
-
-React + TypeScript + Vite is scaffolded and running as an installable PWA (`vite-plugin-pwa`), with Dexie installed for local storage. `src/App.tsx` is currently a placeholder that just renders "Träningsapp" to confirm the setup works. No database schema or app features exist yet.
+## Status
+Router, Tailwind och app-skal (`AppShell`/`BottomNav`) med platshållarsidor finns på plats. Nästa steg: Supabase-projekt, schema, auth.
 
 ## Commands
+- `npm run dev` — dev server
+- `npm run build` — type-check + prod build (genererar PWA service worker)
+- `npm run preview` — förhandsgranska prod-build
+- `npm run lint` — oxlint
 
-- `npm run dev` — start the Vite dev server
-- `npm run build` — type-check (`tsc -b`) and build for production (also generates the PWA service worker)
-- `npm run preview` — preview the production build locally
-- `npm run lint` — run oxlint
-
-## Architecture
-
-- `src/main.tsx` — entry point, mounts `App` into `#root`
-- `src/App.tsx` — root component (currently a minimal placeholder)
-- `vite.config.ts` — Vite config; registers `@vitejs/plugin-react` and `vite-plugin-pwa` (PWA manifest: name "Träningsapp"; app icons are not set yet — TODO)
-- Dexie is installed but no database schema has been defined yet — add a `src/db.ts` (or similar) with a `Dexie` subclass when persistence is needed
+## Arkitektur (filstruktur)
+- `src/main.tsx` — entry point
+- `src/App.tsx` — router + `QueryClientProvider`, routes: `/`, `/calendar`, `/add-meal`, `/profile` (i `AppShell`) samt `/login`, `/onboarding`
+- `vite.config.ts` — plugins: react, tailwind, pwa
+- `src/index.css` — Tailwind + design tokens (teal accent `#1D9E75`, makro-färger, surface/ink/border/warning)
+- `src/components/layout/` — `AppShell`, `BottomNav`
+- `src/routes/` — en fil per toppnivå-sida
+- `src/lib/queryClient.ts` — delad `QueryClient`
+- `supabase/` — migrations + Edge Functions
