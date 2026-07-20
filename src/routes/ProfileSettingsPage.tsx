@@ -1,12 +1,20 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { Spinner } from '../components/common/Spinner'
+import { StravaConnectionCard } from '../components/profile/StravaConnectionCard'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/queryKeys'
+
+const STRAVA_STATUS_MESSAGES: Record<string, string> = {
+  connected: 'Strava anslutet!',
+  denied: 'Strava-anslutningen avbröts.',
+  error: 'Något gick fel vid anslutning till Strava.',
+}
 
 function NumberField({
   label,
@@ -36,7 +44,20 @@ export function ProfileSettingsPage() {
   const { session } = useAuth()
   const { data: profile, isLoading } = useProfile()
   const queryClient = useQueryClient()
+  const [searchParams, setSearchParams] = useSearchParams()
   const [editing, setEditing] = useState(false)
+
+  const stravaStatus = searchParams.get('strava')
+
+  useEffect(() => {
+    if (!stravaStatus) return
+    queryClient.invalidateQueries({ queryKey: ['fitness-connection'] })
+    setSearchParams((params) => {
+      params.delete('strava')
+      params.delete('message')
+      return params
+    })
+  }, [stravaStatus, queryClient, setSearchParams])
   const [calorieGoal, setCalorieGoal] = useState(0)
   const [proteinG, setProteinG] = useState(0)
   const [carbsG, setCarbsG] = useState(0)
@@ -75,6 +96,14 @@ export function ProfileSettingsPage() {
   return (
     <div className="space-y-4">
       <h1 className="text-lg font-semibold">Profil</h1>
+
+      {stravaStatus && (
+        <p className="rounded-lg bg-accent-light px-3 py-2 text-sm text-accent">
+          {STRAVA_STATUS_MESSAGES[stravaStatus] ?? 'Klart.'}
+        </p>
+      )}
+
+      <StravaConnectionCard />
 
       <Card className="space-y-4">
         <div className="flex items-center justify-between">

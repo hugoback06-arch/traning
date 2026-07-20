@@ -1,8 +1,9 @@
 import { NavLink } from 'react-router'
 
 const navItems = [
-  { to: '/', label: 'Översikt', end: true },
-  { to: '/calendar', label: 'Kalender', end: false },
+  { to: '/', label: 'Hem', end: true },
+  { to: '/nutrition', label: 'Kost', end: false },
+  { to: '/training', label: 'Träning', end: false },
   { to: '/profile', label: 'Profil', end: false },
 ]
 

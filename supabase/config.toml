@@ -390,6 +390,31 @@ deno_version = 2
 # call attaches it automatically, so this is "for free" auth on the function.
 verify_jwt = true
 
+[functions.generate-training-plan]
+verify_jwt = true
+
+[functions.evaluate-workout]
+verify_jwt = true
+
+[functions.adjust-training-plan]
+verify_jwt = true
+
+[functions.strava-oauth-start]
+verify_jwt = true
+
+[functions.strava-oauth-callback]
+# Strava redirects the browser here directly — no Supabase JWT is attached.
+# The opaque `state` param (see oauth_states table) is the auth boundary instead.
+verify_jwt = false
+
+[functions.strava-webhook]
+# Called directly by Strava's servers — no Supabase JWT possible.
+# hub.verify_token (GET) / owner_id lookup (POST) are the auth boundary instead.
+verify_jwt = false
+
+[functions.strava-manual-sync]
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327

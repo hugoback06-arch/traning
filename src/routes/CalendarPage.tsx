@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { Link } from 'react-router'
 import { addDays, format, startOfMonth } from 'date-fns'
 import { sv } from 'date-fns/locale'
 import { Card } from '../components/common/Card'
@@ -29,7 +30,12 @@ export function CalendarPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Kalender</h1>
+      <div>
+        <Link to="/nutrition" className="text-sm text-ink-secondary">
+          ← Kost
+        </Link>
+        <h1 className="text-lg font-semibold">Kalender</h1>
+      </div>
 
       <Card>
         <div className="mb-3 flex items-center justify-between">

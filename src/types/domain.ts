@@ -76,3 +76,132 @@ export interface FoodSearchResult {
   portionG?: number | null
   portionUnit?: 'portion' | 'st'
 }
+
+// --- Träningsdel ---
+
+export type WorkoutSource = 'manual' | 'strava' | 'garmin' | 'ai_plan'
+export type ActivityType = 'running' | 'cycling' | 'swimming' | 'strength' | 'walking' | 'other'
+export type PlanActivityType = ActivityType | 'rest'
+export type TrainingPlanStatus = 'active' | 'completed' | 'archived'
+export type IntensityPreference = 'lower' | 'as_planned' | 'higher'
+export type FitnessProvider = 'strava' | 'garmin'
+
+export interface FitnessConnection {
+  id: string
+  user_id: string
+  provider: FitnessProvider
+  external_athlete_id: string | null
+  access_token: string
+  refresh_token: string | null
+  expires_at: string | null
+  scope: string | null
+  connected_at: string
+  last_synced_at: string | null
+}
+
+export interface Exercise {
+  id: string
+  name: string
+  muscle_group: string | null
+  equipment: string | null
+  is_custom: boolean
+  created_by: string | null
+  created_at: string
+}
+
+export interface Workout {
+  id: string
+  user_id: string
+  source: WorkoutSource
+  external_id: string | null
+  activity_type: ActivityType
+  title: string | null
+  started_at: string
+  duration_seconds: number | null
+  distance_meters: number | null
+  calories_burned: number | null
+  avg_heart_rate: number | null
+  max_heart_rate: number | null
+  elevation_gain_meters: number | null
+  perceived_exertion: number | null
+  training_plan_session_id: string | null
+  raw_data: unknown
+  created_at: string
+  updated_at: string
+}
+
+export interface WorkoutSet {
+  id: string
+  workout_id: string
+  exercise_id: string
+  set_number: number
+  reps: number | null
+  weight_kg: number | null
+  rpe: number | null
+  rest_seconds: number | null
+  created_at: string
+}
+
+export interface WorkoutSetWithExercise extends WorkoutSet {
+  exercise: Exercise
+}
+
+export interface TrainingPlan {
+  id: string
+  user_id: string
+  name: string
+  goal: string | null
+  source_prompt: string | null
+  start_date: string
+  end_date: string | null
+  status: TrainingPlanStatus
+  intensity_preference: IntensityPreference
+  created_at: string
+}
+
+export interface TrainingPlanAdjustment {
+  id: string
+  training_plan_id: string
+  user_id: string
+  note: string
+  created_at: string
+}
+
+export interface TrainingPlanSession {
+  id: string
+  training_plan_id: string
+  scheduled_date: string
+  activity_type: PlanActivityType
+  title: string
+  description: string | null
+  target_data: Record<string, unknown> | null
+  completed_workout_id: string | null
+  created_at: string
+}
+
+export interface WorkoutEvaluation {
+  id: string
+  workout_id: string
+  user_id: string
+  summary: string
+  feedback: string | null
+  score: number | null
+  created_at: string
+}
+
+export interface CalorieAdjustment {
+  id: string
+  user_id: string
+  workout_id: string | null
+  adjustment_date: string
+  extra_kcal: number
+  reason: string | null
+  created_at: string
+}
+
+export interface WorkoutDetail extends Workout {
+  sets: WorkoutSetWithExercise[]
+  evaluation: WorkoutEvaluation | null
+  calorieAdjustment: CalorieAdjustment | null
+  session: TrainingPlanSession | null
+}

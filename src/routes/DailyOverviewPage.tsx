@@ -1,6 +1,8 @@
+import { Link } from 'react-router'
 import { CalorieRing } from '../components/overview/CalorieRing'
 import { MacroCard } from '../components/overview/MacroCard'
 import { StreakBadge } from '../components/overview/StreakBadge'
+import { TrainingCalorieBadge } from '../components/overview/TrainingCalorieBadge'
 import { WaterCounter } from '../components/overview/WaterCounter'
 import { MealTypeSection } from '../components/meals/MealTypeSection'
 import { Spinner } from '../components/common/Spinner'
@@ -8,9 +10,11 @@ import { useProfile } from '../hooks/useProfile'
 import { useTodayMealLogs } from '../hooks/useTodayMealLogs'
 import { useTodayWater } from '../hooks/useTodayWater'
 import { useMealLogDates } from '../hooks/useMealLogDates'
+import { useCalorieAdjustmentsForDate } from '../hooks/useCalorieAdjustmentsForDate'
 import { useAddWater } from '../hooks/useAddWater'
 import { useRemoveWater } from '../hooks/useRemoveWater'
 import { sumMealTotals } from '../lib/dailyTotals'
+import { sumExtraKcal } from '../lib/calorieAdjustments'
 import { calculateStreak } from '../lib/streaks'
 
 export function DailyOverviewPage() {
@@ -18,6 +22,7 @@ export function DailyOverviewPage() {
   const { data: mealLogs, isLoading: mealsLoading } = useTodayMealLogs()
   const { data: waterMl, isLoading: waterLoading } = useTodayWater()
   const { data: mealDates } = useMealLogDates()
+  const { data: adjustments } = useCalorieAdjustmentsForDate(new Date())
   const addWater = useAddWater()
   const removeWater = useRemoveWater()
 
@@ -27,15 +32,28 @@ export function DailyOverviewPage() {
 
   const totals = sumMealTotals(mealLogs ?? [])
   const streakDays = calculateStreak(mealDates ?? [])
+  const extraKcal = sumExtraKcal(adjustments ?? [])
+  const goalKcal = (profile.daily_calorie_goal ?? 0) + extraKcal
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Dagsöversikt</h1>
-        <StreakBadge days={streakDays} />
+        <h1 className="text-lg font-semibold">Kost</h1>
+        <div className="flex items-center gap-2">
+          <StreakBadge days={streakDays} />
+          <Link to="/nutrition/calendar" className="text-sm text-ink-secondary underline">
+            Kalender
+          </Link>
+        </div>
       </div>
 
-      <CalorieRing eatenKcal={totals.kcal} goalKcal={profile.daily_calorie_goal ?? 0} />
+      {extraKcal > 0 && (
+        <div className="flex justify-center">
+          <TrainingCalorieBadge extraKcal={extraKcal} />
+        </div>
+      )}
+
+      <CalorieRing eatenKcal={totals.kcal} goalKcal={goalKcal} />
 
       <div className="flex gap-3">
         <MacroCard kind="protein" label="Protein" eatenG={totals.proteinG} goalG={profile.protein_goal_g ?? 0} />

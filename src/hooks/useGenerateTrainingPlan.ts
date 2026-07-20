@@ -1,0 +1,33 @@
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { supabase } from '../lib/supabase'
+import { queryKeys } from '../lib/queryKeys'
+
+interface GenerateTrainingPlanErrorBody {
+  error: string
+  code?: string
+}
+
+export interface GenerateTrainingPlanInput {
+  prompt: string
+  weeks: number
+}
+
+export function useGenerateTrainingPlan() {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async ({ prompt, weeks }: GenerateTrainingPlanInput): Promise<{ training_plan_id: string }> => {
+      const { data, error } = await supabase.functions.invoke<
+        { training_plan_id: string } | GenerateTrainingPlanErrorBody
+      >('generate-training-plan', { body: { prompt, weeks } })
+
+      if (error) throw error
+      if (!data || 'error' in data) throw new Error(data?.error ?? 'Kunde inte generera schema')
+      return data
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: queryKeys.planSessionsPrefix })
+      queryClient.invalidateQueries({ queryKey: ['training-plans'] })
+    },
+  })
+}

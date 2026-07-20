@@ -8,4 +8,16 @@ export const queryKeys = {
   mealLogDatesInRange: (userId: string | undefined, startIso: string, endIsoExclusive: string) =>
     ['meal-logs', 'range', startIso, endIsoExclusive, userId] as const,
   mealLogsPrefix: ['meal-logs'] as const,
+
+  workoutsInRange: (userId: string | undefined, startIso: string, endIsoExclusive: string) =>
+    ['workouts', 'range', startIso, endIsoExclusive, userId] as const,
+  planSessionsInRange: (userId: string | undefined, startDate: string, endDate: string) =>
+    ['plan-sessions', 'range', startDate, endDate, userId] as const,
+  activeTrainingPlan: (userId: string | undefined) => ['training-plans', 'active', userId] as const,
+  workoutHistory: (userId: string | undefined) => ['workouts', 'history', userId] as const,
+  workoutDetail: (workoutId: string | undefined) => ['workouts', 'detail', workoutId] as const,
+  workoutsPrefix: ['workouts'] as const,
+  planSessionsPrefix: ['plan-sessions'] as const,
+  calorieAdjustmentsForDate: (userId: string | undefined, dateKey: string) =>
+    ['calorie-adjustments', 'date', dateKey, userId] as const,
 }

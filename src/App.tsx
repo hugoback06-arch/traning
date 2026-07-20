@@ -7,9 +7,11 @@ import { OnboardingGate } from './components/layout/OnboardingGate'
 import { AppShell } from './components/layout/AppShell'
 import { LoginPage } from './routes/LoginPage'
 import { OnboardingPage } from './routes/OnboardingPage'
+import { Home } from './routes/Home'
 import { DailyOverviewPage } from './routes/DailyOverviewPage'
 import { CalendarPage } from './routes/CalendarPage'
 import { ProfileSettingsPage } from './routes/ProfileSettingsPage'
+import { TrainingPage } from './routes/training/TrainingPage'
 
 function App() {
   return (
@@ -22,8 +24,10 @@ function App() {
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route element={<OnboardingGate />}>
                 <Route element={<AppShell />}>
-                  <Route path="/" element={<DailyOverviewPage />} />
-                  <Route path="/calendar" element={<CalendarPage />} />
+                  <Route path="/" element={<Home />} />
+                  <Route path="/nutrition" element={<DailyOverviewPage />} />
+                  <Route path="/nutrition/calendar" element={<CalendarPage />} />
+                  <Route path="/training" element={<TrainingPage />} />
                   <Route path="/profile" element={<ProfileSettingsPage />} />
                 </Route>
               </Route>

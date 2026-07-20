@@ -18,6 +18,16 @@
   --color-macro-carbs: #eda100;
   --color-macro-fat: #4a3aa7;
 
+  /* Aktivitetstyper i träningsdelen — egen färgskala skild från makro-färgerna
+     ovan så kost och träning inte blandas ihop visuellt. */
+  --color-activity-running: #e2572b;
+  --color-activity-cycling: #1f6fb2;
+  --color-activity-swimming: #0f9bc9;
+  --color-activity-strength: #7b3fe4;
+  --color-activity-walking: #4a9b5e;
+  --color-activity-rest: #9aa39d;
+  --color-activity-other: #5a5f5c;
+
   --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
 }
 
