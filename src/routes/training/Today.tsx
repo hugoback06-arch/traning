@@ -5,14 +5,14 @@ import { Card } from '../../components/common/Card'
 import { ActivityIcon } from '../../components/training/ActivityIcon'
 import { WorkoutDetailSheet } from '../../components/training/WorkoutDetailSheet'
 import type { DetailTarget } from '../../components/training/WorkoutDetailSheet'
-import { useTodayTraining } from '../../hooks/useTodayTraining'
+import { useTrainingForDate } from '../../hooks/useTrainingForDate'
 import { useFitnessConnection } from '../../hooks/useFitnessConnection'
 import { ACTIVITY_LABELS } from '../../lib/activityTypes'
 import { formatDistance, formatDuration } from '../../lib/formatWorkout'
 
 export function Today() {
   const [detailTarget, setDetailTarget] = useState<DetailTarget | null>(null)
-  const { session, matchedWorkout, secondaryWorkouts, isRestDay, isDone } = useTodayTraining()
+  const { session, matchedWorkout, secondaryWorkouts, isRestDay, isDone } = useTrainingForDate()
   const { data: stravaConnection } = useFitnessConnection('strava')
 
   const onOpenMainCard = matchedWorkout

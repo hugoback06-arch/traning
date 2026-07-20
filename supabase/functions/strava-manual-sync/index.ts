@@ -1,10 +1,12 @@
 // Supabase Edge Function (Deno). The addendum's required fallback for when
 // the webhook delivery misses (network blip, Strava outage): a discreet
 // manual "sync now" button — reservlösning, not the primary flow. Pulls
-// recent activities since the last sync (or the last 30 days on first run)
-// and upserts them the same way strava-webhook does. Does NOT auto-trigger
-// AI evaluation (kept fast/synchronous for the button press) — evaluation is
-// still available on-demand from the workout detail sheet.
+// recent activities since the last sync (or the last year on first run, so
+// connecting Strava for the first time brings in real history rather than
+// starting from an empty slate) and upserts them the same way strava-webhook
+// does. Does NOT auto-trigger AI evaluation (kept fast/synchronous for the
+// button press) — evaluation is still available on-demand from the workout
+// detail sheet.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { ensureValidStravaToken, fetchStravaActivities, upsertWorkoutFromStravaActivity } from '../_shared/stravaActivity.ts'
 
@@ -13,7 +15,7 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const FALLBACK_LOOKBACK_DAYS = 30
+const FIRST_SYNC_LOOKBACK_DAYS = 365
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -57,7 +59,7 @@ Deno.serve(async (req) => {
     const accessToken = await ensureValidStravaToken(supabase, connection)
     const afterEpoch = connection.last_synced_at
       ? Math.floor(Date.parse(connection.last_synced_at) / 1000)
-      : Math.floor(Date.now() / 1000) - FALLBACK_LOOKBACK_DAYS * 86_400
+      : Math.floor(Date.now() / 1000) - FIRST_SYNC_LOOKBACK_DAYS * 86_400
 
     const activities = await fetchStravaActivities(accessToken, afterEpoch)
 

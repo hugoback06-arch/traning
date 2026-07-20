@@ -74,14 +74,24 @@ export async function fetchStravaActivity(accessToken: string, activityId: strin
   return res.json()
 }
 
+// Paginates through all activities since afterEpochSeconds — a first-time
+// historical sync can easily exceed a single page (Strava caps per_page at 200).
 // deno-lint-ignore no-explicit-any
 export async function fetchStravaActivities(accessToken: string, afterEpochSeconds: number): Promise<any[]> {
-  const res = await fetch(
-    `https://www.strava.com/api/v3/athlete/activities?after=${afterEpochSeconds}&per_page=50`,
-    { headers: { Authorization: `Bearer ${accessToken}` } },
-  )
-  if (!res.ok) throw new Error(`Kunde inte hämta Strava-aktiviteter (${res.status})`)
-  return res.json()
+  const all: unknown[] = []
+  let page = 1
+  while (true) {
+    const res = await fetch(
+      `https://www.strava.com/api/v3/athlete/activities?after=${afterEpochSeconds}&per_page=200&page=${page}`,
+      { headers: { Authorization: `Bearer ${accessToken}` } },
+    )
+    if (!res.ok) throw new Error(`Kunde inte hämta Strava-aktiviteter (${res.status})`)
+    const batch = (await res.json()) as unknown[]
+    all.push(...batch)
+    if (batch.length < 200) break
+    page += 1
+  }
+  return all
 }
 
 // deno-lint-ignore no-explicit-any

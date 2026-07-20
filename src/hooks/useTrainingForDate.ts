@@ -3,12 +3,11 @@ import { useTrainingPlanSessionsInRange } from './useTrainingPlanSessionsInRange
 import { useWorkoutsInRange } from './useWorkoutsInRange'
 import { dayRangeIso } from '../lib/dateRange'
 
-export function useTodayTraining() {
-  const today = new Date()
-  const todayKey = format(today, 'yyyy-MM-dd')
-  const { startIso, endIsoExclusive } = dayRangeIso(today)
+export function useTrainingForDate(date: Date = new Date()) {
+  const dateKey = format(date, 'yyyy-MM-dd')
+  const { startIso, endIsoExclusive } = dayRangeIso(date)
 
-  const { data: sessions, isLoading: sessionsLoading } = useTrainingPlanSessionsInRange(todayKey, todayKey)
+  const { data: sessions, isLoading: sessionsLoading } = useTrainingPlanSessionsInRange(dateKey, dateKey)
   const { data: workouts, isLoading: workoutsLoading } = useWorkoutsInRange(startIso, endIsoExclusive)
 
   const session = sessions?.[0] ?? null

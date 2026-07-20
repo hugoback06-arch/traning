@@ -7,7 +7,7 @@ import { TrainingCalorieBadge } from '../components/overview/TrainingCalorieBadg
 import { useProfile } from '../hooks/useProfile'
 import { useTodayMealLogs } from '../hooks/useTodayMealLogs'
 import { useCalorieAdjustmentsForDate } from '../hooks/useCalorieAdjustmentsForDate'
-import { useTodayTraining } from '../hooks/useTodayTraining'
+import { useTrainingForDate } from '../hooks/useTrainingForDate'
 import { sumMealTotals } from '../lib/dailyTotals'
 import { sumExtraKcal } from '../lib/calorieAdjustments'
 import { ACTIVITY_LABELS } from '../lib/activityTypes'
@@ -21,7 +21,7 @@ export function Home() {
   const { data: profile } = useProfile()
   const { data: mealLogs } = useTodayMealLogs()
   const { data: adjustments } = useCalorieAdjustmentsForDate(new Date())
-  const { session, matchedWorkout, isRestDay, isDone } = useTodayTraining()
+  const { session, matchedWorkout, isRestDay, isDone } = useTrainingForDate()
 
   const totals = sumMealTotals(mealLogs ?? [])
   const extraKcal = sumExtraKcal(adjustments ?? [])
