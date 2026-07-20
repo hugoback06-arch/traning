@@ -40,6 +40,30 @@ async function processStravaEvent(event: StravaEvent) {
   if (!connection) return
 
   if (event.aspect_type === 'delete') {
+    // POST bodies here are unauthenticated (no signature/HMAC — only the GET
+    // hub.challenge handshake is protected), and owner_id/object_id are plain,
+    // publicly-discoverable integers. Without this check, anyone could forge a
+    // delete event for any athlete and wipe a specific victim's workout row
+    // (cascading to calorie_adjustments, per the FK in 0005_training_schema.sql).
+    // Re-verify against Strava's own API with the connection's real token —
+    // only delete locally if Strava confirms the activity is actually gone.
+    try {
+      const accessToken = await ensureValidStravaToken(supabase, connection)
+      const verifyRes = await fetch(`https://www.strava.com/api/v3/activities/${event.object_id}`, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      })
+      if (verifyRes.status !== 404) {
+        console.warn('strava-webhook: ignoring delete event, activity still reachable', {
+          objectId: event.object_id,
+          status: verifyRes.status,
+        })
+        return
+      }
+    } catch (error) {
+      console.error('strava-webhook: could not verify delete event, skipping', error)
+      return
+    }
+
     await supabase
       .from('workouts')
       .delete()

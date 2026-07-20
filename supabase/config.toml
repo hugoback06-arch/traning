@@ -407,6 +407,11 @@ verify_jwt = true
 # The opaque `state` param (see oauth_states table) is the auth boundary instead.
 verify_jwt = false
 
+[functions.strava-oauth-finalize]
+# Requires the completing browser's own JWT — this is what closes the
+# account-linking CSRF hole (see oauth_pending_link migration + function comment).
+verify_jwt = true
+
 [functions.strava-webhook]
 # Called directly by Strava's servers — no Supabase JWT possible.
 # hub.verify_token (GET) / owner_id lookup (POST) are the auth boundary instead.

@@ -7,10 +7,12 @@ import { Spinner } from '../components/common/Spinner'
 import { StravaConnectionCard } from '../components/profile/StravaConnectionCard'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
+import { useFinalizeStrava } from '../hooks/useFinalizeStrava'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/queryKeys'
 
 const STRAVA_STATUS_MESSAGES: Record<string, string> = {
+  pending: 'Ansluter Strava…',
   connected: 'Strava anslutet!',
   denied: 'Strava-anslutningen avbröts.',
   error: 'Något gick fel vid anslutning till Strava.',
@@ -46,18 +48,40 @@ export function ProfileSettingsPage() {
   const queryClient = useQueryClient()
   const [searchParams, setSearchParams] = useSearchParams()
   const [editing, setEditing] = useState(false)
+  const finalizeStrava = useFinalizeStrava()
+  const [displayStravaStatus, setDisplayStravaStatus] = useState<string | null>(null)
 
   const stravaStatus = searchParams.get('strava')
+  const stravaState = searchParams.get('state')
 
   useEffect(() => {
     if (!stravaStatus) return
-    queryClient.invalidateQueries({ queryKey: ['fitness-connection'] })
+
+    if (stravaStatus === 'pending' && stravaState) {
+      // The callback only stashed tokens — this call, made with our own
+      // session's JWT, is what actually claims them via RLS-checked ownership
+      // (see strava-oauth-finalize). See CLAUDE.md / oauth_pending_link migration.
+      setDisplayStravaStatus('pending')
+      finalizeStrava.mutate(stravaState, {
+        onSuccess: () => {
+          queryClient.invalidateQueries({ queryKey: ['fitness-connection'] })
+          setDisplayStravaStatus('connected')
+        },
+        onError: () => setDisplayStravaStatus('error'),
+      })
+    } else {
+      queryClient.invalidateQueries({ queryKey: ['fitness-connection'] })
+      setDisplayStravaStatus(stravaStatus)
+    }
+
     setSearchParams((params) => {
       params.delete('strava')
+      params.delete('state')
       params.delete('message')
       return params
     })
-  }, [stravaStatus, queryClient, setSearchParams])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [stravaStatus, stravaState, queryClient, setSearchParams])
   const [calorieGoal, setCalorieGoal] = useState(0)
   const [proteinG, setProteinG] = useState(0)
   const [carbsG, setCarbsG] = useState(0)
@@ -97,9 +121,9 @@ export function ProfileSettingsPage() {
     <div className="space-y-4">
       <h1 className="text-lg font-semibold">Profil</h1>
 
-      {stravaStatus && (
+      {displayStravaStatus && (
         <p className="rounded-lg bg-accent-light px-3 py-2 text-sm text-accent">
-          {STRAVA_STATUS_MESSAGES[stravaStatus] ?? 'Klart.'}
+          {STRAVA_STATUS_MESSAGES[displayStravaStatus] ?? 'Klart.'}
         </p>
       )}
 
