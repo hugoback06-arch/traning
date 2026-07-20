@@ -3,6 +3,7 @@ export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'ver
 export type WeightGoal = 'lose' | 'maintain' | 'gain'
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 export type FoodSource = 'open_food_facts' | 'ai_estimate' | 'generic'
+export type ThemePreference = 'system' | 'light' | 'dark'
 
 export interface Profile {
   id: string
@@ -18,6 +19,8 @@ export interface Profile {
   carbs_goal_g: number | null
   fat_goal_g: number | null
   water_goal_ml: number
+  theme_preference: ThemePreference
+  notifications_enabled: boolean
   onboarding_completed_at: string | null
   created_at: string
   updated_at: string

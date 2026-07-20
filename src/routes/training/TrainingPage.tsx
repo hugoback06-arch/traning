@@ -1,26 +1,67 @@
 import { useState } from 'react'
-import { SegmentedControl } from '../../components/training/SegmentedControl'
-import { Today } from './Today'
-import { Schedule } from './Schedule'
-import { History } from './History'
-
-type Tab = 'today' | 'schedule' | 'history'
-
-const TABS: { value: Tab; label: string }[] = [
-  { value: 'today', label: 'Idag' },
-  { value: 'schedule', label: 'Schema' },
-  { value: 'history', label: 'Historik' },
-]
+import { Link } from 'react-router'
+import { format } from 'date-fns'
+import { sv } from 'date-fns/locale'
+import { Card } from '../../components/common/Card'
+import { ActivityIcon } from '../../components/training/ActivityIcon'
+import { TrainingStatusCard } from '../../components/training/TrainingStatusCard'
+import { WeekView } from '../../components/training/WeekView'
+import { WorkoutDetailSheet } from '../../components/training/WorkoutDetailSheet'
+import type { DetailTarget } from '../../components/training/WorkoutDetailSheet'
+import { useTrainingForDate } from '../../hooks/useTrainingForDate'
+import { useFitnessConnection } from '../../hooks/useFitnessConnection'
+import { ACTIVITY_LABELS } from '../../lib/activityTypes'
+import { formatDuration } from '../../lib/formatWorkout'
 
 export function TrainingPage() {
-  const [tab, setTab] = useState<Tab>('today')
+  const [detailTarget, setDetailTarget] = useState<DetailTarget | null>(null)
+  const { secondaryWorkouts } = useTrainingForDate()
+  const { data: stravaConnection } = useFitnessConnection('strava')
 
   return (
     <div className="space-y-4">
-      <SegmentedControl options={TABS} value={tab} onChange={setTab} />
-      {tab === 'today' && <Today />}
-      {tab === 'schedule' && <Schedule />}
-      {tab === 'history' && <History />}
+      <h1 className="font-display text-lg font-semibold">🏋️ Träning</h1>
+
+      <TrainingStatusCard onSelect={setDetailTarget} />
+
+      {secondaryWorkouts.map((workout) => (
+        <button
+          key={workout.id}
+          onClick={() => setDetailTarget({ type: 'workout', workoutId: workout.id })}
+          className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
+        >
+          <ActivityIcon type={workout.activity_type} size="sm" />
+          <span className="text-sm text-ink-primary">
+            Extra: {workout.title ?? ACTIVITY_LABELS[workout.activity_type]}
+            {formatDuration(workout.duration_seconds) ? `, ${formatDuration(workout.duration_seconds)}` : ''}
+          </span>
+        </button>
+      ))}
+
+      <p className="text-center text-xs text-ink-secondary">
+        {stravaConnection?.last_synced_at
+          ? `Senaste synk från Strava: ${format(new Date(stravaConnection.last_synced_at), 'HH:mm', { locale: sv })}`
+          : 'Ingen Strava-anslutning ännu'}
+      </p>
+
+      <WeekView onSelectDay={setDetailTarget} />
+
+      <div className="grid grid-cols-2 gap-3">
+        <Link to="/training/schedule">
+          <Card className="text-center">
+            <p className="text-sm font-medium text-ink-primary">🤖 Schemabyggare</p>
+            <p className="mt-0.5 text-xs text-ink-secondary">Generera/uppdatera schema →</p>
+          </Card>
+        </Link>
+        <Link to="/training/history">
+          <Card className="text-center">
+            <p className="text-sm font-medium text-ink-primary">📜 Historik</p>
+            <p className="mt-0.5 text-xs text-ink-secondary">Tidigare pass →</p>
+          </Card>
+        </Link>
+      </div>
+
+      {detailTarget && <WorkoutDetailSheet target={detailTarget} onClose={() => setDetailTarget(null)} />}
     </div>
   )
 }

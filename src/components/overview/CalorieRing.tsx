@@ -32,7 +32,7 @@ export function CalorieRing({ eatenKcal, goalKcal }: CalorieRingProps) {
         />
       </svg>
       <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-5xl font-semibold text-ink-primary">{Math.round(eatenKcal)}</span>
+        <span className="font-display text-5xl font-semibold text-ink-primary">{Math.round(eatenKcal)}</span>
         <span className="mt-1 text-sm text-ink-secondary">
           {overGoal ? `${Math.round(eatenKcal - goalKcal)} kcal över mål` : `av ${Math.round(goalKcal)} kcal`}
         </span>

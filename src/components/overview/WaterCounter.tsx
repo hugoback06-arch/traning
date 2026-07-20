@@ -17,7 +17,7 @@ export function WaterCounter({ currentMl, goalMl, onAdd, onRemove }: WaterCounte
     <Card>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-ink-primary">Vatten</p>
+          <p className="text-sm font-medium text-ink-primary">💧 Vatten</p>
           <p className="text-xs text-ink-secondary">
             {currentMl} / {goalMl} ml
           </p>

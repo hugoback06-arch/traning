@@ -38,7 +38,7 @@ export function DailyOverviewPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="text-lg font-semibold">Kost</h1>
+        <h1 className="font-display text-lg font-semibold">🍽️ Kost</h1>
         <div className="flex items-center gap-2">
           <StreakBadge days={streakDays} />
           <Link to="/nutrition/calendar" className="text-sm text-ink-secondary underline">

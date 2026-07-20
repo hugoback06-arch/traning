@@ -29,10 +29,26 @@
   --color-activity-other: #5a5f5c;
 
   --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Manrope Variable', var(--font-sans);
 }
 
 :root {
   color-scheme: light;
+}
+
+/* Mörkt läge: överskriver samma semantiska tokens som ljust läge använder,
+   så komponenter (bg-surface, text-ink-primary, border-border …) förblir
+   oförändrade och bara följer med automatiskt. Accent-, makro- och
+   aktivitetsfärgerna behålls som de är — de fungerar på båda bakgrunderna. */
+:root.dark {
+  color-scheme: dark;
+  --color-accent-light: #133528;
+  --color-warning-light: #3a1616;
+  --color-surface: #1c1e1d;
+  --color-surface-muted: #131413;
+  --color-ink-primary: #f2f3f1;
+  --color-ink-secondary: #a5aba6;
+  --color-border: #33362f;
 }
 
 body {

@@ -30,7 +30,7 @@ export function MacroCard({ kind, label, eatenG, goalG }: MacroCardProps) {
         <span className={`h-2 w-2 rounded-full ${DOT_CLASS[kind]}`} />
         <span className="text-xs text-ink-secondary">{label}</span>
       </div>
-      <p className="mt-1 text-xl font-semibold text-ink-primary">
+      <p className="font-display mt-1 text-xl font-semibold text-ink-primary">
         {Math.round(eatenG)}
         <span className="text-sm font-normal text-ink-secondary">g</span>
       </p>

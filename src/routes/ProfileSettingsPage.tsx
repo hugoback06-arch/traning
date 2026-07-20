@@ -4,12 +4,23 @@ import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { Spinner } from '../components/common/Spinner'
+import { Switch } from '../components/common/Switch'
+import { SegmentedControl } from '../components/common/SegmentedControl'
 import { StravaConnectionCard } from '../components/profile/StravaConnectionCard'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
 import { useFinalizeStrava } from '../hooks/useFinalizeStrava'
+import { useTheme } from '../hooks/useTheme'
+import { useUpdateNotificationsEnabled } from '../hooks/useUpdateNotificationsEnabled'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/queryKeys'
+import type { ThemePreference } from '../types/domain'
+
+const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
+  { value: 'system', label: 'Auto' },
+  { value: 'light', label: 'Ljust' },
+  { value: 'dark', label: 'Mörkt' },
+]
 
 const STRAVA_STATUS_MESSAGES: Record<string, string> = {
   pending: 'Ansluter Strava…',
@@ -50,6 +61,9 @@ export function ProfileSettingsPage() {
   const [editing, setEditing] = useState(false)
   const finalizeStrava = useFinalizeStrava()
   const [displayStravaStatus, setDisplayStravaStatus] = useState<string | null>(null)
+  const { preference, setPreference } = useTheme()
+  const updateNotificationsEnabled = useUpdateNotificationsEnabled()
+  const [notificationsMessage, setNotificationsMessage] = useState<string | null>(null)
 
   const stravaStatus = searchParams.get('strava')
   const stravaState = searchParams.get('state')
@@ -108,6 +122,25 @@ export function ProfileSettingsPage() {
 
   if (isLoading || !profile) return <Spinner />
 
+  function handleNotificationsToggle(next: boolean) {
+    setNotificationsMessage(null)
+    if (!next) {
+      updateNotificationsEnabled.mutate(false)
+      return
+    }
+    if (!('Notification' in window)) {
+      setNotificationsMessage('Notiser stöds inte i den här webbläsaren.')
+      return
+    }
+    Notification.requestPermission().then((permission) => {
+      if (permission === 'granted') {
+        updateNotificationsEnabled.mutate(true)
+      } else {
+        setNotificationsMessage('Tillåt notiser i webbläsaren för att slå på.')
+      }
+    })
+  }
+
   function startEditing() {
     if (!profile) return
     setCalorieGoal(profile.daily_calorie_goal ?? 0)
@@ -119,7 +152,7 @@ export function ProfileSettingsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Profil</h1>
+      <h1 className="font-display text-lg font-semibold">👤 Profil</h1>
 
       {displayStravaStatus && (
         <p className="rounded-lg bg-accent-light px-3 py-2 text-sm text-accent">
@@ -182,6 +215,22 @@ export function ProfileSettingsPage() {
             </div>
           </div>
         )}
+      </Card>
+
+      <Card className="space-y-3">
+        <h2 className="text-sm font-medium text-ink-primary">🎨 Utseende</h2>
+        <SegmentedControl options={THEME_OPTIONS} value={preference} onChange={setPreference} />
+      </Card>
+
+      <Card className="space-y-2">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-medium text-ink-primary">🔔 Notiser</h2>
+            <p className="text-xs text-ink-secondary">Påminnelser och uppdateringar från appen.</p>
+          </div>
+          <Switch checked={profile.notifications_enabled} onChange={handleNotificationsToggle} label="Notiser" />
+        </div>
+        {notificationsMessage && <p className="text-xs text-warning">{notificationsMessage}</p>}
       </Card>
     </div>
   )

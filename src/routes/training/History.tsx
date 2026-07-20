@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
 import { Spinner } from '../../components/common/Spinner'
@@ -20,7 +21,10 @@ export function History() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-semibold">Historik</h1>
+      <Link to="/training" className="text-sm text-ink-secondary">
+        ← Träning
+      </Link>
+      <h1 className="font-display text-lg font-semibold">📜 Historik</h1>
 
       {isLoading ? (
         <Spinner />

@@ -66,7 +66,7 @@ export function CalendarPage() {
         <Link to="/nutrition" className="text-sm text-ink-secondary">
           ← Kost
         </Link>
-        <h1 className="text-lg font-semibold">Kalender</h1>
+        <h1 className="font-display text-lg font-semibold">📅 Kalender</h1>
       </div>
 
       <Card>
