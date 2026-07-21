@@ -1,1 +1,1 @@
-# Träningsapp
+# Strikt

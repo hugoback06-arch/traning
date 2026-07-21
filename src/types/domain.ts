@@ -2,7 +2,7 @@ export type Sex = 'male' | 'female' | 'other'
 export type ActivityLevel = 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active'
 export type WeightGoal = 'lose' | 'maintain' | 'gain'
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
-export type FoodSource = 'open_food_facts' | 'ai_estimate' | 'generic'
+export type FoodSource = 'open_food_facts' | 'ai_estimate' | 'ai_text_estimate' | 'generic'
 export type ThemePreference = 'system' | 'light' | 'dark'
 
 export interface Profile {

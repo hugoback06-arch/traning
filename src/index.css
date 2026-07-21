@@ -34,6 +34,12 @@
 
 :root {
   color-scheme: light;
+  /* Mobila webbläsare (särskilt Android Chrome) "boostar" textstorlek
+     automatiskt i smala kolumner/flex-layouter, vilket gör att texten ser
+     för stor ut tills man nyper ihop för att zooma ut. Stäng av det —
+     vi kontrollerar redan typsnittsstorlekarna medvetet via Tailwind. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 /* Mörkt läge: överskriver samma semantiska tokens som ljust läge använder,

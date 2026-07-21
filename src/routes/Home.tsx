@@ -11,6 +11,7 @@ import { useProfile } from '../hooks/useProfile'
 import { useTodayMealLogs } from '../hooks/useTodayMealLogs'
 import { useCalorieAdjustmentsForDate } from '../hooks/useCalorieAdjustmentsForDate'
 import { useMealLogDates } from '../hooks/useMealLogDates'
+import { useActiveTrainingPlan } from '../hooks/useActiveTrainingPlan'
 import { sumMealTotals } from '../lib/dailyTotals'
 import { sumExtraKcal } from '../lib/calorieAdjustments'
 import { calculateStreak } from '../lib/streaks'
@@ -27,6 +28,7 @@ export function Home() {
   const { data: mealLogs } = useTodayMealLogs()
   const { data: adjustments } = useCalorieAdjustmentsForDate(new Date())
   const { data: mealDates } = useMealLogDates()
+  const { data: activePlan } = useActiveTrainingPlan()
 
   const totals = sumMealTotals(mealLogs ?? [])
   const extraKcal = sumExtraKcal(adjustments ?? [])
@@ -48,9 +50,6 @@ export function Home() {
           <div className="flex items-center gap-2">
             {extraKcal > 0 && <TrainingCalorieBadge extraKcal={extraKcal} />}
             {streakDays > 0 && <StreakBadge days={streakDays} />}
-            <Link to="/nutrition/calendar" className="text-xs text-ink-secondary underline">
-              Kalender
-            </Link>
           </div>
         </div>
 
@@ -98,16 +97,52 @@ export function Home() {
       </Card>
 
       <div className="space-y-2">
-        <div className="flex items-center justify-between px-1">
+        <div className="px-1">
           <Link to="/training" className="font-display text-base font-semibold text-ink-primary">
             🏋️ Träning
-          </Link>
-          <Link to="/training/schedule" className="text-xs text-ink-secondary underline">
-            Schema
           </Link>
         </div>
         <Link to="/training" className="press block">
           <TrainingStatusCard />
+        </Link>
+      </div>
+
+      <div className="space-y-2">
+        <div className="px-1">
+          <Link to="/training/schedule" className="font-display text-base font-semibold text-ink-primary">
+            📅 Schema
+          </Link>
+        </div>
+        <Link to="/training/schedule" className="press block">
+          <Card>
+            {activePlan ? (
+              <div className="min-w-0">
+                <p className="font-display text-base font-semibold text-ink-primary">{activePlan.name}</p>
+                <p className="text-xs text-ink-secondary">{activePlan.goal ?? 'Se hela ditt träningsschema'}</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-1 py-2 text-center">
+                <p className="text-sm font-medium text-ink-primary">Inget schema ännu</p>
+                <p className="text-xs text-ink-secondary">Skapa ett AI-genererat träningsschema</p>
+              </div>
+            )}
+          </Card>
+        </Link>
+      </div>
+
+      <div className="space-y-2">
+        <div className="px-1">
+          <Link to="/nutrition/calendar" className="font-display text-base font-semibold text-ink-primary">
+            🗓️ Kalender
+          </Link>
+        </div>
+        <Link to="/nutrition/calendar" className="press block">
+          <Card>
+            <div className="flex flex-col items-center gap-1 py-2 text-center">
+              <p className="text-sm font-medium text-ink-primary">Kost & träning i en vy</p>
+              <p className="text-xs text-ink-secondary">Bläddra bland tidigare dagar</p>
+            </div>
+          </Card>
         </Link>
       </div>
 

@@ -12,6 +12,7 @@ import { useProfile } from '../hooks/useProfile'
 import { useFinalizeStrava } from '../hooks/useFinalizeStrava'
 import { useTheme } from '../hooks/useTheme'
 import { useUpdateNotificationsEnabled } from '../hooks/useUpdateNotificationsEnabled'
+import { useFeedbackSuggestions, useSubmitFeedbackSuggestion } from '../hooks/useFeedbackSuggestions'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/queryKeys'
 import type { ThemePreference } from '../types/domain'
@@ -64,6 +65,9 @@ export function ProfileSettingsPage() {
   const { preference, setPreference } = useTheme()
   const updateNotificationsEnabled = useUpdateNotificationsEnabled()
   const [notificationsMessage, setNotificationsMessage] = useState<string | null>(null)
+  const { data: suggestions } = useFeedbackSuggestions()
+  const submitSuggestion = useSubmitFeedbackSuggestion()
+  const [suggestionText, setSuggestionText] = useState('')
 
   const stravaStatus = searchParams.get('strava')
   const stravaState = searchParams.get('state')
@@ -139,6 +143,12 @@ export function ProfileSettingsPage() {
         setNotificationsMessage('Tillåt notiser i webbläsaren för att slå på.')
       }
     })
+  }
+
+  function handleSubmitSuggestion() {
+    const message = suggestionText.trim()
+    if (!message) return
+    submitSuggestion.mutate(message, { onSuccess: () => setSuggestionText('') })
   }
 
   function startEditing() {
@@ -231,6 +241,44 @@ export function ProfileSettingsPage() {
           <Switch checked={profile.notifications_enabled} onChange={handleNotificationsToggle} label="Notiser" />
         </div>
         {notificationsMessage && <p className="text-xs text-warning">{notificationsMessage}</p>}
+      </Card>
+
+      <Card className="space-y-3">
+        <div>
+          <h2 className="text-sm font-medium text-ink-primary">💡 Föreslå en ändring</h2>
+          <p className="text-xs text-ink-secondary">Tips, buggar eller önskemål — skriv fritt, vi läser allt.</p>
+        </div>
+        <textarea
+          value={suggestionText}
+          onChange={(e) => setSuggestionText(e.target.value)}
+          placeholder="Vad vill du ändra eller lägga till?"
+          rows={3}
+          disabled={submitSuggestion.isPending}
+          className="w-full rounded-lg border border-border px-3 py-2 text-sm text-ink-primary outline-none focus:border-accent"
+        />
+        {submitSuggestion.isError && <p className="text-sm text-warning">Något gick fel, försök igen.</p>}
+        {submitSuggestion.isSuccess && !suggestionText && (
+          <p className="text-sm text-accent">Tack! Förslaget är sparat.</p>
+        )}
+        <Button
+          className="w-full"
+          disabled={submitSuggestion.isPending || !suggestionText.trim()}
+          onClick={handleSubmitSuggestion}
+        >
+          {submitSuggestion.isPending ? 'Skickar…' : 'Skicka förslag'}
+        </Button>
+
+        {suggestions && suggestions.length > 0 && (
+          <div className="space-y-2 border-t border-border pt-3">
+            <p className="text-xs font-medium text-ink-secondary">Dina tidigare förslag</p>
+            {suggestions.map((s) => (
+              <div key={s.id} className="text-xs text-ink-secondary">
+                <p className="text-ink-primary">{s.message}</p>
+                <p>{new Date(s.created_at).toLocaleDateString('sv-SE')}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
     </div>
   )

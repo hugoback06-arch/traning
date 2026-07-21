@@ -2,11 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Träningsapp
+## Strikt
 
 ## Projektbeskrivning
 
-Kost- och träningsapp (webbapp/PWA, mobil-först). MVP = kost-spårning: onboarding med auto-beräknat kalori-/makromål, dagsöversikt, kalender, tre loggningssätt (sökning, streckkod, fotoanalys), måltidshistorik, profilinställningar. Fullständig spec: `app-spec-mvp.md`.
+Kost- och träningsapp (webbapp/PWA, mobil-först), produktnamn **Strikt**. MVP = kost-spårning: onboarding med auto-beräknat kalori-/makromål, dagsöversikt, kalender, fyra loggningssätt (sökning, streckkod, fotoanalys, textbeskrivning), måltidshistorik, profilinställningar. Fullständig spec: `app-spec-mvp.md`.
 
 Träningsdelen byggs som ett tillägg ovanpå MVP:t: automatisk Strava-synk (webhook, ej manuell loggning i huvudflödet), AI-schemagenerator med adaptiv justering, AI-utvärdering av pass, och en osynlig kalori-koppling till kost-målet. Spec: `app-spec-training.md` + `app-spec-training-addendum.md` (läs båda, addendumet är tillägg/ändringar, inte ersättning).
 

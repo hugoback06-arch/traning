@@ -3,12 +3,13 @@ import { Card } from '../common/Card'
 import { AddMealSearchStep } from './AddMealSearchStep'
 import { AddMealScanStep } from './AddMealScanStep'
 import { AddMealPhotoStep } from './AddMealPhotoStep'
+import { AddMealTextStep } from './AddMealTextStep'
 import { LogMealForm } from './LogMealForm'
 import { QuickFoodPicks } from './QuickFoodPicks'
 import { MEAL_TYPE_LABELS } from '../../lib/mealTypeLabels'
 import type { FoodSearchResult, MealType } from '../../types/domain'
 
-type Mode = 'choose' | 'search' | 'scan' | 'photo' | 'quick'
+type Mode = 'choose' | 'search' | 'scan' | 'photo' | 'text' | 'quick'
 
 interface AddMealModalProps {
   mealType: MealType
@@ -44,7 +45,7 @@ export function AddMealModal({ mealType, onClose }: AddMealModalProps) {
         {mode === 'choose' && (
           <div className="space-y-4">
             <QuickFoodPicks onSelect={openQuick} />
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button className="press" onClick={() => setMode('search')}>
                 <Card className="flex flex-col items-center gap-1 py-4 text-center">
                   <span className="text-sm font-medium">Sök</span>
@@ -60,6 +61,11 @@ export function AddMealModal({ mealType, onClose }: AddMealModalProps) {
                   <span className="text-sm font-medium">Foto</span>
                 </Card>
               </button>
+              <button className="press" onClick={() => setMode('text')}>
+                <Card className="flex flex-col items-center gap-1 py-4 text-center">
+                  <span className="text-sm font-medium">Beskriv</span>
+                </Card>
+              </button>
             </div>
           </div>
         )}
@@ -72,6 +78,9 @@ export function AddMealModal({ mealType, onClose }: AddMealModalProps) {
         )}
         {mode === 'photo' && (
           <AddMealPhotoStep initialMealType={mealType} onBack={() => setMode('choose')} onSaved={onClose} />
+        )}
+        {mode === 'text' && (
+          <AddMealTextStep initialMealType={mealType} onBack={() => setMode('choose')} onSaved={onClose} />
         )}
         {mode === 'quick' && quickResult && (
           <LogMealForm

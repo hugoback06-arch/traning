@@ -5,7 +5,7 @@ import { MealTypeSelect } from './MealTypeSelect'
 import { useLogMeal } from '../../hooks/useLogMeal'
 import { defaultMealTypeForNow } from '../../lib/mealTypeDefault'
 import type { MealPhotoEstimate } from '../../hooks/useAnalyzeMealPhoto'
-import type { FoodSearchResult, MealType } from '../../types/domain'
+import type { FoodSearchResult, FoodSource, MealType } from '../../types/domain'
 
 function NumberField({
   label,
@@ -33,12 +33,21 @@ function NumberField({
 
 interface AiEstimateReviewFormProps {
   estimate: MealPhotoEstimate
+  source?: FoodSource
+  backLabel?: string
   initialMealType?: MealType
   onBack: () => void
   onSaved: () => void
 }
 
-export function AiEstimateReviewForm({ estimate, initialMealType, onBack, onSaved }: AiEstimateReviewFormProps) {
+export function AiEstimateReviewForm({
+  estimate,
+  source = 'ai_estimate',
+  backLabel = 'Ta nytt foto',
+  initialMealType,
+  onBack,
+  onSaved,
+}: AiEstimateReviewFormProps) {
   const logMeal = useLogMeal()
   const [name, setName] = useState(estimate.food_name)
   const [weightG, setWeightG] = useState(estimate.estimated_weight_g)
@@ -51,7 +60,7 @@ export function AiEstimateReviewForm({ estimate, initialMealType, onBack, onSave
   async function handleSave() {
     const safeWeight = weightG > 0 ? weightG : 1
     const foodResult: FoodSearchResult = {
-      source: 'ai_estimate',
+      source,
       externalId: crypto.randomUUID(),
       name,
       brand: null,
@@ -68,7 +77,7 @@ export function AiEstimateReviewForm({ estimate, initialMealType, onBack, onSave
   return (
     <div className="space-y-4">
       <button onClick={onBack} className="text-sm text-ink-secondary">
-        ← Ta nytt foto
+        ← {backLabel}
       </button>
       <Card className="space-y-4">
         {estimate.confidence === 'low' && (

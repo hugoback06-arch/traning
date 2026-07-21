@@ -11,9 +11,9 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       manifest: {
-        name: 'Träningsapp',
-        short_name: 'Träningsapp',
-        description: 'Träningsapp',
+        name: 'Strikt',
+        short_name: 'Strikt',
+        description: 'Strikt',
         start_url: '/',
         display: 'standalone',
         background_color: '#ffffff',
