@@ -54,12 +54,15 @@ export function Home() {
           </div>
         </div>
 
-        <Link to="/nutrition" className="block space-y-2">
+        <Link to="/nutrition" className="press block space-y-2">
           <p className="font-display text-4xl font-semibold text-ink-primary">
             {remainingKcal} <span className="text-sm font-normal text-ink-secondary">kcal kvar</span>
           </p>
           <div className="h-2 w-full overflow-hidden rounded-full bg-surface-muted">
-            <div className="h-full rounded-full bg-accent" style={{ width: `${fraction * 100}%` }} />
+            <div
+              className="h-full rounded-full bg-accent transition-[width] duration-500 ease-out"
+              style={{ width: `${fraction * 100}%` }}
+            />
           </div>
         </Link>
 
@@ -87,7 +90,7 @@ export function Home() {
           <span className="text-sm text-ink-primary">{MEAL_TYPE_LABELS[activeMealType]}</span>
           <button
             onClick={() => setAddingMeal(true)}
-            className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground"
+            className="press rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground"
           >
             + Lägg till
           </button>
@@ -103,7 +106,7 @@ export function Home() {
             Schema
           </Link>
         </div>
-        <Link to="/training" className="block">
+        <Link to="/training" className="press block">
           <TrainingStatusCard />
         </Link>
       </div>

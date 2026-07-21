@@ -21,7 +21,7 @@ export function DayCard({ date, session, workouts, onClick }: DayCardProps) {
   return (
     <button
       onClick={onClick}
-      className={`flex w-full flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-center ${
+      className={`press flex w-full flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-center ${
         today ? 'border-accent' : 'border-border'
       } ${isDone ? 'bg-surface-muted' : 'bg-surface'}`}
     >

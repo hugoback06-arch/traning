@@ -41,7 +41,7 @@ export function WeekView({ onSelectDay }: WeekViewProps) {
       <div className="flex items-center justify-between">
         <button
           onClick={() => setReferenceDate((d) => prevWeek(d))}
-          className="rounded-lg px-2 py-1 text-sm text-ink-secondary"
+          className="press rounded-lg px-2 py-1 text-sm text-ink-secondary"
           aria-label="Föregående vecka"
         >
           ←
@@ -49,7 +49,7 @@ export function WeekView({ onSelectDay }: WeekViewProps) {
         <span className="text-sm font-medium text-ink-primary">{weekRangeLabel(referenceDate)}</span>
         <button
           onClick={() => setReferenceDate((d) => nextWeek(d))}
-          className="rounded-lg px-2 py-1 text-sm text-ink-secondary"
+          className="press rounded-lg px-2 py-1 text-sm text-ink-secondary"
           aria-label="Nästa vecka"
         >
           →

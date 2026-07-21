@@ -40,7 +40,7 @@ export function MealListItem({ log }: MealListItemProps) {
     return (
       <button
         onClick={openEdit}
-        className="flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
+        className="press flex w-full items-center justify-between gap-3 rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
       >
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-ink-primary">{log.food_item.name}</p>

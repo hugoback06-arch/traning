@@ -35,7 +35,10 @@ export function MacroCard({ kind, label, eatenG, goalG }: MacroCardProps) {
         <span className="text-sm font-normal text-ink-secondary">g</span>
       </p>
       <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-surface-muted">
-        <div className={`h-full rounded-full ${BAR_CLASS[kind]}`} style={{ width: `${fraction * 100}%` }} />
+        <div
+          className={`h-full rounded-full transition-[width] duration-500 ease-out ${BAR_CLASS[kind]}`}
+          style={{ width: `${fraction * 100}%` }}
+        />
       </div>
       <p className="mt-1 text-xs text-ink-secondary">av {Math.round(goalG)}g</p>
     </Card>

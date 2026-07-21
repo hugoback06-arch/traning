@@ -60,3 +60,20 @@ export async function findOrCreateFoodItem(result: FoodSearchResult, userId: str
 
   throw insertError
 }
+
+/** Inverse of the lookup above — turns an already-saved food_items row back into a
+ * search-result shape so it can flow through the same LogMealForm/useLogMeal path
+ * as a fresh search pick (used for the "frequent foods" quick-select). */
+export function foodItemToSearchResult(item: FoodItem): FoodSearchResult {
+  return {
+    source: item.source,
+    externalId: item.external_id as string,
+    name: item.name,
+    brand: item.brand,
+    caloriesPer100g: item.calories_per_100g,
+    proteinPer100g: item.protein_per_100g,
+    carbsPer100g: item.carbs_per_100g,
+    fatPer100g: item.fat_per_100g,
+    imageUrl: item.image_url,
+  }
+}

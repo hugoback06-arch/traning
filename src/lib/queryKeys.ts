@@ -8,6 +8,7 @@ export const queryKeys = {
   mealLogDatesInRange: (userId: string | undefined, startIso: string, endIsoExclusive: string) =>
     ['meal-logs', 'range', startIso, endIsoExclusive, userId] as const,
   mealLogsPrefix: ['meal-logs'] as const,
+  frequentFoodItems: (userId: string | undefined) => ['meal-logs', 'frequent', userId] as const,
 
   workoutsInRange: (userId: string | undefined, startIso: string, endIsoExclusive: string) =>
     ['workouts', 'range', startIso, endIsoExclusive, userId] as const,

@@ -28,7 +28,7 @@ export function TrainingPage() {
         <button
           key={workout.id}
           onClick={() => setDetailTarget({ type: 'workout', workoutId: workout.id })}
-          className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
+          className="press flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
         >
           <ActivityIcon type={workout.activity_type} size="sm" />
           <span className="text-sm text-ink-primary">
@@ -46,17 +46,23 @@ export function TrainingPage() {
 
       <WeekView onSelectDay={setDetailTarget} />
 
-      <div className="grid grid-cols-2 gap-3">
-        <Link to="/training/schedule">
-          <Card className="text-center">
-            <p className="text-sm font-medium text-ink-primary">🤖 Schemabyggare</p>
-            <p className="mt-0.5 text-xs text-ink-secondary">Generera/uppdatera schema →</p>
+      <div className="space-y-2">
+        <Link to="/training/schedule" className="press block">
+          <Card className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-ink-primary">🤖 Schemabyggare</p>
+              <p className="mt-0.5 text-xs text-ink-secondary">Generera/uppdatera schema</p>
+            </div>
+            <span className="text-ink-secondary">→</span>
           </Card>
         </Link>
-        <Link to="/training/history">
-          <Card className="text-center">
-            <p className="text-sm font-medium text-ink-primary">📜 Historik</p>
-            <p className="mt-0.5 text-xs text-ink-secondary">Tidigare pass →</p>
+        <Link to="/training/history" className="press block">
+          <Card className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-ink-primary">📜 Historik</p>
+              <p className="mt-0.5 text-xs text-ink-secondary">Tidigare pass</p>
+            </div>
+            <span className="text-ink-secondary">→</span>
           </Card>
         </Link>
       </div>

@@ -1,7 +1,19 @@
 import { useEffect, useState, type ReactNode } from 'react'
-import type { Session } from '@supabase/supabase-js'
+import type { AuthError, Session } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
 import { AuthContext } from './auth-context'
+
+// supabase-js builds its error message from the raw (unparsed) fetch Response
+// for any 5xx status — JSON.stringify(Response) is "{}", so error.message is
+// literally the string "{}" on server-side failures (e.g. email sending
+// failing). Show a real message for those instead of leaking that artifact.
+function authErrorMessage(error: AuthError | null): string | null {
+  if (!error) return null
+  if (!error.status || error.status >= 500 || /^\{.*\}$/.test(error.message)) {
+    return 'Kunde inte skicka koden just nu — försök igen om en liten stund.'
+  }
+  return error.message
+}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
@@ -25,12 +37,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email,
       options: { emailRedirectTo: window.location.origin },
     })
-    return { error: error?.message ?? null }
+    return { error: authErrorMessage(error) }
   }
 
   async function verifyOtp(email: string, token: string) {
     const { error } = await supabase.auth.verifyOtp({ email, token, type: 'email' })
-    return { error: error?.message ?? null }
+    return { error: authErrorMessage(error) }
   }
 
   async function signOut() {

@@ -11,9 +11,11 @@ import { COACH_SAFETY_SYSTEM_PROMPT } from '../_shared/safetyPrompt.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
-// Configurable so a cheaper text model can be swapped in without a redeploy
-// of application logic — see CLAUDE.md for the tradeoff.
-const MODEL = Deno.env.get('CLAUDE_TEXT_MODEL') ?? 'claude-opus-4-8'
+// Own model setting (separate from CLAUDE_TEXT_MODEL, which evaluate-workout/
+// strava-webhook use) — plan generation is a forced tool-use call producing
+// many structured days per request, so it warrants a stronger model than the
+// cheaper one used for one-off workout evaluations.
+const MODEL = Deno.env.get('CLAUDE_PLAN_MODEL') ?? 'claude-sonnet-5'
 
 // "Mycket längre än 1 vecka" (addendum punkt 1) without letting a single
 // request balloon into an unbounded/expensive generation — 12 weeks covers a
@@ -59,12 +61,19 @@ function buildPlanTool(dayCount: number) {
               title: { type: 'string', description: 'Short title, in Swedish, e.g. "Löpning 8 km" or "Vila".' },
               description: {
                 type: 'string',
-                description: 'One short sentence with more detail, in Swedish, e.g. "Lugnt tempo, puls zon 2."',
+                description:
+                  'A clear, complete instruction for how to perform the session, in Swedish — this is what the user reads to know exactly what to do, so never leave it as a single vague sentence for a real training day. ' +
+                  'For endurance sessions (running/cycling/swimming/walking), summarize warm-up, the main effort and cool-down, e.g. "10 min lugn uppvärmning, sedan 4×1000m i tröskeltempo (ca 4:45/km) med 2 min gångvila mellan, avsluta med 10 min nedvarvning." ' +
+                  'For strength sessions, give a one-sentence overview of the session\'s focus and structure, e.g. "Helkropp, 5 övningar, 3-4 set styrkefokus — se övningslistan för detaljer." (the exercises themselves belong in target_data.exercises, not repeated here). ' +
+                  'For rest days, a short encouraging note is enough, e.g. "Vilodag — återhämtning är en del av träningen."',
               },
               target_data: {
                 type: 'object',
                 description:
-                  'Structured target values relevant to the activity, e.g. {"distance_km": 8, "pace": "5:30/km"} for running or {"sets": 4, "reps": 8} for strength. Empty object for rest days.',
+                  'Structured, detailed session data. Required (non-empty) for every non-rest day — this is what drives the exercise list / pace breakdown the user actually follows during the session: ' +
+                  '- Strength ("strength"): { "exercises": [ { "name": string (Swedish, e.g. "Marklyft"), "sets": number, "reps": string (e.g. "8-10" or "12"), "rest_seconds": number, "notes": string (optional short cue, e.g. "tunga men tekniskt rena set") } ] }. Always list every exercise planned for the session, in order. ' +
+                  '- Endurance ("running"/"cycling"/"swimming"/"walking"): { "distance_km": number, "pace": string (e.g. "5:30/km", omit if not pace-based), "segments": [ { "label": string (e.g. "Uppvärmning", "Intervall 1", "Nedvarvning"), "detail": string (e.g. "4×1000m i tröskeltempo, 2 min vila mellan") } ] }. Break the session into its actual segments, not just one line. ' +
+                  '- Rest days ("rest"): {}.',
               },
             },
             required: ['scheduled_date', 'activity_type', 'title', 'description', 'target_data'],
@@ -176,7 +185,7 @@ Deno.serve(async (req) => {
   try {
     const message = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: Math.min(16000, dayCount * 180 + 800),
+      max_tokens: Math.min(16000, dayCount * 240 + 800),
       system: COACH_SAFETY_SYSTEM_PROMPT,
       tools: [buildPlanTool(dayCount)],
       tool_choice: { type: 'tool', name: 'record_training_plan' },
@@ -193,7 +202,9 @@ Deno.serve(async (req) => {
                 `Användarens mål: "${prompt}". ` +
                 `Basera intensitet och volym på träningshistoriken ovan när den finns — bygg vidare på nuvarande nivå snarare än att gissa. ` +
                 `Strukturera med gradvis progression vecka för vecka (öka aldrig total volym mer än ~10–15% från en vecka till nästa), ` +
-                `balansera hårda och lätta/vilodagar (inte hårda pass två dagar i rad utan lättare pass eller vila emellan), och svara på svenska.`,
+                `balansera hårda och lätta/vilodagar (inte hårda pass två dagar i rad utan lättare pass eller vila emellan), och svara på svenska. ` +
+                `Varje tränings dag ska vara fullt specificerad så användaren kan följa passet utan att gissa: styrkepass ska lista varje övning med set/reps i target_data.exercises, ` +
+                `och kondition/löppass ska brytas ner i uppvärmning/huvudset/nedvarvning i target_data.segments — se verktygsbeskrivningen för exakt format.`,
             },
           ],
         },

@@ -57,3 +57,67 @@ body {
   color: var(--color-ink-primary);
   font-family: var(--font-sans);
 }
+
+@layer utilities {
+  /* Tap/press feedback for buttons, cards-as-links and other tappable
+     elements — kept as a utility instead of a global button selector so
+     it can be opted into deliberately (some tappable elements, like
+     segmented-control pills, want a different feel). */
+  .press {
+    transition: transform 0.15s ease-out;
+  }
+  .press:active {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter 0.22s ease-out both;
+}
+
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.sheet-up {
+  animation: sheet-up 0.25s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.backdrop-in {
+  animation: backdrop-in 0.2s ease-out both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press,
+  .page-enter,
+  .sheet-up,
+  .backdrop-in {
+    animation: none !important;
+    transition: none !important;
+  }
+}

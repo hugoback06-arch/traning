@@ -67,7 +67,7 @@ export function TrainingStatusCard({ onSelect }: TrainingStatusCardProps) {
   if (!onOpenCard) return card
 
   return (
-    <button onClick={onOpenCard} className="block w-full text-left">
+    <button onClick={onOpenCard} className="press block w-full text-left">
       {card}
     </button>
   )
