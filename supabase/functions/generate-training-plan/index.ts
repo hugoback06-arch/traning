@@ -97,11 +97,14 @@ function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
-function nextNDaysIso(n: number): string[] {
-  const today = new Date()
+// `anchor` must be the caller's local calendar date (YYYY-MM-DD) — the Edge
+// Function runs in UTC, so deriving "today" from `new Date()` server-side
+// shifts the plan's start date near midnight for any non-UTC user.
+function nextNDaysIso(n: number, anchor: string): string[] {
+  const start = new Date(`${anchor}T00:00:00Z`)
   return Array.from({ length: n }, (_, i) => {
-    const d = new Date(today)
-    d.setUTCDate(today.getUTCDate() + i)
+    const d = new Date(start)
+    d.setUTCDate(start.getUTCDate() + i)
     return d.toISOString().slice(0, 10)
   })
 }
@@ -131,11 +134,23 @@ Deno.serve(async (req) => {
   let weeksInput: unknown
   let answersInput: unknown
   let recentRaceInput: unknown
+  let startDateInput: unknown
   try {
-    ;({ prompt, weeks: weeksInput, answers: answersInput, recentRace: recentRaceInput } = await req.json())
+    ;({
+      prompt,
+      weeks: weeksInput,
+      answers: answersInput,
+      recentRace: recentRaceInput,
+      startDate: startDateInput,
+    } = await req.json())
   } catch {
     return jsonResponse({ error: 'Ogiltig begäran', code: 'INVALID_REQUEST' }, 400)
   }
+
+  const startDate =
+    typeof startDateInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(startDateInput)
+      ? startDateInput
+      : new Date().toISOString().slice(0, 10)
 
   if (typeof prompt !== 'string' || !prompt.trim()) {
     return jsonResponse({ error: 'prompt krävs', code: 'INVALID_REQUEST' }, 400)
@@ -175,7 +190,7 @@ Deno.serve(async (req) => {
   }
 
   const historySummary = await fetchHistorySummary(supabase, user.id)
-  const dates = nextNDaysIso(dayCount)
+  const dates = nextNDaysIso(dayCount, startDate)
 
   try {
     const message = await anthropic.messages.create({

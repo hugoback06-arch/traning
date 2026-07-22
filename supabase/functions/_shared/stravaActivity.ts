@@ -98,7 +98,10 @@ export async function fetchStravaActivities(accessToken: string, afterEpochSecon
 export async function upsertWorkoutFromStravaActivity(supabase: SupabaseClient<any>, userId: string, activity: any) {
   const activityType = mapStravaActivityType(activity.sport_type ?? activity.type)
   const startedAt = activity.start_date as string
-  const scheduledDate = startedAt.slice(0, 10)
+  // start_date is UTC; use start_date_local for the calendar-day match below
+  // so a late-evening activity doesn't get compared against the wrong day
+  // for users outside UTC.
+  const scheduledDate = ((activity.start_date_local as string | undefined) ?? startedAt).slice(0, 10)
 
   const { data: workout, error: workoutError } = await supabase
     .from('workouts')
