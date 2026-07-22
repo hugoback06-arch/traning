@@ -4,16 +4,13 @@ import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
 import { Card } from '../components/common/Card'
 import { StreakBadge } from '../components/overview/StreakBadge'
-import { TrainingCalorieBadge } from '../components/overview/TrainingCalorieBadge'
 import { TrainingStatusCard } from '../components/training/TrainingStatusCard'
 import { AddMealModal } from '../components/meals/AddMealModal'
 import { useProfile } from '../hooks/useProfile'
 import { useTodayMealLogs } from '../hooks/useTodayMealLogs'
-import { useCalorieAdjustmentsForDate } from '../hooks/useCalorieAdjustmentsForDate'
 import { useMealLogDates } from '../hooks/useMealLogDates'
 import { useActiveTrainingPlan } from '../hooks/useActiveTrainingPlan'
 import { sumMealTotals } from '../lib/dailyTotals'
-import { sumExtraKcal } from '../lib/calorieAdjustments'
 import { calculateStreak } from '../lib/streaks'
 import { getActiveMealType } from '../lib/activeMealType'
 import { MEAL_TYPE_LABELS } from '../lib/mealTypeLabels'
@@ -26,13 +23,11 @@ export function Home() {
   const [addingMeal, setAddingMeal] = useState(false)
   const { data: profile } = useProfile()
   const { data: mealLogs } = useTodayMealLogs()
-  const { data: adjustments } = useCalorieAdjustmentsForDate(new Date())
   const { data: mealDates } = useMealLogDates()
   const { data: activePlan } = useActiveTrainingPlan()
 
   const totals = sumMealTotals(mealLogs ?? [])
-  const extraKcal = sumExtraKcal(adjustments ?? [])
-  const goalKcal = (profile?.daily_calorie_goal ?? 0) + extraKcal
+  const goalKcal = profile?.daily_calorie_goal ?? 0
   const remainingKcal = Math.max(0, Math.round(goalKcal - totals.kcal))
   const fraction = goalKcal > 0 ? Math.min(totals.kcal / goalKcal, 1) : 0
   const streakDays = calculateStreak(mealDates ?? [])
@@ -48,7 +43,6 @@ export function Home() {
             🍽️ Kost
           </Link>
           <div className="flex items-center gap-2">
-            {extraKcal > 0 && <TrainingCalorieBadge extraKcal={extraKcal} />}
             {streakDays > 0 && <StreakBadge days={streakDays} />}
           </div>
         </div>

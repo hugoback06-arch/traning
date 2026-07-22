@@ -9,7 +9,7 @@ export function useWorkoutDetail(workoutId: string | undefined) {
     queryFn: async (): Promise<WorkoutDetail> => {
       const id = workoutId as string
 
-      const [workoutRes, setsRes, evaluationRes, adjustmentRes] = await Promise.all([
+      const [workoutRes, setsRes, evaluationRes] = await Promise.all([
         supabase.from('workouts').select('*').eq('id', id).single(),
         supabase
           .from('workout_sets')
@@ -23,13 +23,11 @@ export function useWorkoutDetail(workoutId: string | undefined) {
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle(),
-        supabase.from('calorie_adjustments').select('*').eq('workout_id', id).maybeSingle(),
       ])
 
       if (workoutRes.error) throw workoutRes.error
       if (setsRes.error) throw setsRes.error
       if (evaluationRes.error) throw evaluationRes.error
-      if (adjustmentRes.error) throw adjustmentRes.error
 
       const workout = workoutRes.data
       let session = null
@@ -47,7 +45,6 @@ export function useWorkoutDetail(workoutId: string | undefined) {
         ...workout,
         sets: setsRes.data as unknown as WorkoutDetail['sets'],
         evaluation: evaluationRes.data,
-        calorieAdjustment: adjustmentRes.data,
         session,
       }
     },

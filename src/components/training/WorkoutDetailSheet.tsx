@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
 import { Button } from '../common/Button'
@@ -214,15 +213,6 @@ function WorkoutDetailContent({ workoutId }: { workoutId: string }) {
         </div>
       ) : (
         <EvaluateWorkoutButton workoutId={workout.id} />
-      )}
-
-      {workout.calorieAdjustment && (
-        <Link
-          to="/"
-          className="block rounded-lg bg-accent-light px-3 py-2 text-sm font-medium text-accent"
-        >
-          +{workout.calorieAdjustment.extra_kcal} kcal tillagt till dagens kostmål →
-        </Link>
       )}
 
       {editing ? (

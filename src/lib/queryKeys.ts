@@ -19,6 +19,4 @@ export const queryKeys = {
   workoutDetail: (workoutId: string | undefined) => ['workouts', 'detail', workoutId] as const,
   workoutsPrefix: ['workouts'] as const,
   planSessionsPrefix: ['plan-sessions'] as const,
-  calorieAdjustmentsForDate: (userId: string | undefined, dateKey: string) =>
-    ['calorie-adjustments', 'date', dateKey, userId] as const,
 }

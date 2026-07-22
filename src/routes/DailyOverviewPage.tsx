@@ -2,7 +2,6 @@ import { Link } from 'react-router'
 import { CalorieRing } from '../components/overview/CalorieRing'
 import { MacroCard } from '../components/overview/MacroCard'
 import { StreakBadge } from '../components/overview/StreakBadge'
-import { TrainingCalorieBadge } from '../components/overview/TrainingCalorieBadge'
 import { WaterCounter } from '../components/overview/WaterCounter'
 import { MealTypeSection } from '../components/meals/MealTypeSection'
 import { Spinner } from '../components/common/Spinner'
@@ -10,11 +9,9 @@ import { useProfile } from '../hooks/useProfile'
 import { useTodayMealLogs } from '../hooks/useTodayMealLogs'
 import { useTodayWater } from '../hooks/useTodayWater'
 import { useMealLogDates } from '../hooks/useMealLogDates'
-import { useCalorieAdjustmentsForDate } from '../hooks/useCalorieAdjustmentsForDate'
 import { useAddWater } from '../hooks/useAddWater'
 import { useRemoveWater } from '../hooks/useRemoveWater'
 import { sumMealTotals } from '../lib/dailyTotals'
-import { sumExtraKcal } from '../lib/calorieAdjustments'
 import { calculateStreak } from '../lib/streaks'
 
 export function DailyOverviewPage() {
@@ -22,7 +19,6 @@ export function DailyOverviewPage() {
   const { data: mealLogs, isLoading: mealsLoading } = useTodayMealLogs()
   const { data: waterMl, isLoading: waterLoading } = useTodayWater()
   const { data: mealDates } = useMealLogDates()
-  const { data: adjustments } = useCalorieAdjustmentsForDate(new Date())
   const addWater = useAddWater()
   const removeWater = useRemoveWater()
 
@@ -32,8 +28,7 @@ export function DailyOverviewPage() {
 
   const totals = sumMealTotals(mealLogs ?? [])
   const streakDays = calculateStreak(mealDates ?? [])
-  const extraKcal = sumExtraKcal(adjustments ?? [])
-  const goalKcal = (profile.daily_calorie_goal ?? 0) + extraKcal
+  const goalKcal = profile.daily_calorie_goal ?? 0
 
   return (
     <div className="space-y-4">
@@ -46,12 +41,6 @@ export function DailyOverviewPage() {
           </Link>
         </div>
       </div>
-
-      {extraKcal > 0 && (
-        <div className="flex justify-center">
-          <TrainingCalorieBadge extraKcal={extraKcal} />
-        </div>
-      )}
 
       <CalorieRing eatenKcal={totals.kcal} goalKcal={goalKcal} />
 

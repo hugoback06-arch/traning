@@ -1,7 +1,7 @@
 // Shared Strava helpers: token refresh, activity → workouts mapping, and the
-// upsert (incl. auto-linking to a scheduled training_plan_session + writing
-// the calorie_adjustments row) — used by both strava-webhook (automatic) and
-// strava-manual-sync (fallback button, see app-spec-training-addendum.md punkt 1).
+// upsert (incl. auto-linking to a scheduled training_plan_session) — used by
+// both strava-webhook (automatic) and strava-manual-sync (fallback button,
+// see app-spec-training-addendum.md punkt 1).
 // deno-lint-ignore no-explicit-any
 import type { SupabaseClient } from 'npm:@supabase/supabase-js@2'
 
@@ -124,11 +124,12 @@ export async function upsertWorkoutFromStravaActivity(supabase: SupabaseClient<a
 
   if (workoutError || !workout) return { error: workoutError?.message ?? 'Kunde inte spara passet' }
 
-  // Auto-link to a scheduled-but-not-yet-completed session on the same date
-  // AND of the same activity type — matching on date alone let e.g. a bike
-  // ride silently claim a planned run (same-day, only non-rest session that
-  // day), which then displayed as "run completed" instead of what actually
-  // happened.
+  // Auto-link to a scheduled-but-not-yet-completed session on the same date.
+  // Deliberately NOT filtered by activity_type: a day's plan should always
+  // show what you actually did as "the pass for that day" rather than
+  // banishing a mismatched activity to the unlinked "extra workout" list —
+  // DayCard (src/components/training/DayCard.tsx) is what surfaces a
+  // planned/actual activity-type mismatch to the user, not this linking step.
   if (!workout.training_plan_session_id) {
     const { data: candidateSession } = await supabase
       .from('training_plan_sessions')
@@ -137,7 +138,7 @@ export async function upsertWorkoutFromStravaActivity(supabase: SupabaseClient<a
       .eq('training_plans.status', 'active')
       .eq('scheduled_date', scheduledDate)
       .is('completed_workout_id', null)
-      .eq('activity_type', activityType)
+      .neq('activity_type', 'rest')
       .limit(1)
       .maybeSingle()
 
@@ -146,19 +147,6 @@ export async function upsertWorkoutFromStravaActivity(supabase: SupabaseClient<a
       await supabase.from('workouts').update({ training_plan_session_id: candidateSession.id }).eq('id', workout.id)
       workout.training_plan_session_id = candidateSession.id
     }
-  }
-
-  if (activity.calories) {
-    await supabase.from('calorie_adjustments').upsert(
-      {
-        user_id: userId,
-        workout_id: workout.id,
-        adjustment_date: scheduledDate,
-        extra_kcal: Math.round(activity.calories),
-        reason: `${activity.name ?? 'Träningspass'}, ${Math.round(activity.calories)} kcal förbrända`,
-      },
-      { onConflict: 'workout_id' },
-    )
   }
 
   return { data: workout }

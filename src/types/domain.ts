@@ -192,19 +192,8 @@ export interface WorkoutEvaluation {
   created_at: string
 }
 
-export interface CalorieAdjustment {
-  id: string
-  user_id: string
-  workout_id: string | null
-  adjustment_date: string
-  extra_kcal: number
-  reason: string | null
-  created_at: string
-}
-
 export interface WorkoutDetail extends Workout {
   sets: WorkoutSetWithExercise[]
   evaluation: WorkoutEvaluation | null
-  calorieAdjustment: CalorieAdjustment | null
   session: TrainingPlanSession | null
 }
