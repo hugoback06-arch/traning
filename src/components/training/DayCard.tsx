@@ -20,17 +20,19 @@ export function DayCard({ date, session, workouts, onClick }: DayCardProps) {
   return (
     <button
       onClick={onClick}
-      className={`press flex w-full min-w-0 flex-col items-center gap-1.5 rounded-xl border px-1.5 py-2.5 text-center ${
+      className={`press flex w-full items-center gap-3 rounded-xl border px-3 py-3 text-left ${
         today ? 'border-accent' : 'border-border'
       } ${isDone ? 'bg-surface-muted' : 'bg-surface'}`}
     >
-      <span className="text-[11px] font-medium text-ink-secondary">{format(date, 'EEE', { locale: sv })}</span>
-      <span className="text-xs text-ink-secondary">{format(date, 'd/M')}</span>
-      <ActivityIcon type={activityType} size="sm" />
-      <span className="line-clamp-1 w-full truncate text-[11px] leading-tight text-ink-primary">
-        {isDone ? '✓ ' : ''}
+      <div className="flex w-11 shrink-0 flex-col items-center">
+        <span className="text-[11px] font-medium text-ink-secondary">{format(date, 'EEE', { locale: sv })}</span>
+        <span className="text-xs text-ink-secondary">{format(date, 'd/M')}</span>
+      </div>
+      <ActivityIcon type={activityType} />
+      <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-primary">
         {ACTIVITY_LABELS[activityType]}
       </span>
+      {isDone && <span className="shrink-0 text-lg text-accent">✓</span>}
     </button>
   )
 }

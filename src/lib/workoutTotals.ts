@@ -32,12 +32,12 @@ export function weekSummaryLabel(workouts: Workout[]): string {
   return `Denna vecka: ${parts.join(', ')}.`
 }
 
-// "X/Y pass genomförda" — app-spec-training-addendum.md punkt 3. Räknar bara
-// planerade (icke-vila) pass, mot hur många av dem som har ett genomfört pass kopplat.
-export function weekComplianceLabel(sessions: TrainingPlanSession[]): string | null {
+// app-spec-training-addendum.md punkt 3. Räknar bara planerade (icke-vila)
+// pass, mot hur många av dem som har ett genomfört pass kopplat.
+export function weekComplianceStats(sessions: TrainingPlanSession[]): { completed: number; total: number } | null {
   const plannedSessions = sessions.filter((s) => s.activity_type !== 'rest')
   if (plannedSessions.length === 0) return null
 
   const completed = plannedSessions.filter((s) => s.completed_workout_id != null).length
-  return `${completed}/${plannedSessions.length} pass genomförda denna vecka`
+  return { completed, total: plannedSessions.length }
 }

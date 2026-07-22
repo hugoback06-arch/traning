@@ -2,12 +2,13 @@ import { useMemo, useState } from 'react'
 import { addDays, format } from 'date-fns'
 import { Card } from '../common/Card'
 import { DayCard } from './DayCard'
+import { WeekProgressRing } from './WeekProgressRing'
 import { IntensityControl } from './IntensityControl'
 import { useTrainingPlanSessionsInRange } from '../../hooks/useTrainingPlanSessionsInRange'
 import { useWorkoutsInRange } from '../../hooks/useWorkoutsInRange'
 import { useActiveTrainingPlan } from '../../hooks/useActiveTrainingPlan'
 import { nextWeek, prevWeek, weekDays, weekRangeLabel } from '../../lib/weekGrid'
-import { weekComplianceLabel, weekSummaryLabel } from '../../lib/workoutTotals'
+import { weekComplianceStats, weekSummaryLabel } from '../../lib/workoutTotals'
 import type { DetailTarget } from './WorkoutDetailSheet'
 
 interface WeekViewProps {
@@ -27,7 +28,7 @@ export function WeekView({ onSelectDay }: WeekViewProps) {
   const { data: workouts } = useWorkoutsInRange(startIso, endIsoExclusive)
   const { data: activePlan } = useActiveTrainingPlan()
 
-  const complianceLabel = weekComplianceLabel(sessions ?? [])
+  const complianceStats = weekComplianceStats(sessions ?? [])
 
   const sessionsByDate = new Map((sessions ?? []).map((s) => [s.scheduled_date, s]))
   const workoutsByDate = new Map<string, typeof workouts>()
@@ -56,7 +57,19 @@ export function WeekView({ onSelectDay }: WeekViewProps) {
         </button>
       </div>
 
-      <div className="grid grid-cols-7 gap-1">
+      {complianceStats && (
+        <div className="flex items-center gap-3 rounded-xl bg-surface-muted p-3">
+          <WeekProgressRing completed={complianceStats.completed} total={complianceStats.total} />
+          <p className="text-sm text-ink-primary">
+            <span className="font-medium">
+              {complianceStats.completed}/{complianceStats.total} pass genomförda
+            </span>{' '}
+            denna vecka
+          </p>
+        </div>
+      )}
+
+      <div className="space-y-2">
         {days.map((day) => {
           const dateKey = format(day, 'yyyy-MM-dd')
           const session = sessionsByDate.get(dateKey) ?? null
@@ -77,10 +90,7 @@ export function WeekView({ onSelectDay }: WeekViewProps) {
         })}
       </div>
 
-      <p className="text-xs text-ink-secondary">
-        {complianceLabel ? `${complianceLabel} · ` : ''}
-        {weekSummaryLabel(workouts ?? [])}
-      </p>
+      <p className="text-xs text-ink-secondary">{weekSummaryLabel(workouts ?? [])}</p>
 
       {activePlan && <IntensityControl trainingPlanId={activePlan.id} current={activePlan.intensity_preference} />}
     </Card>
