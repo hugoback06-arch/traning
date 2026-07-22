@@ -8,39 +8,14 @@
 
   <rect width="512" height="512" rx="115" fill="url(#bg)"/>
 
-  <!-- swim: stacked wave lines, top -->
-  <g transform="translate(256,121)" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M -50,-16 Q -37,-30 -25,-16 Q -13,-2 0,-16 Q 13,-30 25,-16 Q 37,-2 50,-16"/>
-    <path d="M -50,8 Q -37,-6 -25,8 Q -13,22 0,8 Q 13,-6 25,8 Q 37,22 50,8"/>
-    <path d="M -50,32 Q -37,18 -25,32 Q -13,46 0,32 Q 13,18 25,32 Q 37,46 50,32"/>
+  <!-- dumbbell, tilted like mid-rep -->
+  <g transform="translate(256,266) rotate(-20)">
+    <rect x="-100" y="-16" width="200" height="32" rx="16" fill="#ffffff"/>
+    <rect x="-160" y="-56" width="48" height="112" rx="20" fill="#ffffff"/>
+    <rect x="112" y="-56" width="48" height="112" rx="20" fill="#ffffff"/>
   </g>
 
-  <!-- bike: wheel with spokes, bottom right -->
-  <g transform="translate(373,324)">
-    <circle r="42" fill="none" stroke="#ffffff" stroke-width="9"/>
-    <g stroke="#ffffff" stroke-width="6" stroke-linecap="round">
-      <line x1="-30" y1="-30" x2="30" y2="30"/>
-      <line x1="30" y1="-30" x2="-30" y2="30"/>
-      <line x1="0" y1="-42" x2="0" y2="42"/>
-      <line x1="-42" y1="0" x2="42" y2="0"/>
-    </g>
-    <circle r="8" fill="#ffffff"/>
-  </g>
-
-  <!-- run: footprint, bottom left -->
-  <g transform="translate(139,324)" fill="#ffffff">
-    <ellipse cx="0" cy="28" rx="22" ry="26"/>
-    <ellipse cx="0" cy="-14" rx="27" ry="30"/>
-    <circle cx="-24" cy="-46" r="7"/>
-    <circle cx="-9" cy="-55" r="8"/>
-    <circle cx="9" cy="-55" r="8"/>
-    <circle cx="24" cy="-46" r="7"/>
-  </g>
-
-  <!-- strength: dumbbell, center -->
-  <g transform="translate(256,256) rotate(-20)" fill="#ffffff">
-    <rect x="-45" y="-8" width="90" height="16" rx="8"/>
-    <rect x="-70" y="-24" width="22" height="48" rx="9"/>
-    <rect x="48" y="-24" width="22" height="48" rx="9"/>
-  </g>
+  <!-- AI sparkle accents -->
+  <path fill="#ffe28a" d="M364,106 L372.4,127.6 L394,136 L372.4,144.4 L364,166 L355.6,144.4 L334,136 L355.6,127.6 Z"/>
+  <path fill="#ffe28a" d="M140,376 L143.9,386.08 L154,390 L143.9,393.92 L140,404 L136.1,393.92 L126,390 L136.1,386.08 Z"/>
 </svg>
