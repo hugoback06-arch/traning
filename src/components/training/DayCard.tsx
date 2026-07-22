@@ -13,8 +13,14 @@ interface DayCardProps {
 
 export function DayCard({ date, session, workouts, onClick }: DayCardProps) {
   const primaryWorkout = workouts.find((w) => w.training_plan_session_id === session?.id) ?? workouts[0] ?? null
-  const activityType: PlanActivityType = session?.activity_type ?? primaryWorkout?.activity_type ?? 'rest'
+  const plannedType: PlanActivityType | null = session?.activity_type ?? null
+  const actualType: PlanActivityType | null = primaryWorkout?.activity_type ?? null
   const isDone = !!primaryWorkout
+  // A Strava activity can auto-link to a same-day session of a different type
+  // (e.g. a bike ride linked to a planned run) — surface that mismatch here
+  // instead of silently showing the planned type with a checkmark.
+  const differs = isDone && plannedType !== null && actualType !== null && plannedType !== actualType
+  const displayType: PlanActivityType = actualType ?? plannedType ?? 'rest'
   const today = isToday(date)
 
   return (
@@ -28,9 +34,17 @@ export function DayCard({ date, session, workouts, onClick }: DayCardProps) {
         <span className="text-[11px] font-medium text-ink-secondary">{format(date, 'EEE', { locale: sv })}</span>
         <span className="text-xs text-ink-secondary">{format(date, 'd/M')}</span>
       </div>
-      <ActivityIcon type={activityType} />
+      {differs ? (
+        <div className="flex shrink-0 items-center gap-1">
+          <ActivityIcon type={plannedType} size="sm" />
+          <span className="text-xs text-ink-secondary">→</span>
+          <ActivityIcon type={actualType} />
+        </div>
+      ) : (
+        <ActivityIcon type={displayType} />
+      )}
       <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-primary">
-        {ACTIVITY_LABELS[activityType]}
+        {differs ? `${ACTIVITY_LABELS[actualType]} (planerat: ${ACTIVITY_LABELS[plannedType]})` : ACTIVITY_LABELS[displayType]}
       </span>
       {isDone && <span className="shrink-0 text-lg text-accent">✓</span>}
     </button>

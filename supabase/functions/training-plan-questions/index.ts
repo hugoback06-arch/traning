@@ -30,7 +30,7 @@ const QUESTIONS_TOOL = {
     properties: {
       questions: {
         type: 'array',
-        minItems: 0,
+        minItems: 2,
         maxItems: 4,
         items: {
           type: 'object',
@@ -54,15 +54,16 @@ const QUESTIONS_TOOL = {
 }
 
 const QUESTIONS_SYSTEM_PROMPT = `Du hjälper till att ta fram uppföljningsfrågor innan ett träningsschema byggs.
-Föreslå bara frågor vars svar faktiskt förändrar hur schemat byggs — hoppa över sådant som redan
-framgår tydligt av användarens mål eller av träningshistoriken (fråga t.ex. inte om
-träningsfrekvens om historiken redan visar ett tydligt, stabilt mönster). Vanliga bra frågor: hur
-många pass/vecka, hur långa pass (tid), önskad intensitet/ansträngningsnivå, specifikt måldatum
-eller lopp, eventuella begränsningar (skador, utrustning, platsbrist). Max 4 frågor, ofta färre
-räcker. Om målet redan är väldigt tydligt och specifikt och historiken ger gott om kontext, är
-det helt okej att svara med en tom lista — tvinga inte fram frågor som inte behövs. Varje fråga
-ska ha 2-5 korta, konkreta svarsalternativ (inte "annat" eller öppna svar — användaren kan ändå
-skriva eget svar i appen). Kort och koncist. Svara alltid på svenska.`
+Ställ alltid minst 2 frågor, även om målet känns tydligt — det finns nästan alltid någon detalj
+kvar som skulle förbättra schemat (t.ex. hur många pass/vecka, hur långa pass i tid, önskad
+intensitet/ansträngningsnivå, specifikt måldatum eller lopp, eventuella begränsningar som skador,
+utrustning eller platsbrist). Prioritera frågor vars svar faktiskt förändrar hur schemat byggs —
+hoppa bara över en specifik fråga om just den redan besvaras tydligt av målet eller av
+träningshistoriken (fråga t.ex. inte om träningsfrekvens om historiken redan visar ett tydligt,
+stabilt mönster), men ersätt den då med en annan relevant fråga istället för att lämna färre än
+2 kvar. Max 4 frågor totalt. Varje fråga ska ha 2-5 korta, konkreta svarsalternativ (inte "annat"
+eller öppna svar — användaren kan ändå skriva eget svar i appen). Kort och koncist. Svara alltid
+på svenska.`
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
