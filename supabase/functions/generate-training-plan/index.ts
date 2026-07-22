@@ -8,6 +8,7 @@
 import Anthropic from 'npm:@anthropic-ai/sdk'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { COACH_SAFETY_SYSTEM_PROMPT } from '../_shared/safetyPrompt.ts'
+import { PLAN_METHODOLOGY_PROMPT } from '../_shared/planMethodologyPrompt.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
@@ -21,7 +22,11 @@ const MODEL = Deno.env.get('CLAUDE_PLAN_MODEL') ?? 'claude-sonnet-5'
 // request balloon into an unbounded/expensive generation — 12 weeks covers a
 // full training mesocycle, which is the common upper bound for one AI-plan.
 const MAX_WEEKS = 12
-const HISTORY_LIMIT = 30
+// Effectively "all" logged history — this is a cost/safety ceiling, not a
+// meaningful business limit. A summarized (not raw-dumped) history is cheap
+// on tokens even at this size, and more history means better-grounded paces
+// and volume trends than a small recent-only window would give.
+const HISTORY_LIMIT = 1000
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -58,7 +63,13 @@ function buildPlanTool(dayCount: number) {
                 description: 'The exact ISO date (YYYY-MM-DD) provided for this day — copy it verbatim.',
               },
               activity_type: { type: 'string', enum: ACTIVITY_TYPES },
-              title: { type: 'string', description: 'Short title, in Swedish, e.g. "Löpning 8 km" or "Vila".' },
+              title: {
+                type: 'string',
+                description:
+                  'Short title, in Swedish. For endurance sessions, name the pass type so it\'s clear at a glance, ' +
+                  'e.g. "Löpning – Långpass", "Löpning – Intervaller", "Löpning – Tröskel", "Löpning – Lugn distans" ' +
+                  '(not just "Löpning 8 km" every time). For rest days, "Vila".',
+              },
               description: {
                 type: 'string',
                 description:
@@ -101,6 +112,78 @@ function nextNDaysIso(n: number): string[] {
   })
 }
 
+const PACEABLE_TYPES = new Set(['running', 'walking', 'cycling'])
+
+function formatPace(secondsPerKm: number): string {
+  const min = Math.floor(secondsPerKm / 60)
+  const sec = Math.round(secondsPerKm % 60)
+  return `${min}:${sec.toString().padStart(2, '0')}/km`
+}
+
+// Per activity type: count/avg distance+duration as before, plus (for
+// distance-based endurance types) an average pace and the fastest sustained
+// pace among longer efforts — a rough threshold-pace proxy the model can
+// calibrate easy/tempo/interval paces against, instead of guessing numbers.
+function summarizeByType(workouts: WorkoutRow[]): string[] {
+  const byType = new Map<string, WorkoutRow[]>()
+  for (const w of workouts) {
+    byType.set(w.activity_type, [...(byType.get(w.activity_type) ?? []), w])
+  }
+
+  return Array.from(byType.entries()).map(([type, rows]) => {
+    const totalDistanceKm = rows.reduce((sum, w) => sum + (w.distance_meters ?? 0), 0) / 1000
+    const totalDurationMin = rows.reduce((sum, w) => sum + (w.duration_seconds ?? 0), 0) / 60
+
+    const parts = [`${rows.length} pass`]
+    if (totalDistanceKm > 0) parts.push(`snitt ${(totalDistanceKm / rows.length).toFixed(1)} km/pass`)
+    if (totalDurationMin > 0) parts.push(`snitt ${Math.round(totalDurationMin / rows.length)} min/pass`)
+
+    if (PACEABLE_TYPES.has(type) && totalDistanceKm > 0 && totalDurationMin > 0) {
+      parts.push(`snittempo ${formatPace((totalDurationMin * 60) / totalDistanceKm)}`)
+
+      const sustainedEfforts = rows.filter((w) => (w.distance_meters ?? 0) >= 2000 && (w.duration_seconds ?? 0) > 0)
+      if (sustainedEfforts.length > 0) {
+        const bestPaceSecPerKm = Math.min(
+          ...sustainedEfforts.map((w) => w.duration_seconds! / (w.distance_meters! / 1000)),
+        )
+        parts.push(`snabbaste hållbara tempo ~${formatPace(bestPaceSecPerKm)}`)
+      }
+    }
+
+    return `${type}: ${parts.join(', ')}`
+  })
+}
+
+// Recent-vs-prior 4-week volume comparison — tells the model whether the
+// user is ramping up, steady, or coming off a break, so a new plan doesn't
+// restart too easy for someone already fit or too hard after time off.
+function summarizeTrend(workouts: WorkoutRow[]): string | null {
+  const now = Date.now()
+  const FOUR_WEEKS_MS = 28 * 86_400_000
+
+  const recent = workouts.filter((w) => now - Date.parse(w.started_at) <= FOUR_WEEKS_MS)
+  const prior = workouts.filter((w) => {
+    const age = now - Date.parse(w.started_at)
+    return age > FOUR_WEEKS_MS && age <= FOUR_WEEKS_MS * 2
+  })
+  if (recent.length === 0) return null
+
+  const recentKm = recent.reduce((s, w) => s + (w.distance_meters ?? 0), 0) / 1000
+  const priorKm = prior.reduce((s, w) => s + (w.distance_meters ?? 0), 0) / 1000
+
+  let trendNote = ''
+  if (priorKm > 0) {
+    const diffPct = Math.round(((recentKm - priorKm) / priorKm) * 100)
+    if (diffPct > 15) trendNote = ' (ökande trend jämfört med perioden innan)'
+    else if (diffPct < -15) trendNote = ' (minskande trend jämfört med perioden innan, ev. paus/vila — bygg försiktigt upp igen)'
+    else trendNote = ' (stabil volym)'
+  } else if (recent.length > 0) {
+    trendNote = ' (ingen träning loggad perioden innan — nystart eller ny användare av synken)'
+  }
+
+  return `Senaste 4 veckorna: ${recent.length} pass, ${recentKm.toFixed(0)} km${trendNote}.`
+}
+
 // Compact, human-readable summary instead of raw rows — cheaper on tokens and
 // more reliable for Claude to reason about than a long JSON dump.
 function summarizeHistory(workouts: WorkoutRow[]): string {
@@ -108,32 +191,16 @@ function summarizeHistory(workouts: WorkoutRow[]): string {
     return 'Ingen tidigare träningshistorik finns än — utgå från att användaren är nybörjare/okänd nivå och bygg försiktigt.'
   }
 
-  const byType = new Map<string, { count: number; totalDistanceM: number; totalDurationS: number }>()
-  for (const w of workouts) {
-    const entry = byType.get(w.activity_type) ?? { count: 0, totalDistanceM: 0, totalDurationS: 0 }
-    entry.count += 1
-    entry.totalDistanceM += w.distance_meters ?? 0
-    entry.totalDurationS += w.duration_seconds ?? 0
-    byType.set(w.activity_type, entry)
-  }
-
   const oldestIso = workouts[workouts.length - 1].started_at
   const newestIso = workouts[0].started_at
   const spanDays = Math.max(1, Math.round((Date.parse(newestIso) - Date.parse(oldestIso)) / 86_400_000))
 
-  const lines = Array.from(byType.entries()).map(([type, stats]) => {
-    const avgDistanceKm = stats.totalDistanceM > 0 ? (stats.totalDistanceM / stats.count / 1000).toFixed(1) : null
-    const avgDurationMin = stats.totalDurationS > 0 ? Math.round(stats.totalDurationS / stats.count / 60) : null
-    const details = [
-      avgDistanceKm ? `snitt ${avgDistanceKm} km/pass` : null,
-      avgDurationMin ? `snitt ${avgDurationMin} min/pass` : null,
-    ]
-      .filter(Boolean)
-      .join(', ')
-    return `${type}: ${stats.count} pass${details ? ` (${details})` : ''}`
-  })
-
-  return `Träningshistorik senaste ${spanDays} dagar (${workouts.length} pass): ${lines.join('; ')}.`
+  return [
+    `All loggad träningshistorik (${workouts.length} pass över ${spanDays} dagar): ${summarizeByType(workouts).join('; ')}.`,
+    summarizeTrend(workouts),
+  ]
+    .filter(Boolean)
+    .join(' ')
 }
 
 Deno.serve(async (req) => {
@@ -186,7 +253,7 @@ Deno.serve(async (req) => {
     const message = await anthropic.messages.create({
       model: MODEL,
       max_tokens: Math.min(16000, dayCount * 240 + 800),
-      system: COACH_SAFETY_SYSTEM_PROMPT,
+      system: `${COACH_SAFETY_SYSTEM_PROMPT}\n\n${PLAN_METHODOLOGY_PROMPT}`,
       tools: [buildPlanTool(dayCount)],
       tool_choice: { type: 'tool', name: 'record_training_plan' },
       messages: [
@@ -200,9 +267,8 @@ Deno.serve(async (req) => {
                 `Använd scheduled_date exakt som angivet för respektive dag. ` +
                 `${historySummary} ` +
                 `Användarens mål: "${prompt}". ` +
-                `Basera intensitet och volym på träningshistoriken ovan när den finns — bygg vidare på nuvarande nivå snarare än att gissa. ` +
-                `Strukturera med gradvis progression vecka för vecka (öka aldrig total volym mer än ~10–15% från en vecka till nästa), ` +
-                `balansera hårda och lätta/vilodagar (inte hårda pass två dagar i rad utan lättare pass eller vila emellan), och svara på svenska. ` +
+                `Basera intensitet, volym och tempo på träningshistoriken ovan när den finns — bygg vidare på nuvarande nivå och uppmätta tempon snarare än att gissa. ` +
+                `Följ periodisering, 80/20-fördelning och passvariation enligt instruktionerna i systemprompten, och svara på svenska. ` +
                 `Varje tränings dag ska vara fullt specificerad så användaren kan följa passet utan att gissa: styrkepass ska lista varje övning med set/reps i target_data.exercises, ` +
                 `och kondition/löppass ska brytas ner i uppvärmning/huvudset/nedvarvning i target_data.segments — se verktygsbeskrivningen för exakt format.`,
             },
