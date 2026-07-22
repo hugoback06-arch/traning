@@ -17,8 +17,9 @@ interface GenericFood {
 
 // Curated Swedish staples + common home-cooked dishes, for when Open Food
 // Facts' barcode-centric database doesn't have a plain "banan" or "köttbullar".
-// Kept in sync by hand with supabase/migrations/0003_seed_generic_foods.sql and
-// 0004_more_generic_foods.sql (portionG/portionUnit are UI-only and not persisted).
+// Kept in sync by hand with supabase/migrations/0003_seed_generic_foods.sql,
+// 0004_more_generic_foods.sql, 0014_more_generic_dishes.sql and
+// 0016_even_more_generic_dishes.sql (portionG/portionUnit are UI-only and not persisted).
 const GENERIC_FOODS: GenericFood[] = [
   // Raw ingredients / staples
   { slug: 'banan', name: 'Banan', caloriesPer100g: 89, proteinPer100g: 1.1, carbsPer100g: 22.8, fatPer100g: 0.3, portionG: 120, portionUnit: 'st' },
@@ -80,6 +81,195 @@ const GENERIC_FOODS: GenericFood[] = [
   { slug: 'kladdkaka', name: 'Kladdkaka', caloriesPer100g: 400, proteinPer100g: 5, carbsPer100g: 45, fatPer100g: 22, portionG: 80 },
   { slug: 'flaskpannkaka', name: 'Fläskpannkaka', caloriesPer100g: 230, proteinPer100g: 9, carbsPer100g: 20, fatPer100g: 13, portionG: 300 },
   { slug: 'kramig-kycklingpasta', name: 'Krämig kycklingpasta', aliases: ['kycklingpasta'], caloriesPer100g: 180, proteinPer100g: 9, carbsPer100g: 16, fatPer100g: 9, portionG: 400 },
+
+  // Husmanskost
+  { slug: 'flaskkotlett-makaroner', name: 'Fläskkotlett med stuvade makaroner', aliases: ['fläskkotlett'], caloriesPer100g: 200, proteinPer100g: 12, carbsPer100g: 12, fatPer100g: 11, portionG: 350 },
+  { slug: 'kroppkakor', name: 'Kroppkakor med lingon', caloriesPer100g: 180, proteinPer100g: 7, carbsPer100g: 22, fatPer100g: 7, portionG: 350 },
+  { slug: 'kaldolmar', name: 'Kåldolmar med potatis och lingon', aliases: ['kåldolme'], caloriesPer100g: 160, proteinPer100g: 9, carbsPer100g: 14, fatPer100g: 7, portionG: 400 },
+  { slug: 'dillkott', name: 'Dillkött med potatis', aliases: ['kalvfrikassé'], caloriesPer100g: 150, proteinPer100g: 12, carbsPer100g: 8, fatPer100g: 8, portionG: 350 },
+  { slug: 'kokt-torsk-aggsas', name: 'Kokt torsk med äggsås och potatis', aliases: ['torsk'], caloriesPer100g: 130, proteinPer100g: 14, carbsPer100g: 10, fatPer100g: 3.5, portionG: 400 },
+  { slug: 'stekt-stromming', name: 'Stekt strömming med potatismos', aliases: ['strömming'], caloriesPer100g: 200, proteinPer100g: 12, carbsPer100g: 12, fatPer100g: 12, portionG: 350 },
+  { slug: 'sill-potatis', name: 'Sill och potatis med gräddfil', aliases: ['inlagd sill'], caloriesPer100g: 170, proteinPer100g: 8, carbsPer100g: 12, fatPer100g: 10, portionG: 300 },
+  { slug: 'rotmos-flask', name: 'Rotmos med fläsk', caloriesPer100g: 150, proteinPer100g: 6, carbsPer100g: 12, fatPer100g: 9, portionG: 350 },
+  { slug: 'ugnspannkaka', name: 'Ugnspannkaka med fläsk', caloriesPer100g: 210, proteinPer100g: 8, carbsPer100g: 18, fatPer100g: 12, portionG: 300 },
+  { slug: 'isterband', name: 'Isterband med rotmos', caloriesPer100g: 230, proteinPer100g: 9, carbsPer100g: 12, fatPer100g: 16, portionG: 350 },
+  { slug: 'kalvsylta', name: 'Kalvsylta med rödbetor', caloriesPer100g: 180, proteinPer100g: 14, carbsPer100g: 4, fatPer100g: 12, portionG: 200 },
+  { slug: 'blodpudding', name: 'Blodpudding med lingon och bacon', caloriesPer100g: 220, proteinPer100g: 9, carbsPer100g: 20, fatPer100g: 12, portionG: 250 },
+  { slug: 'rimmad-oxbringa', name: 'Rimmad oxbringa med rotmos', caloriesPer100g: 180, proteinPer100g: 15, carbsPer100g: 8, fatPer100g: 10, portionG: 350 },
+
+  // Pasta
+  { slug: 'spaghetti-bolognese', name: 'Spaghetti bolognese', aliases: ['bolognese'], caloriesPer100g: 155, proteinPer100g: 7, carbsPer100g: 17, fatPer100g: 6, portionG: 400 },
+  { slug: 'pasta-carbonara', name: 'Pasta carbonara', aliases: ['carbonara'], caloriesPer100g: 200, proteinPer100g: 8, carbsPer100g: 18, fatPer100g: 11, portionG: 350 },
+  { slug: 'pasta-pesto', name: 'Pasta med pesto', caloriesPer100g: 180, proteinPer100g: 6, carbsPer100g: 22, fatPer100g: 8, portionG: 350 },
+  { slug: 'makaroner-koettfarssas', name: 'Makaroner med köttfärssås', aliases: ['makaroner och köttfärssås'], caloriesPer100g: 150, proteinPer100g: 7, carbsPer100g: 16, fatPer100g: 6, portionG: 400 },
+
+  // Asiatiskt
+  { slug: 'kycklingwok', name: 'Kycklingwok med nudlar', caloriesPer100g: 140, proteinPer100g: 9, carbsPer100g: 15, fatPer100g: 5, portionG: 400 },
+  { slug: 'pad-thai', name: 'Pad thai', caloriesPer100g: 165, proteinPer100g: 8, carbsPer100g: 20, fatPer100g: 6, portionG: 400 },
+  { slug: 'ramen-flask', name: 'Ramen med fläsk', aliases: ['ramen'], caloriesPer100g: 110, proteinPer100g: 6, carbsPer100g: 12, fatPer100g: 4, portionG: 500 },
+  { slug: 'dumplings', name: 'Dumplings/gyoza', aliases: ['gyoza'], caloriesPer100g: 200, proteinPer100g: 8, carbsPer100g: 22, fatPer100g: 9, portionG: 200 },
+  { slug: 'nasi-goreng', name: 'Nasi goreng', caloriesPer100g: 170, proteinPer100g: 7, carbsPer100g: 22, fatPer100g: 6, portionG: 350 },
+
+  // Indiskt/curry
+  { slug: 'tikka-masala', name: 'Kyckling tikka masala med ris', aliases: ['tikka masala'], caloriesPer100g: 150, proteinPer100g: 9, carbsPer100g: 15, fatPer100g: 6, portionG: 400 },
+  { slug: 'butter-chicken', name: 'Butter chicken med ris', caloriesPer100g: 170, proteinPer100g: 9, carbsPer100g: 16, fatPer100g: 8, portionG: 400 },
+  { slug: 'gronsakscurry', name: 'Grönsakscurry med ris', aliases: ['curry'], caloriesPer100g: 120, proteinPer100g: 3, carbsPer100g: 18, fatPer100g: 4, portionG: 400 },
+
+  // Mexikanskt
+  { slug: 'burrito', name: 'Burrito med kött', caloriesPer100g: 190, proteinPer100g: 9, carbsPer100g: 20, fatPer100g: 8, portionG: 300 },
+  { slug: 'quesadilla', name: 'Quesadilla', caloriesPer100g: 250, proteinPer100g: 10, carbsPer100g: 22, fatPer100g: 14, portionG: 200 },
+  { slug: 'nachos', name: 'Nachos med ost', caloriesPer100g: 300, proteinPer100g: 8, carbsPer100g: 30, fatPer100g: 17, portionG: 250 },
+  { slug: 'chili-con-carne', name: 'Chili con carne', caloriesPer100g: 130, proteinPer100g: 9, carbsPer100g: 10, fatPer100g: 6, portionG: 350 },
+
+  // Snabbmat
+  { slug: 'hamburgare', name: 'Hamburgare med bröd', aliases: ['burgare'], caloriesPer100g: 250, proteinPer100g: 13, carbsPer100g: 20, fatPer100g: 13, portionG: 250 },
+  { slug: 'cheeseburgare', name: 'Cheeseburgare med bröd', caloriesPer100g: 270, proteinPer100g: 14, carbsPer100g: 20, fatPer100g: 15, portionG: 250 },
+  { slug: 'pommes-frites', name: 'Pommes frites', aliases: ['pommes'], caloriesPer100g: 290, proteinPer100g: 3.4, carbsPer100g: 38, fatPer100g: 14, portionG: 150 },
+  { slug: 'falafel-brod', name: 'Falafel med bröd och sås', aliases: ['falafel'], caloriesPer100g: 220, proteinPer100g: 8, carbsPer100g: 24, fatPer100g: 10, portionG: 300 },
+  { slug: 'kebabrulle', name: 'Kebabrulle', caloriesPer100g: 230, proteinPer100g: 9, carbsPer100g: 25, fatPer100g: 11, portionG: 300 },
+
+  // Sallader
+  { slug: 'cesarsallad-kyckling', name: 'Cesarsallad med kyckling', aliases: ['cesarsallad'], caloriesPer100g: 140, proteinPer100g: 10, carbsPer100g: 5, fatPer100g: 9, portionG: 350 },
+  { slug: 'halloumisallad', name: 'Halloumisallad', caloriesPer100g: 180, proteinPer100g: 8, carbsPer100g: 8, fatPer100g: 13, portionG: 350 },
+  { slug: 'tonfisksallad', name: 'Tonfisksallad', caloriesPer100g: 110, proteinPer100g: 10, carbsPer100g: 6, fatPer100g: 5, portionG: 350 },
+
+  // Soppor
+  { slug: 'broccolisoppa', name: 'Broccolisoppa', caloriesPer100g: 55, proteinPer100g: 3, carbsPer100g: 5, fatPer100g: 2.5, portionG: 350 },
+  { slug: 'tomatsoppa', name: 'Tomatsoppa', caloriesPer100g: 45, proteinPer100g: 1.5, carbsPer100g: 7, fatPer100g: 1.5, portionG: 350 },
+  { slug: 'linssoppa', name: 'Linssoppa', caloriesPer100g: 80, proteinPer100g: 5, carbsPer100g: 12, fatPer100g: 1.5, portionG: 350 },
+  { slug: 'currysoppa-kyckling', name: 'Currysoppa med kyckling', caloriesPer100g: 90, proteinPer100g: 6, carbsPer100g: 8, fatPer100g: 4, portionG: 350 },
+
+  // Frukost
+  { slug: 'havregrynsgrot', name: 'Havregrynsgröt med mjölk', aliases: ['gröt', 'havregröt'], caloriesPer100g: 85, proteinPer100g: 3.5, carbsPer100g: 13, fatPer100g: 2, portionG: 300 },
+  { slug: 'smorgas-skinka-ost', name: 'Smörgås med skinka och ost', aliases: ['skinksmörgås'], caloriesPer100g: 260, proteinPer100g: 14, carbsPer100g: 28, fatPer100g: 10, portionG: 80 },
+  { slug: 'aggrora-bacon', name: 'Äggröra med bacon', caloriesPer100g: 220, proteinPer100g: 15, carbsPer100g: 1, fatPer100g: 17, portionG: 150 },
+
+  // Grill och fisk
+  { slug: 'grillad-kyckling-potatissallad', name: 'Grillad kyckling med potatissallad', caloriesPer100g: 180, proteinPer100g: 15, carbsPer100g: 10, fatPer100g: 8, portionG: 400 },
+  { slug: 'revbensspjall', name: 'Revbensspjäll med potatissallad', aliases: ['revben'], caloriesPer100g: 260, proteinPer100g: 15, carbsPer100g: 8, fatPer100g: 18, portionG: 400 },
+  { slug: 'laxfile-potatis', name: 'Laxfilé med potatis och sås', caloriesPer100g: 180, proteinPer100g: 15, carbsPer100g: 10, fatPer100g: 9, portionG: 400 },
+  { slug: 'fish-and-chips', name: 'Fish and chips', caloriesPer100g: 230, proteinPer100g: 10, carbsPer100g: 20, fatPer100g: 12, portionG: 350 },
+
+  // Vegetariskt/veganskt
+  { slug: 'vegetarisk-lasagne', name: 'Vegetarisk lasagne', caloriesPer100g: 130, proteinPer100g: 6, carbsPer100g: 14, fatPer100g: 6, portionG: 350 },
+  { slug: 'linsbolognese', name: 'Linsbolognese med pasta', caloriesPer100g: 130, proteinPer100g: 6, carbsPer100g: 20, fatPer100g: 3, portionG: 400 },
+  { slug: 'veggieburgare', name: 'Veggieburgare med bröd', caloriesPer100g: 200, proteinPer100g: 9, carbsPer100g: 22, fatPer100g: 8, portionG: 250 },
+  { slug: 'halloumiwok', name: 'Halloumiwok', caloriesPer100g: 160, proteinPer100g: 9, carbsPer100g: 12, fatPer100g: 9, portionG: 400 },
+
+  // Fika/söt
+  { slug: 'kanelbulle', name: 'Kanelbulle', caloriesPer100g: 350, proteinPer100g: 7, carbsPer100g: 45, fatPer100g: 15, portionG: 65, portionUnit: 'st' },
+  { slug: 'semla', name: 'Semla', caloriesPer100g: 330, proteinPer100g: 6, carbsPer100g: 33, fatPer100g: 19, portionG: 120, portionUnit: 'st' },
+  { slug: 'vaffla-sylt-gradde', name: 'Våffla med sylt och grädde', aliases: ['våfflor'], caloriesPer100g: 290, proteinPer100g: 5, carbsPer100g: 30, fatPer100g: 16, portionG: 150 },
+
+  // Fler svenska klassiker
+  { slug: 'wallenbergare', name: 'Wallenbergare med gröna ärtor och potatismos', caloriesPer100g: 240, proteinPer100g: 10, carbsPer100g: 10, fatPer100g: 18, portionG: 350 },
+  { slug: 'skagenrora', name: 'Toast Skagen', aliases: ['skagenröra'], caloriesPer100g: 260, proteinPer100g: 8, carbsPer100g: 18, fatPer100g: 17, portionG: 150 },
+  { slug: 'biff-rydberg', name: 'Biff Rydberg', caloriesPer100g: 210, proteinPer100g: 12, carbsPer100g: 12, fatPer100g: 13, portionG: 350 },
+  { slug: 'kalvfile-oscar', name: 'Kalvfilé Oscar', caloriesPer100g: 200, proteinPer100g: 18, carbsPer100g: 5, fatPer100g: 12, portionG: 300 },
+  { slug: 'lutfisk', name: 'Lutfisk med vit sås och ärtor', caloriesPer100g: 110, proteinPer100g: 12, carbsPer100g: 6, fatPer100g: 4, portionG: 400 },
+  { slug: 'julskinka', name: 'Julskinka med sås och rödkål', caloriesPer100g: 190, proteinPer100g: 16, carbsPer100g: 8, fatPer100g: 10, portionG: 300 },
+  { slug: 'prinskorv-potatismos', name: 'Prinskorv med potatismos', caloriesPer100g: 210, proteinPer100g: 8, carbsPer100g: 14, fatPer100g: 13, portionG: 350 },
+  { slug: 'kottfarslimpa', name: 'Köttfärslimpa med sås och potatis', aliases: ['köttfärslimpa'], caloriesPer100g: 170, proteinPer100g: 10, carbsPer100g: 12, fatPer100g: 9, portionG: 400 },
+  { slug: 'palt', name: 'Blodpalt med fläsk och lingon', caloriesPer100g: 200, proteinPer100g: 6, carbsPer100g: 30, fatPer100g: 7, portionG: 350 },
+  { slug: 'renskav', name: 'Renskav med lingon och potatismos', caloriesPer100g: 170, proteinPer100g: 11, carbsPer100g: 12, fatPer100g: 8, portionG: 350 },
+  { slug: 'kalvschnitzel', name: 'Kalvschnitzel med potatis', caloriesPer100g: 200, proteinPer100g: 14, carbsPer100g: 14, fatPer100g: 10, portionG: 350 },
+
+  // Proteinmåltider / gymmat
+  { slug: 'kyckling-ris-broccoli', name: 'Kyckling, ris och broccoli', caloriesPer100g: 140, proteinPer100g: 14, carbsPer100g: 15, fatPer100g: 2.5, portionG: 400 },
+  { slug: 'proteinbowl-kyckling', name: 'Proteinbowl med kyckling och quinoa', caloriesPer100g: 150, proteinPer100g: 13, carbsPer100g: 14, fatPer100g: 4, portionG: 400 },
+  { slug: 'laxbowl-quinoa', name: 'Laxbowl med quinoa och avokado', caloriesPer100g: 170, proteinPer100g: 12, carbsPer100g: 12, fatPer100g: 8, portionG: 400 },
+  { slug: 'overnight-oats', name: 'Overnight oats med bär', caloriesPer100g: 110, proteinPer100g: 4, carbsPer100g: 16, fatPer100g: 3, portionG: 300 },
+  { slug: 'kvarg-bar-granola', name: 'Kvarg med bär och granola', caloriesPer100g: 100, proteinPer100g: 9, carbsPer100g: 12, fatPer100g: 2, portionG: 300 },
+  { slug: 'protein-pannkakor', name: 'Proteinpannkakor', caloriesPer100g: 180, proteinPer100g: 15, carbsPer100g: 15, fatPer100g: 6, portionG: 250 },
+  { slug: 'kycklingfile-sotpotatis', name: 'Kycklingfilé med sötpotatis och grönsaker', caloriesPer100g: 130, proteinPer100g: 15, carbsPer100g: 12, fatPer100g: 2.5, portionG: 400 },
+  { slug: 'poke-bowl-lax', name: 'Pokebowl med lax', aliases: ['poké bowl'], caloriesPer100g: 150, proteinPer100g: 9, carbsPer100g: 18, fatPer100g: 5, portionG: 400 },
+  { slug: 'buddha-bowl', name: 'Buddha bowl med kikärtor', caloriesPer100g: 130, proteinPer100g: 5, carbsPer100g: 15, fatPer100g: 5, portionG: 400 },
+
+  // Italienskt
+  { slug: 'risotto-svamp', name: 'Risotto med svamp', caloriesPer100g: 150, proteinPer100g: 4, carbsPer100g: 22, fatPer100g: 5, portionG: 350 },
+  { slug: 'gnocchi-gorgonzola', name: 'Gnocchi med gorgonzolasås', caloriesPer100g: 190, proteinPer100g: 6, carbsPer100g: 22, fatPer100g: 9, portionG: 350 },
+  { slug: 'calzone', name: 'Pizza calzone', caloriesPer100g: 260, proteinPer100g: 11, carbsPer100g: 30, fatPer100g: 10, portionG: 350 },
+  { slug: 'tortellini-gradde', name: 'Tortellini med gräddsås', caloriesPer100g: 200, proteinPer100g: 8, carbsPer100g: 20, fatPer100g: 10, portionG: 350 },
+  { slug: 'minestrone', name: 'Minestronesoppa', caloriesPer100g: 55, proteinPer100g: 2.5, carbsPer100g: 8, fatPer100g: 1.5, portionG: 350 },
+  { slug: 'bruschetta', name: 'Bruschetta', caloriesPer100g: 180, proteinPer100g: 4, carbsPer100g: 24, fatPer100g: 7, portionG: 150 },
+  { slug: 'caprese', name: 'Capresesallad', caloriesPer100g: 160, proteinPer100g: 8, carbsPer100g: 4, fatPer100g: 13, portionG: 250 },
+  { slug: 'pasta-arrabbiata', name: 'Pasta arrabbiata', caloriesPer100g: 140, proteinPer100g: 4, carbsPer100g: 24, fatPer100g: 3, portionG: 400 },
+  { slug: 'pasta-alla-vodka', name: 'Pasta alla vodka', caloriesPer100g: 190, proteinPer100g: 6, carbsPer100g: 20, fatPer100g: 10, portionG: 350 },
+
+  // Grekiskt/mellanöstern/turkiskt
+  { slug: 'grekisk-sallad', name: 'Grekisk sallad', caloriesPer100g: 110, proteinPer100g: 4, carbsPer100g: 5, fatPer100g: 8, portionG: 300 },
+  { slug: 'souvlaki', name: 'Souvlaki med pitabröd', caloriesPer100g: 200, proteinPer100g: 13, carbsPer100g: 18, fatPer100g: 9, portionG: 350 },
+  { slug: 'gyrostallrik', name: 'Gyrostallrik', aliases: ['gyros'], caloriesPer100g: 180, proteinPer100g: 11, carbsPer100g: 12, fatPer100g: 10, portionG: 400 },
+  { slug: 'hummus-pita', name: 'Hummus med pitabröd', caloriesPer100g: 220, proteinPer100g: 7, carbsPer100g: 26, fatPer100g: 9, portionG: 250 },
+  { slug: 'shawarma', name: 'Shawarma', caloriesPer100g: 200, proteinPer100g: 10, carbsPer100g: 18, fatPer100g: 10, portionG: 350 },
+  { slug: 'moussaka', name: 'Moussaka', caloriesPer100g: 160, proteinPer100g: 8, carbsPer100g: 10, fatPer100g: 10, portionG: 350 },
+  { slug: 'dolmar', name: 'Dolmar (vinbladsrullar)', caloriesPer100g: 160, proteinPer100g: 3, carbsPer100g: 20, fatPer100g: 8, portionG: 250 },
+  { slug: 'lahmacun', name: 'Lahmacun', caloriesPer100g: 240, proteinPer100g: 10, carbsPer100g: 32, fatPer100g: 8, portionG: 150 },
+  { slug: 'pide', name: 'Pide', caloriesPer100g: 260, proteinPer100g: 11, carbsPer100g: 32, fatPer100g: 10, portionG: 250 },
+
+  // Fler asiatiskt
+  { slug: 'pho', name: 'Pho (vietnamesisk nudelsoppa)', caloriesPer100g: 90, proteinPer100g: 6, carbsPer100g: 12, fatPer100g: 2, portionG: 500 },
+  { slug: 'varrullar', name: 'Vårrullar', caloriesPer100g: 220, proteinPer100g: 5, carbsPer100g: 24, fatPer100g: 11, portionG: 150 },
+  { slug: 'tom-yum', name: 'Tom yum-soppa', caloriesPer100g: 50, proteinPer100g: 4, carbsPer100g: 5, fatPer100g: 1.5, portionG: 400 },
+  { slug: 'thai-rod-curry', name: 'Röd curry med ris', caloriesPer100g: 140, proteinPer100g: 6, carbsPer100g: 16, fatPer100g: 6, portionG: 400 },
+  { slug: 'thai-gron-curry', name: 'Grön curry med ris', caloriesPer100g: 140, proteinPer100g: 6, carbsPer100g: 16, fatPer100g: 6, portionG: 400 },
+  { slug: 'bibimbap', name: 'Bibimbap', caloriesPer100g: 140, proteinPer100g: 7, carbsPer100g: 18, fatPer100g: 4.5, portionG: 400 },
+  { slug: 'korean-fried-chicken', name: 'Koreansk fried chicken med ris', caloriesPer100g: 220, proteinPer100g: 12, carbsPer100g: 22, fatPer100g: 10, portionG: 400 },
+  { slug: 'sotsur-kyckling', name: 'Kyckling i sursöt sås med ris', caloriesPer100g: 160, proteinPer100g: 8, carbsPer100g: 22, fatPer100g: 5, portionG: 400 },
+  { slug: 'notkott-broccoli', name: 'Nötkött med broccoli i ostronsås', caloriesPer100g: 130, proteinPer100g: 10, carbsPer100g: 8, fatPer100g: 6, portionG: 400 },
+  { slug: 'friterat-ris', name: 'Friterat ris', aliases: ['fried rice'], caloriesPer100g: 180, proteinPer100g: 5, carbsPer100g: 26, fatPer100g: 6, portionG: 350 },
+  { slug: 'chow-mein', name: 'Chow mein', caloriesPer100g: 150, proteinPer100g: 6, carbsPer100g: 20, fatPer100g: 5, portionG: 400 },
+  { slug: 'teriyaki-kyckling', name: 'Teriyakikyckling med ris', aliases: ['teriyaki'], caloriesPer100g: 160, proteinPer100g: 10, carbsPer100g: 22, fatPer100g: 3.5, portionG: 400 },
+  { slug: 'katsu-curry', name: 'Katsu curry', caloriesPer100g: 200, proteinPer100g: 9, carbsPer100g: 22, fatPer100g: 8, portionG: 400 },
+  { slug: 'yakisoba', name: 'Yakisoba', caloriesPer100g: 150, proteinPer100g: 6, carbsPer100g: 20, fatPer100g: 5, portionG: 400 },
+
+  // Amerikanskt
+  { slug: 'mac-and-cheese', name: 'Mac and cheese', caloriesPer100g: 210, proteinPer100g: 8, carbsPer100g: 20, fatPer100g: 11, portionG: 350 },
+  { slug: 'pulled-pork-brod', name: 'BBQ pulled pork med bröd', caloriesPer100g: 240, proteinPer100g: 14, carbsPer100g: 24, fatPer100g: 9, portionG: 300 },
+  { slug: 'buffalo-wings', name: 'Buffalo wings', caloriesPer100g: 250, proteinPer100g: 18, carbsPer100g: 4, fatPer100g: 18, portionG: 250 },
+  { slug: 'club-sandwich', name: 'Club sandwich', caloriesPer100g: 250, proteinPer100g: 13, carbsPer100g: 22, fatPer100g: 12, portionG: 250 },
+  { slug: 'amerikanska-pannkakor', name: 'Amerikanska pannkakor med lönnsirap', caloriesPer100g: 260, proteinPer100g: 6, carbsPer100g: 40, fatPer100g: 8, portionG: 200 },
+
+  // Franskt
+  { slug: 'boeuf-bourguignon', name: 'Boeuf bourguignon', caloriesPer100g: 160, proteinPer100g: 13, carbsPer100g: 6, fatPer100g: 9, portionG: 400 },
+  { slug: 'quiche-lorraine', name: 'Quiche Lorraine', aliases: ['quiche'], caloriesPer100g: 240, proteinPer100g: 9, carbsPer100g: 14, fatPer100g: 17, portionG: 200 },
+  { slug: 'ratatouille', name: 'Ratatouille', caloriesPer100g: 60, proteinPer100g: 1.5, carbsPer100g: 8, fatPer100g: 2.5, portionG: 350 },
+  { slug: 'crepes', name: 'Crêpes', caloriesPer100g: 220, proteinPer100g: 6, carbsPer100g: 26, fatPer100g: 9, portionG: 150 },
+
+  // Frukost/brunch
+  { slug: 'smoothie-bowl', name: 'Smoothie bowl', caloriesPer100g: 100, proteinPer100g: 3, carbsPer100g: 18, fatPer100g: 2, portionG: 350 },
+  { slug: 'avokadomacka', name: 'Avokadomacka', caloriesPer100g: 220, proteinPer100g: 6, carbsPer100g: 20, fatPer100g: 13, portionG: 150 },
+  { slug: 'frukostwrap-agg', name: 'Frukostwrap med ägg', caloriesPer100g: 200, proteinPer100g: 11, carbsPer100g: 18, fatPer100g: 9, portionG: 200 },
+  { slug: 'yoghurt-musli-bar', name: 'Yoghurt med müsli och bär', caloriesPer100g: 85, proteinPer100g: 4, carbsPer100g: 12, fatPer100g: 2.5, portionG: 300 },
+
+  // Smörgåsar/wraps
+  { slug: 'wrap-kyckling', name: 'Wrap med kyckling', caloriesPer100g: 190, proteinPer100g: 11, carbsPer100g: 20, fatPer100g: 7, portionG: 250 },
+  { slug: 'blt-macka', name: 'BLT-macka', caloriesPer100g: 260, proteinPer100g: 11, carbsPer100g: 24, fatPer100g: 13, portionG: 150 },
+  { slug: 'baguette-skinka-ost', name: 'Baguette med skinka och ost', caloriesPer100g: 250, proteinPer100g: 12, carbsPer100g: 32, fatPer100g: 8, portionG: 200 },
+
+  // Fler soppor
+  { slug: 'fisksoppa', name: 'Fisksoppa', caloriesPer100g: 75, proteinPer100g: 8, carbsPer100g: 5, fatPer100g: 2.5, portionG: 400 },
+  { slug: 'kycklingsoppa-nudlar', name: 'Kycklingsoppa med nudlar', caloriesPer100g: 55, proteinPer100g: 5, carbsPer100g: 7, fatPer100g: 1, portionG: 400 },
+  { slug: 'gulaschsoppa', name: 'Gulaschsoppa', caloriesPer100g: 90, proteinPer100g: 7, carbsPer100g: 7, fatPer100g: 3.5, portionG: 400 },
+  { slug: 'svampsoppa', name: 'Svampsoppa', caloriesPer100g: 60, proteinPer100g: 2, carbsPer100g: 5, fatPer100g: 3.5, portionG: 350 },
+
+  // Fler efterrätter/fika
+  { slug: 'chokladboll', name: 'Chokladboll', caloriesPer100g: 420, proteinPer100g: 6, carbsPer100g: 45, fatPer100g: 24, portionG: 25, portionUnit: 'st' },
+  { slug: 'prinsesstarta', name: 'Prinsesstårta', caloriesPer100g: 300, proteinPer100g: 4, carbsPer100g: 38, fatPer100g: 14, portionG: 100 },
+  { slug: 'ostkaka', name: 'Ostkaka', caloriesPer100g: 200, proteinPer100g: 9, carbsPer100g: 18, fatPer100g: 10, portionG: 120 },
+  { slug: 'appelpaj-vaniljsas', name: 'Äppelpaj med vaniljsås', caloriesPer100g: 200, proteinPer100g: 3, carbsPer100g: 30, fatPer100g: 8, portionG: 200 },
+  { slug: 'glass-vanilj', name: 'Glass, vanilj', caloriesPer100g: 200, proteinPer100g: 3.5, carbsPer100g: 24, fatPer100g: 10, portionG: 100 },
+
+  // Fler skaldjur/fisk
+  { slug: 'musslor-vitvinssas', name: 'Musslor i vitvinssås', caloriesPer100g: 90, proteinPer100g: 11, carbsPer100g: 3, fatPer100g: 3.5, portionG: 400 },
+  { slug: 'fiskpinnar-potatismos', name: 'Fiskpinnar med potatismos', caloriesPer100g: 190, proteinPer100g: 9, carbsPer100g: 18, fatPer100g: 9, portionG: 350 },
+  { slug: 'rakmacka', name: 'Räkmacka', caloriesPer100g: 220, proteinPer100g: 10, carbsPer100g: 18, fatPer100g: 12, portionG: 150 },
+  { slug: 'gravlax-dillsas', name: 'Gravlax med hovmästarsås', caloriesPer100g: 200, proteinPer100g: 16, carbsPer100g: 4, fatPer100g: 13, portionG: 150 },
+
+  // Fler sallader/bowls
+  { slug: 'couscoussallad', name: 'Couscoussallad med grönsaker', caloriesPer100g: 140, proteinPer100g: 4, carbsPer100g: 24, fatPer100g: 3.5, portionG: 350 },
+  { slug: 'pastasallad', name: 'Pastasallad', caloriesPer100g: 160, proteinPer100g: 5, carbsPer100g: 22, fatPer100g: 6, portionG: 350 },
+  { slug: 'quinoasallad', name: 'Quinoasallad med grönsaker', caloriesPer100g: 130, proteinPer100g: 4, carbsPer100g: 20, fatPer100g: 3.5, portionG: 350 },
 ]
 
 function toSearchResult(food: GenericFood): FoodSearchResult {

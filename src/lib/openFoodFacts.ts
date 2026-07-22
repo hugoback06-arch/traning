@@ -133,16 +133,21 @@ async function searchFoodItemsLegacy(query: string): Promise<FoodSearchResult[]>
 }
 
 // The legacy endpoint occasionally 503s outright (observed 2026-07-22, not
-// just typo-related emptiness) on top of never fuzzy-matching misspellings,
-// so both failure modes fall through to the same fuzzy search-a-licious path.
+// just typo-related emptiness) and never fuzzy-matches misspellings. Rather
+// than awaiting it before trying the fuzzy fallback — which makes every
+// search pay the legacy timeout whenever it's down — both run concurrently
+// and their results are merged, so a 503 or slow response on one side never
+// blocks or delays the other.
 export async function searchFoodItems(query: string): Promise<FoodSearchResult[]> {
-  try {
-    const results = await searchFoodItemsLegacy(query)
-    if (results.length > 0) return results
-  } catch {
-    // fall through to fuzzy search below
-  }
-  return searchFoodItemsFuzzy(query)
+  const [legacyOutcome, fuzzyOutcome] = await Promise.allSettled([
+    searchFoodItemsLegacy(query),
+    searchFoodItemsFuzzy(query),
+  ])
+  const legacy = legacyOutcome.status === 'fulfilled' ? legacyOutcome.value : []
+  const fuzzy = fuzzyOutcome.status === 'fulfilled' ? fuzzyOutcome.value : []
+
+  const seen = new Set(legacy.map((r) => r.externalId))
+  return [...legacy, ...fuzzy.filter((r) => !seen.has(r.externalId))]
 }
 
 export async function lookupBarcode(barcode: string): Promise<FoodSearchResult | null> {
