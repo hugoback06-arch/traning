@@ -4,6 +4,7 @@ import { Button } from '../common/Button'
 import { AmountInput } from './AmountInput'
 import { MealTypeSelect } from './MealTypeSelect'
 import { useLogMeal } from '../../hooks/useLogMeal'
+import { useLastLoggedAmount } from '../../hooks/useLastLoggedAmount'
 import { defaultMealTypeForNow } from '../../lib/mealTypeDefault'
 import type { FoodSearchResult, MealType } from '../../types/domain'
 
@@ -16,7 +17,10 @@ interface LogMealFormProps {
 
 export function LogMealForm({ foodResult, initialMealType, onBack, onSaved }: LogMealFormProps) {
   const logMeal = useLogMeal()
-  const [amountG, setAmountG] = useState(foodResult.portionG ?? 100)
+  const { data: lastLoggedAmounts } = useLastLoggedAmount()
+  const [amountG, setAmountG] = useState(
+    () => lastLoggedAmounts?.get(`${foodResult.source}:${foodResult.externalId}`) ?? foodResult.portionG ?? 100,
+  )
   const [mealType, setMealType] = useState<MealType>(initialMealType ?? defaultMealTypeForNow())
 
   const kcal = Math.round((foodResult.caloriesPer100g * amountG) / 100)

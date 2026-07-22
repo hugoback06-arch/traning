@@ -35,3 +35,18 @@ export function foodItemFrequencyMap(logs: MealLogWithFood[]): Map<string, numbe
 
   return counts
 }
+
+/** Grams last logged for each food ("source:externalId" → amount_g), from the
+ * most recent log — logs is already newest-first, so the first occurrence of a
+ * key wins. Used to seed the amount picker with what the user actually ate last
+ * time, instead of a fixed default. */
+export function lastLoggedAmountMap(logs: MealLogWithFood[]): Map<string, number> {
+  const map = new Map<string, number>()
+
+  for (const log of logs) {
+    const key = `${log.food_item.source}:${log.food_item.external_id}`
+    if (!map.has(key)) map.set(key, log.amount_g)
+  }
+
+  return map
+}
