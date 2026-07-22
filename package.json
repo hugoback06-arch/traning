@@ -16,6 +16,7 @@
     "barcode-detector": "^3.2.1",
     "date-fns": "^4.4.0",
     "dexie": "^4.4.4",
+    "fuse.js": "^7.5.0",
     "lucide-react": "^1.25.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

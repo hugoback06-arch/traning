@@ -44,8 +44,6 @@ export function TrainingPage() {
           : 'Ingen Strava-anslutning ännu'}
       </p>
 
-      <WeekView onSelectDay={setDetailTarget} />
-
       <div className="space-y-2">
         <Link to="/training/schedule" className="press block">
           <Card className="flex items-center justify-between">
@@ -66,6 +64,8 @@ export function TrainingPage() {
           </Card>
         </Link>
       </div>
+
+      <WeekView onSelectDay={setDetailTarget} />
 
       {detailTarget && <WorkoutDetailSheet target={detailTarget} onClose={() => setDetailTarget(null)} />}
     </div>

@@ -63,7 +63,7 @@ Deno.serve(async (req) => {
   authorizeUrl.searchParams.set('client_id', Deno.env.get('STRAVA_CLIENT_ID')!)
   authorizeUrl.searchParams.set('redirect_uri', redirectUri)
   authorizeUrl.searchParams.set('response_type', 'code')
-  authorizeUrl.searchParams.set('approval_prompt', 'auto')
+  authorizeUrl.searchParams.set('approval_prompt', 'force')
   authorizeUrl.searchParams.set('scope', SCOPE)
   authorizeUrl.searchParams.set('state', state)
 

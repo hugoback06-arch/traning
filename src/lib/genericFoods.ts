@@ -1,3 +1,4 @@
+import Fuse from 'fuse.js'
 import type { FoodSearchResult } from '../types/domain'
 
 interface GenericFood {
@@ -97,12 +98,17 @@ function toSearchResult(food: GenericFood): FoodSearchResult {
   }
 }
 
+// threshold 0.35 tolerates a typo or two (t.ex. "koettbullar" -> "Köttbullar")
+// without matching on completely unrelated words.
+const fuse = new Fuse(GENERIC_FOODS, {
+  keys: ['name', 'aliases'],
+  threshold: 0.35,
+  ignoreLocation: true,
+})
+
 export function searchGenericFoods(query: string): FoodSearchResult[] {
-  const normalized = query.trim().toLowerCase()
+  const normalized = query.trim()
   if (normalized.length < 2) return []
 
-  return GENERIC_FOODS.filter(
-    (food) =>
-      food.name.toLowerCase().includes(normalized) || food.aliases?.some((alias) => alias.includes(normalized)),
-  ).map(toSearchResult)
+  return fuse.search(normalized).map((result) => toSearchResult(result.item))
 }
