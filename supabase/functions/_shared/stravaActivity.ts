@@ -124,7 +124,11 @@ export async function upsertWorkoutFromStravaActivity(supabase: SupabaseClient<a
 
   if (workoutError || !workout) return { error: workoutError?.message ?? 'Kunde inte spara passet' }
 
-  // Auto-link to a scheduled-but-not-yet-completed session on the same date, if one exists.
+  // Auto-link to a scheduled-but-not-yet-completed session on the same date
+  // AND of the same activity type — matching on date alone let e.g. a bike
+  // ride silently claim a planned run (same-day, only non-rest session that
+  // day), which then displayed as "run completed" instead of what actually
+  // happened.
   if (!workout.training_plan_session_id) {
     const { data: candidateSession } = await supabase
       .from('training_plan_sessions')
@@ -133,7 +137,7 @@ export async function upsertWorkoutFromStravaActivity(supabase: SupabaseClient<a
       .eq('training_plans.status', 'active')
       .eq('scheduled_date', scheduledDate)
       .is('completed_workout_id', null)
-      .neq('activity_type', 'rest')
+      .eq('activity_type', activityType)
       .limit(1)
       .maybeSingle()
 
