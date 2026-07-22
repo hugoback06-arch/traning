@@ -18,7 +18,7 @@ Träningsdelen byggs som ett tillägg ovanpå MVP:t: automatisk Strava-synk (web
 - **Supabase** (Postgres + Auth + Edge Functions): magic-link login, RLS per användare
 - Open Food Facts API (publik, ingen nyckel) för sökning/streckkod
 - Claude API (vision) för fotoanalys, via Edge Function `supabase/functions/analyze-meal-photo` (håller `ANTHROPIC_API_KEY` server-side)
-- Claude API (text/tool-use) för AI-schema (`generate-training-plan`) och pass-utvärdering (`evaluate-workout`) — delad system-prompt med säkerhetsramar i `supabase/functions/_shared/safetyPrompt.ts`
+- Claude API (text/tool-use) för AI-schema (`generate-training-plan`, med föregående uppföljningsfrågor via `training-plan-questions`) och pass-utvärdering (`evaluate-workout`, alltid manuellt triggad — inte längre automatisk vid Strava-synk, se kostnadskontroll) — delad system-prompt med säkerhetsramar i `supabase/functions/_shared/safetyPrompt.ts`, delad träningshistorik-sammanfattning i `supabase/functions/_shared/trainingHistory.ts`
 - Strava API (OAuth + push-webhook) för automatisk träningssynk — `strava-oauth-start`/`strava-oauth-callback` (anslutning), `strava-webhook` (push-events, huvudflöde), `strava-manual-sync` (diskret fallback-knapp i Profil). Delad mappnings-/upsert-logik i `supabase/functions/_shared/stravaActivity.ts`
 - `barcode-detector` (native + WASM-fallback för Safari/iOS)
 - Dexie installerat men **oanvänt** (relik från tidigare lokal-first-idé) — kan tas bort ur `package.json`

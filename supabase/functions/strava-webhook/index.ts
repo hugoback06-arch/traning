@@ -5,14 +5,15 @@
 //  2. POST: activity create/update/delete events. Strava expects a 200 within
 //     a couple of seconds or it treats the delivery as failed and retries —
 //     so we ack immediately and do the real work (token refresh, fetching the
-//     activity, upserting, triggering the AI evaluation) via
-//     EdgeRuntime.waitUntil() in the background.
+//     activity, upserting) via EdgeRuntime.waitUntil() in the background.
 // No Supabase JWT is ever attached to these requests (Strava calls this
 // directly), so verify_jwt is OFF (see config.toml) and all DB access here
 // uses the service-role key.
+// AI evaluation is NOT triggered automatically here (cost control — see
+// evaluate-workout) — the user triggers it on-demand via the "Utvärdera med
+// AI" button in the workout detail sheet instead.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { ensureValidStravaToken, fetchStravaActivity, upsertWorkoutFromStravaActivity } from '../_shared/stravaActivity.ts'
-import { evaluateWorkout } from '../_shared/evaluateWorkout.ts'
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -76,13 +77,9 @@ async function processStravaEvent(event: StravaEvent) {
   try {
     const accessToken = await ensureValidStravaToken(supabase, connection)
     const activity = await fetchStravaActivity(accessToken, event.object_id)
-    const result = await upsertWorkoutFromStravaActivity(supabase, connection.user_id, activity)
+    await upsertWorkoutFromStravaActivity(supabase, connection.user_id, activity)
 
     await supabase.from('fitness_connections').update({ last_synced_at: new Date().toISOString() }).eq('id', connection.id)
-
-    if (result.data) {
-      await evaluateWorkout(supabase, result.data.id, connection.user_id)
-    }
   } catch (error) {
     console.error('strava-webhook processing failed', error)
   }
