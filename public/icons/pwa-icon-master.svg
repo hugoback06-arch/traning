@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#863bff"/>
+      <stop offset="1" stop-color="#47bfff"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="512" height="512" rx="115" fill="url(#bg)"/>
+
+  <!-- dumbbell, tilted like mid-rep -->
+  <g transform="translate(256,266) rotate(-20)">
+    <rect x="-100" y="-16" width="200" height="32" rx="16" fill="#ffffff"/>
+    <rect x="-160" y="-56" width="48" height="112" rx="20" fill="#ffffff"/>
+    <rect x="112" y="-56" width="48" height="112" rx="20" fill="#ffffff"/>
+  </g>
+
+  <!-- AI sparkle accents -->
+  <path fill="#ffe28a" d="M364,106 L372.4,127.6 L394,136 L372.4,144.4 L364,166 L355.6,144.4 L334,136 L355.6,127.6 Z"/>
+  <path fill="#ffe28a" d="M140,376 L143.9,386.08 L154,390 L143.9,393.92 L140,404 L136.1,393.92 L126,390 L136.1,386.08 Z"/>
+</svg>
