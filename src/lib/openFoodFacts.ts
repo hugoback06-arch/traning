@@ -1,3 +1,4 @@
+import { supabase } from './supabase'
 import type { FoodSearchResult } from '../types/domain'
 
 // The .se subdomain scopes results to products sold in Sweden and returns
@@ -103,57 +104,15 @@ function mapProduct(raw: OffRawProduct): FoodSearchResult | null {
   }
 }
 
-// search-a-licious (Elasticsearch-backed) supports Lucene fuzzy syntax
-// (word~N, edit distance N) — the legacy cgi/search.pl endpoint below does
-// near-literal token matching and returns nothing for misspellings.
-const FUZZY_SEARCH_URL = 'https://search.openfoodfacts.org/search'
-
-function sanitizeLuceneWord(word: string): string {
-  return word.replace(/[^\p{L}\p{N}]/gu, '')
-}
-
-// Edit distance 1-2 catches typical typos without matching unrelated short
-// words (ES fuzzy on 1-2 char terms is mostly noise).
-function fuzzinessForWord(word: string): 0 | 1 | 2 {
-  if (word.length <= 2) return 0
-  if (word.length <= 5) return 1
-  return 2
-}
-
-function buildFuzzyQuery(query: string): string | null {
-  const words = query
-    .trim()
-    .split(/\s+/)
-    .map(sanitizeLuceneWord)
-    .filter((word) => word.length > 0)
-  if (words.length === 0) return null
-
-  const wordClauses = words.map((word) => {
-    const fuzziness = fuzzinessForWord(word)
-    const suffix = fuzziness > 0 ? `~${fuzziness}` : ''
-    return `(product_name.sv:${word}${suffix} OR generic_name.sv:${word}${suffix})`
-  })
-
-  // Scoped to Sweden to match se.openfoodfacts.org above, and sorted by scan
-  // popularity since this endpoint's default relevance ranking is noisy for
-  // fuzzy matches (brand-name coincidences outrank the actual product).
-  return `countries_tags:"en:sweden" AND ${wordClauses.join(' AND ')}`
-}
-
+// search-a-licious (Elasticsearch-backed, fuzzy Lucene syntax) doesn't send
+// Access-Control-Allow-Origin, so a direct browser fetch() is CORS-blocked
+// and rejects outright — routed through an Edge Function instead, which also
+// builds the fuzzy query server-side (see supabase/functions/off-fuzzy-search).
 async function searchFoodItemsFuzzy(query: string): Promise<FoodSearchResult[]> {
-  const q = buildFuzzyQuery(query)
-  if (!q) return []
-
-  const url = new URL(FUZZY_SEARCH_URL)
-  url.searchParams.set('q', q)
-  url.searchParams.set('langs', 'sv')
-  url.searchParams.set('page_size', '20')
-  url.searchParams.set('sort_by', 'unique_scans_n')
-  url.searchParams.set('fields', FIELDS)
-
-  const res = await fetch(url.toString())
-  if (!res.ok) return []
-  const data = (await res.json()) as { hits?: OffRawProduct[] }
+  const { data, error } = await supabase.functions.invoke<{ hits?: OffRawProduct[] }>('off-fuzzy-search', {
+    body: { query },
+  })
+  if (error || !data) return []
   return (data.hits ?? []).map(mapProduct).filter((p): p is FoodSearchResult => p !== null)
 }
 

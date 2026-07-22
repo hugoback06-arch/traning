@@ -423,6 +423,12 @@ verify_jwt = false
 [functions.strava-manual-sync]
 verify_jwt = true
 
+[functions.off-fuzzy-search]
+# Proxies to search.openfoodfacts.org server-side because that endpoint
+# doesn't send Access-Control-Allow-Origin (browser fetch() would be
+# CORS-blocked otherwise) — see the function's own comment for details.
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327
