@@ -13,7 +13,10 @@ import { fetchHistorySummary } from '../_shared/trainingHistory.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
-const MODEL = Deno.env.get('CLAUDE_QUESTIONS_MODEL') ?? 'claude-haiku-4-5-20251001'
+// Match the exact model string already proven to work in this project
+// (CLAUDE_VISION_MODEL/CLAUDE_TEXT_MODEL secrets use this same form) rather
+// than a dated snapshot id that's never been verified against this account.
+const MODEL = Deno.env.get('CLAUDE_QUESTIONS_MODEL') ?? 'claude-haiku-4-5'
 const MAX_WEEKS = 12
 
 const CORS_HEADERS = {
