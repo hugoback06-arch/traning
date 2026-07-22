@@ -16,7 +16,7 @@ export function useConnectStrava() {
 
       if (error) throw error
       if (!data || 'error' in data) throw new Error(data?.error ?? 'Kunde inte starta Strava-anslutning')
-      window.location.href = data.authorize_url
+      window.open(data.authorize_url, '_blank', 'noopener,noreferrer')
     },
   })
 }
