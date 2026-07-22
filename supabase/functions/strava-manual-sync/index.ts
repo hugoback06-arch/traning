@@ -71,14 +71,31 @@ Deno.serve(async (req) => {
     // to backfill map/splits for historical activities too.
     const summaries = await fetchStravaActivities(accessToken, afterEpoch)
 
+    // Rows synced before map/splits backfilling existed (or that failed
+    // mid-loop earlier) stay outside the `after=` window forever, since it's
+    // keyed off last_synced_at rather than "row still missing data" — so
+    // separately re-fetch any already-stored Strava activity that's still
+    // missing its map, regardless of when it was created.
+    const { data: missingMapRows } = await supabase
+      .from('workouts')
+      .select('external_id')
+      .eq('user_id', user.id)
+      .eq('source', 'strava')
+      .is('map_polyline', null)
+
+    const activityIds = new Set<string>(summaries.map((summary: { id: number | string }) => String(summary.id)))
+    for (const row of missingMapRows ?? []) {
+      if (row.external_id) activityIds.add(row.external_id)
+    }
+
     let syncedCount = 0
-    for (const summary of summaries) {
+    for (const activityId of activityIds) {
       try {
-        const activity = await fetchStravaActivity(accessToken, summary.id)
+        const activity = await fetchStravaActivity(accessToken, activityId)
         const result = await upsertWorkoutFromStravaActivity(supabase, user.id, activity)
         if (result.data) syncedCount += 1
       } catch (error) {
-        console.error('strava-manual-sync: kunde inte synka aktivitet', summary.id, error)
+        console.error('strava-manual-sync: kunde inte synka aktivitet', activityId, error)
       }
     }
 
