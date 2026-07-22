@@ -1,7 +1,8 @@
 // Supabase Edge Function (Deno). Takes the user's free-text goal (+ desired
-// plan length), asks Claude for a structured multi-week training plan grounded
-// in the user's actual recent training history when available, and writes it
-// to training_plans + training_plan_sessions on the caller's behalf
+// plan length, + optional answers to the training-plan-questions follow-up),
+// asks Claude for a structured multi-week training plan grounded in the
+// user's actual training history when available, and writes it to
+// training_plans + training_plan_sessions on the caller's behalf
 // (RLS-respecting: writes go through a Supabase client authenticated with the
 // caller's own JWT, not a service-role key). ANTHROPIC_API_KEY never reaches
 // the browser.
@@ -9,6 +10,7 @@ import Anthropic from 'npm:@anthropic-ai/sdk'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { COACH_SAFETY_SYSTEM_PROMPT } from '../_shared/safetyPrompt.ts'
 import { PLAN_METHODOLOGY_PROMPT } from '../_shared/planMethodologyPrompt.ts'
+import { ACTIVITY_TYPES, fetchHistorySummary } from '../_shared/trainingHistory.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
@@ -22,24 +24,15 @@ const MODEL = Deno.env.get('CLAUDE_PLAN_MODEL') ?? 'claude-sonnet-5'
 // request balloon into an unbounded/expensive generation — 12 weeks covers a
 // full training mesocycle, which is the common upper bound for one AI-plan.
 const MAX_WEEKS = 12
-// Effectively "all" logged history — this is a cost/safety ceiling, not a
-// meaningful business limit. A summarized (not raw-dumped) history is cheap
-// on tokens even at this size, and more history means better-grounded paces
-// and volume trends than a small recent-only window would give.
-const HISTORY_LIMIT = 1000
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const ACTIVITY_TYPES = ['running', 'cycling', 'swimming', 'strength', 'walking', 'rest', 'other'] as const
-
-interface WorkoutRow {
-  activity_type: (typeof ACTIVITY_TYPES)[number]
-  started_at: string
-  duration_seconds: number | null
-  distance_meters: number | null
+interface QuestionAnswer {
+  question: string
+  answer: string
 }
 
 function buildPlanTool(dayCount: number) {
@@ -112,95 +105,9 @@ function nextNDaysIso(n: number): string[] {
   })
 }
 
-const PACEABLE_TYPES = new Set(['running', 'walking', 'cycling'])
-
-function formatPace(secondsPerKm: number): string {
-  const min = Math.floor(secondsPerKm / 60)
-  const sec = Math.round(secondsPerKm % 60)
-  return `${min}:${sec.toString().padStart(2, '0')}/km`
-}
-
-// Per activity type: count/avg distance+duration as before, plus (for
-// distance-based endurance types) an average pace and the fastest sustained
-// pace among longer efforts — a rough threshold-pace proxy the model can
-// calibrate easy/tempo/interval paces against, instead of guessing numbers.
-function summarizeByType(workouts: WorkoutRow[]): string[] {
-  const byType = new Map<string, WorkoutRow[]>()
-  for (const w of workouts) {
-    byType.set(w.activity_type, [...(byType.get(w.activity_type) ?? []), w])
-  }
-
-  return Array.from(byType.entries()).map(([type, rows]) => {
-    const totalDistanceKm = rows.reduce((sum, w) => sum + (w.distance_meters ?? 0), 0) / 1000
-    const totalDurationMin = rows.reduce((sum, w) => sum + (w.duration_seconds ?? 0), 0) / 60
-
-    const parts = [`${rows.length} pass`]
-    if (totalDistanceKm > 0) parts.push(`snitt ${(totalDistanceKm / rows.length).toFixed(1)} km/pass`)
-    if (totalDurationMin > 0) parts.push(`snitt ${Math.round(totalDurationMin / rows.length)} min/pass`)
-
-    if (PACEABLE_TYPES.has(type) && totalDistanceKm > 0 && totalDurationMin > 0) {
-      parts.push(`snittempo ${formatPace((totalDurationMin * 60) / totalDistanceKm)}`)
-
-      const sustainedEfforts = rows.filter((w) => (w.distance_meters ?? 0) >= 2000 && (w.duration_seconds ?? 0) > 0)
-      if (sustainedEfforts.length > 0) {
-        const bestPaceSecPerKm = Math.min(
-          ...sustainedEfforts.map((w) => w.duration_seconds! / (w.distance_meters! / 1000)),
-        )
-        parts.push(`snabbaste hållbara tempo ~${formatPace(bestPaceSecPerKm)}`)
-      }
-    }
-
-    return `${type}: ${parts.join(', ')}`
-  })
-}
-
-// Recent-vs-prior 4-week volume comparison — tells the model whether the
-// user is ramping up, steady, or coming off a break, so a new plan doesn't
-// restart too easy for someone already fit or too hard after time off.
-function summarizeTrend(workouts: WorkoutRow[]): string | null {
-  const now = Date.now()
-  const FOUR_WEEKS_MS = 28 * 86_400_000
-
-  const recent = workouts.filter((w) => now - Date.parse(w.started_at) <= FOUR_WEEKS_MS)
-  const prior = workouts.filter((w) => {
-    const age = now - Date.parse(w.started_at)
-    return age > FOUR_WEEKS_MS && age <= FOUR_WEEKS_MS * 2
-  })
-  if (recent.length === 0) return null
-
-  const recentKm = recent.reduce((s, w) => s + (w.distance_meters ?? 0), 0) / 1000
-  const priorKm = prior.reduce((s, w) => s + (w.distance_meters ?? 0), 0) / 1000
-
-  let trendNote = ''
-  if (priorKm > 0) {
-    const diffPct = Math.round(((recentKm - priorKm) / priorKm) * 100)
-    if (diffPct > 15) trendNote = ' (ökande trend jämfört med perioden innan)'
-    else if (diffPct < -15) trendNote = ' (minskande trend jämfört med perioden innan, ev. paus/vila — bygg försiktigt upp igen)'
-    else trendNote = ' (stabil volym)'
-  } else if (recent.length > 0) {
-    trendNote = ' (ingen träning loggad perioden innan — nystart eller ny användare av synken)'
-  }
-
-  return `Senaste 4 veckorna: ${recent.length} pass, ${recentKm.toFixed(0)} km${trendNote}.`
-}
-
-// Compact, human-readable summary instead of raw rows — cheaper on tokens and
-// more reliable for Claude to reason about than a long JSON dump.
-function summarizeHistory(workouts: WorkoutRow[]): string {
-  if (workouts.length === 0) {
-    return 'Ingen tidigare träningshistorik finns än — utgå från att användaren är nybörjare/okänd nivå och bygg försiktigt.'
-  }
-
-  const oldestIso = workouts[workouts.length - 1].started_at
-  const newestIso = workouts[0].started_at
-  const spanDays = Math.max(1, Math.round((Date.parse(newestIso) - Date.parse(oldestIso)) / 86_400_000))
-
-  return [
-    `All loggad träningshistorik (${workouts.length} pass över ${spanDays} dagar): ${summarizeByType(workouts).join('; ')}.`,
-    summarizeTrend(workouts),
-  ]
-    .filter(Boolean)
-    .join(' ')
+function summarizeAnswers(answers: QuestionAnswer[]): string {
+  if (answers.length === 0) return ''
+  return `Användarens svar på uppföljningsfrågor: ${answers.map((a) => `${a.question} — ${a.answer}`).join('; ')}. `
 }
 
 Deno.serve(async (req) => {
@@ -210,8 +117,9 @@ Deno.serve(async (req) => {
 
   let prompt: unknown
   let weeksInput: unknown
+  let answersInput: unknown
   try {
-    ;({ prompt, weeks: weeksInput } = await req.json())
+    ;({ prompt, weeks: weeksInput, answers: answersInput } = await req.json())
   } catch {
     return jsonResponse({ error: 'Ogiltig begäran', code: 'INVALID_REQUEST' }, 400)
   }
@@ -219,6 +127,13 @@ Deno.serve(async (req) => {
   if (typeof prompt !== 'string' || !prompt.trim()) {
     return jsonResponse({ error: 'prompt krävs', code: 'INVALID_REQUEST' }, 400)
   }
+
+  const answers: QuestionAnswer[] = Array.isArray(answersInput)
+    ? answersInput.filter(
+        (a): a is QuestionAnswer =>
+          a && typeof a.question === 'string' && typeof a.answer === 'string' && a.answer.trim() !== '',
+      )
+    : []
 
   const weeks = Math.min(MAX_WEEKS, Math.max(1, Math.round(Number(weeksInput) || 1)))
   const dayCount = weeks * 7
@@ -239,14 +154,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Saknar autentisering', code: 'UNAUTHORIZED' }, 401)
   }
 
-  const { data: history } = await supabase
-    .from('workouts')
-    .select('activity_type, started_at, duration_seconds, distance_meters')
-    .eq('user_id', user.id)
-    .order('started_at', { ascending: false })
-    .limit(HISTORY_LIMIT)
-
-  const historySummary = summarizeHistory((history ?? []) as WorkoutRow[])
+  const historySummary = await fetchHistorySummary(supabase, user.id)
   const dates = nextNDaysIso(dayCount)
 
   try {
@@ -267,7 +175,9 @@ Deno.serve(async (req) => {
                 `Använd scheduled_date exakt som angivet för respektive dag. ` +
                 `${historySummary} ` +
                 `Användarens mål: "${prompt}". ` +
+                `${summarizeAnswers(answers)}` +
                 `Basera intensitet, volym och tempo på träningshistoriken ovan när den finns — bygg vidare på nuvarande nivå och uppmätta tempon snarare än att gissa. ` +
+                `Ta hänsyn till användarens svar på uppföljningsfrågorna ovan när de finns — de väger tyngre än en gissning baserad på historik eller mål ensamt. ` +
                 `Följ periodisering, 80/20-fördelning och passvariation enligt instruktionerna i systemprompten, och svara på svenska. ` +
                 `Varje tränings dag ska vara fullt specificerad så användaren kan följa passet utan att gissa: styrkepass ska lista varje övning med set/reps i target_data.exercises, ` +
                 `och kondition/löppass ska brytas ner i uppvärmning/huvudset/nedvarvning i target_data.segments — se verktygsbeskrivningen för exakt format.`,

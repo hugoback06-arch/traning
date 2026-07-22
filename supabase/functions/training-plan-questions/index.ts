@@ -1,0 +1,148 @@
+// Supabase Edge Function (Deno). Given the user's free-text goal for
+// generate-training-plan, asks Claude for a short list of clarifying
+// questions (frequency/week, session length, intensity, etc.) grounded in
+// the goal + training history — answers get fed back into
+// generate-training-plan to produce a better-targeted plan. A separate,
+// cheap/fast model from CLAUDE_PLAN_MODEL since this is a small, low-stakes
+// generation and latency matters (it blocks the user before they even see
+// the questions).
+import Anthropic from 'npm:@anthropic-ai/sdk'
+import { createClient } from 'npm:@supabase/supabase-js@2'
+import { COACH_SAFETY_SYSTEM_PROMPT } from '../_shared/safetyPrompt.ts'
+import { fetchHistorySummary } from '../_shared/trainingHistory.ts'
+
+const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
+
+const MODEL = Deno.env.get('CLAUDE_QUESTIONS_MODEL') ?? 'claude-haiku-4-5-20251001'
+const MAX_WEEKS = 12
+
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
+
+const QUESTIONS_TOOL = {
+  name: 'ask_clarifying_questions',
+  description:
+    'Record 2-4 short clarifying questions to ask the user before building their training plan, each with quick-tap suggested answers.',
+  input_schema: {
+    type: 'object' as const,
+    properties: {
+      questions: {
+        type: 'array',
+        minItems: 0,
+        maxItems: 4,
+        items: {
+          type: 'object',
+          properties: {
+            key: { type: 'string', description: 'Short machine-readable id, e.g. "frequency", "session_length".' },
+            question: { type: 'string', description: 'The question itself, in Swedish, short and concrete.' },
+            suggested_answers: {
+              type: 'array',
+              minItems: 2,
+              maxItems: 5,
+              items: { type: 'string' },
+              description: 'Short quick-tap answer options, in Swedish, e.g. ["2-3 ggr/vecka", "4-5 ggr/vecka", "6+ ggr/vecka"].',
+            },
+          },
+          required: ['key', 'question', 'suggested_answers'],
+        },
+      },
+    },
+    required: ['questions'],
+  },
+}
+
+const QUESTIONS_SYSTEM_PROMPT = `Du hjälper till att ta fram uppföljningsfrågor innan ett träningsschema byggs.
+Föreslå bara frågor vars svar faktiskt förändrar hur schemat byggs — hoppa över sådant som redan
+framgår tydligt av användarens mål eller av träningshistoriken (fråga t.ex. inte om
+träningsfrekvens om historiken redan visar ett tydligt, stabilt mönster). Vanliga bra frågor: hur
+många pass/vecka, hur långa pass (tid), önskad intensitet/ansträngningsnivå, specifikt måldatum
+eller lopp, eventuella begränsningar (skador, utrustning, platsbrist). Max 4 frågor, ofta färre
+räcker. Om målet redan är väldigt tydligt och specifikt och historiken ger gott om kontext, är
+det helt okej att svara med en tom lista — tvinga inte fram frågor som inte behövs. Varje fråga
+ska ha 2-5 korta, konkreta svarsalternativ (inte "annat" eller öppna svar — användaren kan ändå
+skriva eget svar i appen). Kort och koncist. Svara alltid på svenska.`
+
+function jsonResponse(body: unknown, status = 200): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' },
+  })
+}
+
+Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response('ok', { headers: CORS_HEADERS })
+  }
+
+  let prompt: unknown
+  let weeksInput: unknown
+  try {
+    ;({ prompt, weeks: weeksInput } = await req.json())
+  } catch {
+    return jsonResponse({ error: 'Ogiltig begäran', code: 'INVALID_REQUEST' }, 400)
+  }
+
+  if (typeof prompt !== 'string' || !prompt.trim()) {
+    return jsonResponse({ error: 'prompt krävs', code: 'INVALID_REQUEST' }, 400)
+  }
+
+  const weeks = Math.min(MAX_WEEKS, Math.max(1, Math.round(Number(weeksInput) || 1)))
+
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader) {
+    return jsonResponse({ error: 'Saknar autentisering', code: 'UNAUTHORIZED' }, 401)
+  }
+
+  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    global: { headers: { Authorization: authHeader } },
+  })
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return jsonResponse({ error: 'Saknar autentisering', code: 'UNAUTHORIZED' }, 401)
+  }
+
+  const historySummary = await fetchHistorySummary(supabase, user.id)
+
+  try {
+    const message = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 1024,
+      system: `${COACH_SAFETY_SYSTEM_PROMPT}\n\n${QUESTIONS_SYSTEM_PROMPT}`,
+      tools: [QUESTIONS_TOOL],
+      tool_choice: { type: 'tool', name: 'ask_clarifying_questions' },
+      messages: [
+        {
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text:
+                `Användaren vill bygga ett träningsschema på ${weeks} veckor. ` +
+                `Mål: "${prompt}". ` +
+                `${historySummary}`,
+            },
+          ],
+        },
+      ],
+    })
+
+    const toolUse = message.content.find((block) => block.type === 'tool_use')
+    if (!toolUse || toolUse.name !== 'ask_clarifying_questions') {
+      return jsonResponse({ questions: [] })
+    }
+
+    return jsonResponse(toolUse.input)
+  } catch (error) {
+    const isRateLimit = error instanceof Anthropic.RateLimitError
+    const message = error instanceof Error ? error.message : 'Okänt fel'
+    return jsonResponse(
+      { error: message, code: isRateLimit ? 'RATE_LIMITED' : 'QUESTIONS_ERROR' },
+      isRateLimit ? 429 : 502,
+    )
+  }
+})

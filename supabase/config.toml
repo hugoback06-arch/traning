@@ -396,6 +396,9 @@ verify_jwt = true
 [functions.generate-training-plan]
 verify_jwt = true
 
+[functions.training-plan-questions]
+verify_jwt = true
+
 [functions.evaluate-workout]
 verify_jwt = true
 
