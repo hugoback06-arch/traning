@@ -11,6 +11,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 import { COACH_SAFETY_SYSTEM_PROMPT } from '../_shared/safetyPrompt.ts'
 import { PLAN_METHODOLOGY_PROMPT } from '../_shared/planMethodologyPrompt.ts'
 import { ACTIVITY_TYPES, fetchHistorySummary } from '../_shared/trainingHistory.ts'
+import { computeVdotPaces } from '../_shared/vdot.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
@@ -110,6 +111,17 @@ function summarizeAnswers(answers: QuestionAnswer[]): string {
   return `Användarens svar på uppföljningsfrågor: ${answers.map((a) => `${a.question} — ${a.answer}`).join('; ')}. `
 }
 
+function summarizeRecentRace(recentRace: { distanceKm: number; timeSeconds: number } | null): string {
+  if (!recentRace) return ''
+  const paces = computeVdotPaces(recentRace.distanceKm, recentRace.timeSeconds)
+  if (!paces) return ''
+  return (
+    `Användaren har nyligen sprungit ${recentRace.distanceKm} km på ${Math.round(recentRace.timeSeconds / 60)} min. ` +
+    `Beräknat VDOT (Daniels formel) är ${paces.vdot} — använd dessa EXAKTA löptempon istället för att gissa utifrån historiken när du sätter pace i target_data: ` +
+    `lugnt tempo ${paces.easyPace}, maratontempo ${paces.marathonPace}, tröskeltempo ${paces.thresholdPace}, intervalltempo ${paces.intervalPace}, repetitionstempo ${paces.repetitionPace}. `
+  )
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: CORS_HEADERS })
@@ -118,8 +130,9 @@ Deno.serve(async (req) => {
   let prompt: unknown
   let weeksInput: unknown
   let answersInput: unknown
+  let recentRaceInput: unknown
   try {
-    ;({ prompt, weeks: weeksInput, answers: answersInput } = await req.json())
+    ;({ prompt, weeks: weeksInput, answers: answersInput, recentRace: recentRaceInput } = await req.json())
   } catch {
     return jsonResponse({ error: 'Ogiltig begäran', code: 'INVALID_REQUEST' }, 400)
   }
@@ -134,6 +147,13 @@ Deno.serve(async (req) => {
           a && typeof a.question === 'string' && typeof a.answer === 'string' && a.answer.trim() !== '',
       )
     : []
+
+  const recentRace =
+    recentRaceInput &&
+    typeof (recentRaceInput as { distanceKm?: unknown }).distanceKm === 'number' &&
+    typeof (recentRaceInput as { timeSeconds?: unknown }).timeSeconds === 'number'
+      ? (recentRaceInput as { distanceKm: number; timeSeconds: number })
+      : null
 
   const weeks = Math.min(MAX_WEEKS, Math.max(1, Math.round(Number(weeksInput) || 1)))
   const dayCount = weeks * 7
@@ -176,6 +196,7 @@ Deno.serve(async (req) => {
                 `${historySummary} ` +
                 `Användarens mål: "${prompt}". ` +
                 `${summarizeAnswers(answers)}` +
+                `${summarizeRecentRace(recentRace)}` +
                 `Basera intensitet, volym och tempo på träningshistoriken ovan när den finns — bygg vidare på nuvarande nivå och uppmätta tempon snarare än att gissa. ` +
                 `Ta hänsyn till användarens svar på uppföljningsfrågorna ovan när de finns — de väger tyngre än en gissning baserad på historik eller mål ensamt. ` +
                 `Följ periodisering, 80/20-fördelning och passvariation enligt instruktionerna i systemprompten, och svara på svenska. ` +

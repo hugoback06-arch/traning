@@ -7,30 +7,51 @@ import { useTrainingPlanQuestions } from '../../hooks/useTrainingPlanQuestions'
 import type { ClarifyingQuestion } from '../../hooks/useTrainingPlanQuestions'
 
 const WEEK_PRESETS = [1, 4, 8, 12]
+const RACE_DISTANCES = [
+  { label: '5 km', km: 5 },
+  { label: '10 km', km: 10 },
+  { label: 'Halvmaraton', km: 21.1 },
+  { label: 'Maraton', km: 42.2 },
+]
+
+// Accepts "mm:ss" or "h:mm:ss".
+function parseTimeToSeconds(text: string): number | null {
+  const parts = text.trim().split(':')
+  if (parts.length < 2 || parts.length > 3 || parts.some((p) => p === '' || Number.isNaN(Number(p)))) return null
+  const nums = parts.map(Number)
+  return nums.length === 2 ? nums[0] * 60 + nums[1] : nums[0] * 3600 + nums[1] * 60 + nums[2]
+}
 
 export function AiPlanGenerator() {
   const [prompt, setPrompt] = useState('')
   const [weeks, setWeeks] = useState(4)
+  const [raceDistanceKm, setRaceDistanceKm] = useState<number | null>(null)
+  const [raceTimeText, setRaceTimeText] = useState('')
   const [questions, setQuestions] = useState<ClarifyingQuestion[] | null>(null)
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const { data: activePlan } = useActiveTrainingPlan()
   const generatePlan = useGenerateTrainingPlan()
   const fetchQuestions = useTrainingPlanQuestions()
 
+  const raceTimeSeconds = parseTimeToSeconds(raceTimeText)
+  const recentRace = raceDistanceKm && raceTimeSeconds ? { distanceKm: raceDistanceKm, timeSeconds: raceTimeSeconds } : undefined
+
   function reset() {
     setPrompt('')
+    setRaceDistanceKm(null)
+    setRaceTimeText('')
     setQuestions(null)
     setAnswers({})
   }
 
   async function handleGenerate(answerList: { question: string; answer: string }[]) {
-    await generatePlan.mutateAsync({ prompt, weeks, answers: answerList })
+    await generatePlan.mutateAsync({ prompt, weeks, answers: answerList, recentRace })
     reset()
   }
 
   async function handleNext() {
     if (!prompt.trim()) return
-    const result = await fetchQuestions.mutateAsync({ prompt, weeks })
+    const result = await fetchQuestions.mutateAsync({ prompt, weeks, previousPlanGoal: activePlan?.goal ?? null })
     if (result.length === 0) {
       await handleGenerate([])
       return
@@ -116,6 +137,32 @@ export function AiPlanGenerator() {
             </button>
           ))}
         </div>
+      </div>
+      <div>
+        <label className="block text-xs text-ink-secondary">Senaste bästa löptid (valfritt, ger exaktare löptempo)</label>
+        <div className="mt-1 flex flex-wrap gap-2">
+          {RACE_DISTANCES.map((d) => (
+            <button
+              key={d.label}
+              onClick={() => setRaceDistanceKm(raceDistanceKm === d.km ? null : d.km)}
+              className={`rounded-full border px-3 py-1 text-xs ${
+                raceDistanceKm === d.km ? 'border-accent bg-accent-light text-accent' : 'border-border text-ink-secondary'
+              }`}
+            >
+              {d.label}
+            </button>
+          ))}
+        </div>
+        {raceDistanceKm && (
+          <input
+            type="text"
+            inputMode="numeric"
+            placeholder="Tid, t.ex. 24:30"
+            value={raceTimeText}
+            onChange={(e) => setRaceTimeText(e.target.value)}
+            className="mt-1.5 w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent"
+          />
+        )}
       </div>
       {(fetchQuestions.isError || generatePlan.isError) && (
         <p className="text-sm text-warning">Något gick fel, försök igen.</p>

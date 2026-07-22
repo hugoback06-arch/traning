@@ -66,7 +66,12 @@ träningshistoriken (fråga t.ex. inte om träningsfrekvens om historiken redan 
 stabilt mönster), men ersätt den då med en annan relevant fråga istället för att lämna färre än
 2 kvar. Max 4 frågor totalt. Varje fråga ska ha 2-5 korta, konkreta svarsalternativ (inte "annat"
 eller öppna svar — användaren kan ändå skriva eget svar i appen). Kort och koncist. Svara alltid
-på svenska.`
+på svenska.
+
+Om användaren UPPDATERAR ett befintligt schema (framgår av kontexten nedan): fokusera frågorna på
+vad som ska ÄNDRAS jämfört med förra schemat — t.ex. vad som funkade bra/dåligt, om frekvens/
+intensitet/passtyper ska ändras, om målet är detsamma eller nytt. Ställ inte samma generiska
+förstagångsfrågor som om det vore ett helt nytt schema.`
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
@@ -82,8 +87,9 @@ Deno.serve(async (req) => {
 
   let prompt: unknown
   let weeksInput: unknown
+  let previousPlanGoalInput: unknown
   try {
-    ;({ prompt, weeks: weeksInput } = await req.json())
+    ;({ prompt, weeks: weeksInput, previousPlanGoal: previousPlanGoalInput } = await req.json())
   } catch {
     return jsonResponse({ error: 'Ogiltig begäran', code: 'INVALID_REQUEST' }, 400)
   }
@@ -91,6 +97,8 @@ Deno.serve(async (req) => {
   if (typeof prompt !== 'string' || !prompt.trim()) {
     return jsonResponse({ error: 'prompt krävs', code: 'INVALID_REQUEST' }, 400)
   }
+
+  const previousPlanGoal = typeof previousPlanGoalInput === 'string' ? previousPlanGoalInput.trim() : null
 
   const weeks = Math.min(MAX_WEEKS, Math.max(1, Math.round(Number(weeksInput) || 1)))
 
@@ -128,6 +136,9 @@ Deno.serve(async (req) => {
               text:
                 `Användaren vill bygga ett träningsschema på ${weeks} veckor. ` +
                 `Mål: "${prompt}". ` +
+                (previousPlanGoal
+                  ? `Detta är en UPPDATERING av ett befintligt aktivt schema, vars nuvarande mål är: "${previousPlanGoal}". `
+                  : '') +
                 `${historySummary}`,
             },
           ],

@@ -9,8 +9,14 @@ interface TrainingStatusCardProps {
   onSelect?: (target: DetailTarget) => void
 }
 
+function plannedDistanceLabel(session: { target_data: Record<string, unknown> | null } | null): string | null {
+  const distanceKm = session?.target_data?.distance_km
+  return typeof distanceKm === 'number' ? `${distanceKm} km` : null
+}
+
 export function TrainingStatusCard({ onSelect }: TrainingStatusCardProps) {
   const { session, matchedWorkout, isRestDay, isDone } = useTrainingForDate()
+  const plannedDistance = session ? plannedDistanceLabel(session) : null
 
   const onOpenCard = !onSelect
     ? undefined
@@ -29,6 +35,7 @@ export function TrainingStatusCard({ onSelect }: TrainingStatusCardProps) {
             <p className="font-display text-base font-semibold text-ink-primary">
               {isDone && '✓ '}
               {session.title}
+              {!isDone && plannedDistance && <span className="text-ink-secondary"> · {plannedDistance}</span>}
             </p>
             {isDone && matchedWorkout ? (
               <p className="text-xs text-ink-secondary">

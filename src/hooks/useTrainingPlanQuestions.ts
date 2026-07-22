@@ -10,6 +10,7 @@ export interface ClarifyingQuestion {
 interface TrainingPlanQuestionsInput {
   prompt: string
   weeks: number
+  previousPlanGoal?: string | null
 }
 
 interface TrainingPlanQuestionsErrorBody {
@@ -19,10 +20,14 @@ interface TrainingPlanQuestionsErrorBody {
 
 export function useTrainingPlanQuestions() {
   return useMutation({
-    mutationFn: async ({ prompt, weeks }: TrainingPlanQuestionsInput): Promise<ClarifyingQuestion[]> => {
+    mutationFn: async ({
+      prompt,
+      weeks,
+      previousPlanGoal,
+    }: TrainingPlanQuestionsInput): Promise<ClarifyingQuestion[]> => {
       const { data, error } = await supabase.functions.invoke<
         { questions: ClarifyingQuestion[] } | TrainingPlanQuestionsErrorBody
-      >('training-plan-questions', { body: { prompt, weeks } })
+      >('training-plan-questions', { body: { prompt, weeks, previousPlanGoal } })
 
       if (error) throw error
       if (!data || 'error' in data) throw new Error(data?.error ?? 'Kunde inte ta fram frågor')

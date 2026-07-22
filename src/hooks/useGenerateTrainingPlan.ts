@@ -11,16 +11,22 @@ export interface GenerateTrainingPlanInput {
   prompt: string
   weeks: number
   answers?: { question: string; answer: string }[]
+  recentRace?: { distanceKm: number; timeSeconds: number }
 }
 
 export function useGenerateTrainingPlan() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ prompt, weeks, answers }: GenerateTrainingPlanInput): Promise<{ training_plan_id: string }> => {
+    mutationFn: async ({
+      prompt,
+      weeks,
+      answers,
+      recentRace,
+    }: GenerateTrainingPlanInput): Promise<{ training_plan_id: string }> => {
       const { data, error } = await supabase.functions.invoke<
         { training_plan_id: string } | GenerateTrainingPlanErrorBody
-      >('generate-training-plan', { body: { prompt, weeks, answers } })
+      >('generate-training-plan', { body: { prompt, weeks, answers, recentRace } })
 
       if (error) throw error
       if (!data || 'error' in data) throw new Error(data?.error ?? 'Kunde inte generera schema')
