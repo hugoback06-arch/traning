@@ -6,7 +6,7 @@ import type { FoodSearchResult } from '../types/domain'
 const BASE_URL = 'https://se.openfoodfacts.org'
 const FIELDS =
   'code,product_name,brands,nutriments,image_front_small_url,image_small_url,' +
-  'serving_quantity,serving_quantity_unit,product_quantity,product_quantity_unit'
+  'serving_quantity,serving_quantity_unit,product_quantity,product_quantity_unit,unique_scans_n'
 
 interface OffRawNutriments {
   'energy-kcal_100g'?: number
@@ -29,6 +29,9 @@ interface OffRawProduct {
   serving_quantity_unit?: string
   product_quantity?: number
   product_quantity_unit?: string
+  // Number of times this barcode has been scanned in the OFF app — the closest
+  // thing to a real-world "how common is this product" signal.
+  unique_scans_n?: number
 }
 
 const KJ_PER_KCAL = 4.184
@@ -108,15 +111,15 @@ function mapProduct(raw: OffRawProduct): FoodSearchResult | null {
 // Access-Control-Allow-Origin, so a direct browser fetch() is CORS-blocked
 // and rejects outright — routed through an Edge Function instead, which also
 // builds the fuzzy query server-side (see supabase/functions/off-fuzzy-search).
-async function searchFoodItemsFuzzy(query: string): Promise<FoodSearchResult[]> {
+async function searchFoodItemsFuzzy(query: string): Promise<OffRawProduct[]> {
   const { data, error } = await supabase.functions.invoke<{ hits?: OffRawProduct[] }>('off-fuzzy-search', {
     body: { query },
   })
   if (error || !data) return []
-  return (data.hits ?? []).map(mapProduct).filter((p): p is FoodSearchResult => p !== null)
+  return data.hits ?? []
 }
 
-async function searchFoodItemsLegacy(query: string): Promise<FoodSearchResult[]> {
+async function searchFoodItemsLegacy(query: string): Promise<OffRawProduct[]> {
   const url = new URL(`${BASE_URL}/cgi/search.pl`)
   url.searchParams.set('search_terms', query)
   url.searchParams.set('search_simple', '1')
@@ -124,12 +127,13 @@ async function searchFoodItemsLegacy(query: string): Promise<FoodSearchResult[]>
   url.searchParams.set('json', '1')
   url.searchParams.set('page_size', '20')
   url.searchParams.set('lc', 'sv')
+  url.searchParams.set('sort_by', 'unique_scans_n')
   url.searchParams.set('fields', FIELDS)
 
   const res = await fetch(url.toString())
   if (!res.ok) throw new Error('Sökningen misslyckades')
   const data = (await res.json()) as { products?: OffRawProduct[] }
-  return (data.products ?? []).map(mapProduct).filter((p): p is FoodSearchResult => p !== null)
+  return data.products ?? []
 }
 
 // The legacy endpoint occasionally 503s outright (observed 2026-07-22, not
@@ -138,6 +142,11 @@ async function searchFoodItemsLegacy(query: string): Promise<FoodSearchResult[]>
 // search pay the legacy timeout whenever it's down — both run concurrently
 // and their results are merged, so a 503 or slow response on one side never
 // blocks or delays the other.
+//
+// Both sources already request their own page sorted by unique_scans_n, but
+// after merging and deduping the combined list is re-sorted by that same
+// count — so e.g. searching "kvarg" surfaces the actually-common brand first
+// instead of whichever source happened to list it earlier.
 export async function searchFoodItems(query: string): Promise<FoodSearchResult[]> {
   const [legacyOutcome, fuzzyOutcome] = await Promise.allSettled([
     searchFoodItemsLegacy(query),
@@ -146,8 +155,16 @@ export async function searchFoodItems(query: string): Promise<FoodSearchResult[]
   const legacy = legacyOutcome.status === 'fulfilled' ? legacyOutcome.value : []
   const fuzzy = fuzzyOutcome.status === 'fulfilled' ? fuzzyOutcome.value : []
 
-  const seen = new Set(legacy.map((r) => r.externalId))
-  return [...legacy, ...fuzzy.filter((r) => !seen.has(r.externalId))]
+  const seen = new Set<string>()
+  const merged: OffRawProduct[] = []
+  for (const product of [...legacy, ...fuzzy]) {
+    if (!product.code || seen.has(product.code)) continue
+    seen.add(product.code)
+    merged.push(product)
+  }
+  merged.sort((a, b) => (b.unique_scans_n ?? 0) - (a.unique_scans_n ?? 0))
+
+  return merged.map(mapProduct).filter((p): p is FoodSearchResult => p !== null)
 }
 
 export async function lookupBarcode(barcode: string): Promise<FoodSearchResult | null> {

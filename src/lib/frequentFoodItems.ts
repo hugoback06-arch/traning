@@ -21,3 +21,17 @@ export function topFrequentFoodItems(logs: MealLogWithFood[], limit: number): Fo
     .slice(0, limit)
     .map((entry) => entry.item)
 }
+
+/** Log count per "source:externalId", for ranking search results by how often
+ * the user has actually logged that specific food before — e.g. searching
+ * "kvarg" should surface their usual brand over one they've never picked. */
+export function foodItemFrequencyMap(logs: MealLogWithFood[]): Map<string, number> {
+  const counts = new Map<string, number>()
+
+  for (const log of logs) {
+    const key = `${log.food_item.source}:${log.food_item.external_id}`
+    counts.set(key, (counts.get(key) ?? 0) + 1)
+  }
+
+  return counts
+}

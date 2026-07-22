@@ -6,7 +6,7 @@
 const FUZZY_SEARCH_URL = 'https://search.openfoodfacts.org/search'
 const FIELDS =
   'code,product_name,brands,nutriments,image_front_small_url,image_small_url,' +
-  'serving_quantity,serving_quantity_unit,product_quantity,product_quantity_unit'
+  'serving_quantity,serving_quantity_unit,product_quantity,product_quantity_unit,unique_scans_n'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
