@@ -36,6 +36,9 @@ export function DailyOverviewPage() {
         <h1 className="font-display text-lg font-semibold">🍽️ Kost</h1>
         <div className="flex items-center gap-2">
           <StreakBadge days={streakDays} />
+          <Link to="/nutrition/saved-meals" className="text-sm text-ink-secondary underline">
+            Sparade
+          </Link>
           <Link to="/nutrition/calendar" className="text-sm text-ink-secondary underline">
             Kalender
           </Link>

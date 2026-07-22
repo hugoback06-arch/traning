@@ -62,6 +62,30 @@ export interface MealLogWithFood extends MealLog {
   food_item: FoodItem
 }
 
+export interface SavedMeal {
+  id: string
+  user_id: string
+  name: string
+  created_at: string
+}
+
+export interface SavedMealItem {
+  id: string
+  saved_meal_id: string
+  food_item_id: string
+  amount_g: number
+  sort_order: number
+  created_at: string
+}
+
+export interface SavedMealItemWithFood extends SavedMealItem {
+  food_item: FoodItem
+}
+
+export interface SavedMealWithItems extends SavedMeal {
+  items: SavedMealItemWithFood[]
+}
+
 // A candidate result from any food search source (Open Food Facts, the local
 // generic-foods list, later AI photo estimates) — not yet a saved food_items row.
 // portionG/portionUnit are presentation-only hints for the amount picker (e.g. "1

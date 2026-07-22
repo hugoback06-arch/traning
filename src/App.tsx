@@ -11,6 +11,7 @@ import { OnboardingPage } from './routes/OnboardingPage'
 import { Home } from './routes/Home'
 import { DailyOverviewPage } from './routes/DailyOverviewPage'
 import { CalendarPage } from './routes/CalendarPage'
+import { SavedMealsPage } from './routes/SavedMealsPage'
 import { ProfileSettingsPage } from './routes/ProfileSettingsPage'
 import { TrainingPage } from './routes/training/TrainingPage'
 import { SchedulePage } from './routes/training/SchedulePage'
@@ -31,6 +32,7 @@ function App() {
                     <Route path="/" element={<Home />} />
                     <Route path="/nutrition" element={<DailyOverviewPage />} />
                     <Route path="/nutrition/calendar" element={<CalendarPage />} />
+                    <Route path="/nutrition/saved-meals" element={<SavedMealsPage />} />
                     <Route path="/training" element={<TrainingPage />} />
                     <Route path="/training/schedule" element={<SchedulePage />} />
                     <Route path="/training/history" element={<History />} />
