@@ -21,6 +21,9 @@ export function DayCard({ date, session, workouts, onClick }: DayCardProps) {
   // instead of silently showing the planned type with a checkmark.
   const differs = isDone && plannedType !== null && actualType !== null && plannedType !== actualType
   const displayType: PlanActivityType = actualType ?? plannedType ?? 'rest'
+  const label = differs
+    ? `${primaryWorkout?.title ?? ACTIVITY_LABELS[actualType]} (planerat: ${session?.title ?? ACTIVITY_LABELS[plannedType]})`
+    : (session?.title ?? primaryWorkout?.title ?? ACTIVITY_LABELS[displayType])
   const today = isToday(date)
 
   return (
@@ -43,9 +46,7 @@ export function DayCard({ date, session, workouts, onClick }: DayCardProps) {
       ) : (
         <ActivityIcon type={displayType} />
       )}
-      <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-primary">
-        {differs ? `${ACTIVITY_LABELS[actualType]} (planerat: ${ACTIVITY_LABELS[plannedType]})` : ACTIVITY_LABELS[displayType]}
-      </span>
+      <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-primary">{label}</span>
       {isDone && <span className="shrink-0 text-lg text-accent">✓</span>}
     </button>
   )
