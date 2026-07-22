@@ -112,6 +112,16 @@ export interface Exercise {
   created_at: string
 }
 
+export interface WorkoutSplit {
+  split: number
+  distance: number
+  elapsed_time: number
+  moving_time: number
+  elevation_difference: number | null
+  average_speed: number | null
+  average_heartrate: number | null
+}
+
 export interface Workout {
   id: string
   user_id: string
@@ -128,6 +138,8 @@ export interface Workout {
   elevation_gain_meters: number | null
   perceived_exertion: number | null
   training_plan_session_id: string | null
+  map_polyline: string | null
+  splits: WorkoutSplit[] | null
   raw_data: unknown
   created_at: string
   updated_at: string

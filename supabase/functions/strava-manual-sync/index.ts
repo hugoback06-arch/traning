@@ -8,7 +8,12 @@
 // button press) — evaluation is still available on-demand from the workout
 // detail sheet.
 import { createClient } from 'npm:@supabase/supabase-js@2'
-import { ensureValidStravaToken, fetchStravaActivities, upsertWorkoutFromStravaActivity } from '../_shared/stravaActivity.ts'
+import {
+  ensureValidStravaToken,
+  fetchStravaActivities,
+  fetchStravaActivity,
+  upsertWorkoutFromStravaActivity,
+} from '../_shared/stravaActivity.ts'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -61,12 +66,20 @@ Deno.serve(async (req) => {
       ? Math.floor(Date.parse(connection.last_synced_at) / 1000)
       : Math.floor(Date.now() / 1000) - FIRST_SYNC_LOOKBACK_DAYS * 86_400
 
-    const activities = await fetchStravaActivities(accessToken, afterEpoch)
+    // The summary list endpoint only gives summary_polyline and no splits at
+    // all, so fetch each activity's detail (same endpoint the webhook uses)
+    // to backfill map/splits for historical activities too.
+    const summaries = await fetchStravaActivities(accessToken, afterEpoch)
 
     let syncedCount = 0
-    for (const activity of activities) {
-      const result = await upsertWorkoutFromStravaActivity(supabase, user.id, activity)
-      if (result.data) syncedCount += 1
+    for (const summary of summaries) {
+      try {
+        const activity = await fetchStravaActivity(accessToken, summary.id)
+        const result = await upsertWorkoutFromStravaActivity(supabase, user.id, activity)
+        if (result.data) syncedCount += 1
+      } catch (error) {
+        console.error('strava-manual-sync: kunde inte synka aktivitet', summary.id, error)
+      }
     }
 
     await supabase.from('fitness_connections').update({ last_synced_at: new Date().toISOString() }).eq('id', connection.id)

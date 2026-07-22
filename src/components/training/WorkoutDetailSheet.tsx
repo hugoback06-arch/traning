@@ -4,13 +4,20 @@ import { sv } from 'date-fns/locale'
 import { Button } from '../common/Button'
 import { Spinner } from '../common/Spinner'
 import { ActivityIcon } from './ActivityIcon'
+import { WorkoutMap } from './WorkoutMap'
 import { useWorkoutDetail } from '../../hooks/useWorkoutDetail'
 import { useUpdateWorkout } from '../../hooks/useUpdateWorkout'
 import { useEvaluateWorkout } from '../../hooks/useEvaluateWorkout'
 import { useCreateManualWorkout } from '../../hooks/useCreateManualWorkout'
 import { ACTIVITY_LABELS } from '../../lib/activityTypes'
 import { formatDistance, formatDuration, formatPace } from '../../lib/formatWorkout'
-import type { PlanActivityType, TrainingPlanSession, WorkoutDetail, WorkoutSetWithExercise } from '../../types/domain'
+import type {
+  PlanActivityType,
+  TrainingPlanSession,
+  WorkoutDetail,
+  WorkoutSetWithExercise,
+  WorkoutSplit,
+} from '../../types/domain'
 
 export type DetailTarget =
   | { type: 'workout'; workoutId: string }
@@ -188,6 +195,8 @@ function WorkoutDetailContent({ workoutId }: { workoutId: string }) {
         </div>
       </div>
 
+      {workout.map_polyline && <WorkoutMap polyline={workout.map_polyline} />}
+
       {workout.session && <PlanVsActual session={workout.session} workout={workout} />}
 
       {stats.length > 0 && (
@@ -200,6 +209,8 @@ function WorkoutDetailContent({ workoutId }: { workoutId: string }) {
           ))}
         </div>
       )}
+
+      {workout.splits && workout.splits.length > 1 && <SplitsTable splits={workout.splits} />}
 
       {isStrength(workout.activity_type) && workout.sets.length > 0 && <SetsTable sets={workout.sets} />}
 
@@ -313,6 +324,36 @@ function buildStatEntries(workout: WorkoutDetail): [string, string][] {
   if (workout.calories_burned) entries.push(['Kalorier', `${workout.calories_burned} kcal`])
   if (workout.elevation_gain_meters) entries.push(['Höjdmeter', `${Math.round(workout.elevation_gain_meters)} m`])
   return entries
+}
+
+function SplitsTable({ splits }: { splits: WorkoutSplit[] }) {
+  return (
+    <div className="space-y-1">
+      <p className="text-xs font-medium text-ink-secondary">Splits</p>
+      <div className="rounded-lg border border-border">
+        {splits.map((split) => (
+          <div
+            key={split.split}
+            className="flex items-center justify-between gap-2 border-b border-border px-2.5 py-1.5 text-xs last:border-b-0"
+          >
+            <span className="text-ink-secondary">{split.split} km</span>
+            <span className="font-medium text-ink-primary">
+              {formatPace(split.distance, split.moving_time) ?? '—'}
+            </span>
+            {split.average_heartrate != null && (
+              <span className="text-ink-secondary">{Math.round(split.average_heartrate)} bpm</span>
+            )}
+            {split.elevation_difference != null && (
+              <span className="text-ink-secondary">
+                {split.elevation_difference > 0 ? '+' : ''}
+                {Math.round(split.elevation_difference)} m
+              </span>
+            )}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function SetsTable({ sets }: { sets: WorkoutSetWithExercise[] }) {

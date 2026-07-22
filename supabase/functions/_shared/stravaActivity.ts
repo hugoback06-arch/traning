@@ -116,6 +116,9 @@ export async function upsertWorkoutFromStravaActivity(supabase: SupabaseClient<a
         avg_heart_rate: activity.average_heartrate ? Math.round(activity.average_heartrate) : null,
         max_heart_rate: activity.max_heartrate ? Math.round(activity.max_heartrate) : null,
         elevation_gain_meters: activity.total_elevation_gain ?? null,
+        map_polyline: activity.map?.polyline ?? activity.map?.summary_polyline ?? null,
+        splits: activity.splits_metric ?? null,
+        raw_data: activity,
       },
       { onConflict: 'user_id,source,external_id' },
     )
