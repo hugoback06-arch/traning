@@ -1,7 +1,7 @@
 import { Card } from '../common/Card'
 import { ActivityIcon } from './ActivityIcon'
+import { WorkoutSummaryCard } from './WorkoutSummaryCard'
 import { useTrainingForDate } from '../../hooks/useTrainingForDate'
-import { ACTIVITY_LABELS } from '../../lib/activityTypes'
 import { formatDistance, formatDuration } from '../../lib/formatWorkout'
 import type { DetailTarget } from './WorkoutDetailSheet'
 
@@ -26,6 +26,10 @@ export function TrainingStatusCard({ onSelect }: TrainingStatusCardProps) {
         ? () => onSelect({ type: 'session', session })
         : undefined
 
+  if (!session && matchedWorkout) {
+    return <WorkoutSummaryCard workout={matchedWorkout} onClick={onOpenCard} />
+  }
+
   const card = (
     <Card className={isDone ? 'bg-surface-muted' : ''}>
       {session && !isRestDay ? (
@@ -46,20 +50,6 @@ export function TrainingStatusCard({ onSelect }: TrainingStatusCardProps) {
             ) : (
               session.description && <p className="text-xs text-ink-secondary">{session.description}</p>
             )}
-          </div>
-        </div>
-      ) : matchedWorkout ? (
-        <div className="flex items-center gap-3">
-          <ActivityIcon type={matchedWorkout.activity_type} />
-          <div className="min-w-0 flex-1">
-            <p className="font-display text-base font-semibold text-ink-primary">
-              ✓ {matchedWorkout.title ?? ACTIVITY_LABELS[matchedWorkout.activity_type]}
-            </p>
-            <p className="text-xs text-ink-secondary">
-              {[formatDistance(matchedWorkout.distance_meters), formatDuration(matchedWorkout.duration_seconds)]
-                .filter(Boolean)
-                .join(' · ') || 'Genomfört'}
-            </p>
           </div>
         </div>
       ) : (

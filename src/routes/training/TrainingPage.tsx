@@ -3,15 +3,13 @@ import { Link } from 'react-router'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
 import { Card } from '../../components/common/Card'
-import { ActivityIcon } from '../../components/training/ActivityIcon'
 import { TrainingStatusCard } from '../../components/training/TrainingStatusCard'
+import { WorkoutSummaryCard } from '../../components/training/WorkoutSummaryCard'
 import { WeekView } from '../../components/training/WeekView'
 import { WorkoutDetailSheet } from '../../components/training/WorkoutDetailSheet'
 import type { DetailTarget } from '../../components/training/WorkoutDetailSheet'
 import { useTrainingForDate } from '../../hooks/useTrainingForDate'
 import { useFitnessConnection } from '../../hooks/useFitnessConnection'
-import { ACTIVITY_LABELS } from '../../lib/activityTypes'
-import { formatDuration } from '../../lib/formatWorkout'
 
 export function TrainingPage() {
   const [detailTarget, setDetailTarget] = useState<DetailTarget | null>(null)
@@ -25,17 +23,11 @@ export function TrainingPage() {
       <TrainingStatusCard onSelect={setDetailTarget} />
 
       {secondaryWorkouts.map((workout) => (
-        <button
+        <WorkoutSummaryCard
           key={workout.id}
+          workout={workout}
           onClick={() => setDetailTarget({ type: 'workout', workoutId: workout.id })}
-          className="press flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
-        >
-          <ActivityIcon type={workout.activity_type} size="sm" />
-          <span className="text-sm text-ink-primary">
-            Extra: {workout.title ?? ACTIVITY_LABELS[workout.activity_type]}
-            {formatDuration(workout.duration_seconds) ? `, ${formatDuration(workout.duration_seconds)}` : ''}
-          </span>
-        </button>
+        />
       ))}
 
       <p className="text-center text-xs text-ink-secondary">
