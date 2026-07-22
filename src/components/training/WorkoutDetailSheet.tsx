@@ -189,6 +189,8 @@ function WorkoutDetailContent({ workoutId }: { workoutId: string }) {
         </div>
       </div>
 
+      {workout.session && <PlanVsActual session={workout.session} workout={workout} />}
+
       {stats.length > 0 && (
         <div className="grid grid-cols-3 gap-2">
           {stats.map(([label, value]) => (
@@ -214,12 +216,6 @@ function WorkoutDetailContent({ workoutId }: { workoutId: string }) {
         <EvaluateWorkoutButton workoutId={workout.id} />
       )}
 
-      {workout.session && (
-        <p className="text-xs text-ink-secondary">
-          Planerat: {workout.session.title} · Genomfört: {stats[0]?.[1] ?? '—'}
-        </p>
-      )}
-
       {workout.calorieAdjustment && (
         <Link
           to="/"
@@ -236,6 +232,52 @@ function WorkoutDetailContent({ workoutId }: { workoutId: string }) {
           Korrigera passet
         </button>
       )}
+    </div>
+  )
+}
+
+// Treat as "as planned" (no need to show both) unless the activity type
+// changed or the actual distance is off by more than 15% from the target —
+// small variance (route was a bit longer/shorter) isn't worth calling out.
+const DISTANCE_TOLERANCE = 0.15
+
+function PlanVsActual({ session, workout }: { session: TrainingPlanSession; workout: WorkoutDetail }) {
+  const targetData = (session.target_data ?? {}) as Record<string, unknown>
+  const targetDistanceKm = typeof targetData.distance_km === 'number' ? targetData.distance_km : null
+  const actualDistanceKm = workout.distance_meters ? workout.distance_meters / 1000 : null
+
+  const activityDiffers = session.activity_type !== workout.activity_type
+  const distanceDiffers =
+    targetDistanceKm !== null &&
+    actualDistanceKm !== null &&
+    Math.abs(actualDistanceKm - targetDistanceKm) / targetDistanceKm > DISTANCE_TOLERANCE
+
+  if (!activityDiffers && !distanceDiffers) {
+    return <p className="text-xs text-ink-secondary">✓ Genomfört enligt plan: {session.title}</p>
+  }
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      <div className="rounded-lg border border-border p-2.5">
+        <p className="text-xs font-medium text-ink-secondary">Planerat</p>
+        <div className="mt-1 flex items-center gap-1.5">
+          <ActivityIcon type={session.activity_type} size="sm" />
+          <p className="min-w-0 truncate text-sm font-medium text-ink-primary">{session.title}</p>
+        </div>
+        {targetDistanceKm !== null && <p className="mt-1 text-xs text-ink-secondary">{targetDistanceKm} km</p>}
+      </div>
+      <div className="rounded-lg border border-accent p-2.5">
+        <p className="text-xs font-medium text-ink-secondary">Genomfört</p>
+        <div className="mt-1 flex items-center gap-1.5">
+          <ActivityIcon type={workout.activity_type} size="sm" />
+          <p className="min-w-0 truncate text-sm font-medium text-ink-primary">
+            {workout.title ?? ACTIVITY_LABELS[workout.activity_type]}
+          </p>
+        </div>
+        {actualDistanceKm !== null && (
+          <p className="mt-1 text-xs text-ink-secondary">{actualDistanceKm.toFixed(1)} km</p>
+        )}
+      </div>
     </div>
   )
 }
