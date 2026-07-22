@@ -18,7 +18,9 @@ interface OffRawNutriments {
 interface OffRawProduct {
   code?: string
   product_name?: string
-  brands?: string
+  // string from the legacy cgi/search.pl API (comma-separated), string[] from
+  // the search-a-licious fuzzy fallback.
+  brands?: string | string[]
   nutriments?: OffRawNutriments
   image_front_small_url?: string
   image_small_url?: string
@@ -84,12 +86,13 @@ function mapProduct(raw: OffRawProduct): FoodSearchResult | null {
   }
 
   const portionG = resolvePortionG(raw)
+  const brand = Array.isArray(raw.brands) ? raw.brands[0]?.trim() : raw.brands?.split(',')[0]?.trim()
 
   return {
     source: 'open_food_facts',
     externalId: raw.code,
     name,
-    brand: raw.brands?.split(',')[0]?.trim() || null,
+    brand: brand || null,
     caloriesPer100g: calories,
     proteinPer100g: protein,
     carbsPer100g: carbs,
@@ -100,7 +103,61 @@ function mapProduct(raw: OffRawProduct): FoodSearchResult | null {
   }
 }
 
-export async function searchFoodItems(query: string): Promise<FoodSearchResult[]> {
+// search-a-licious (Elasticsearch-backed) supports Lucene fuzzy syntax
+// (word~N, edit distance N) — the legacy cgi/search.pl endpoint below does
+// near-literal token matching and returns nothing for misspellings.
+const FUZZY_SEARCH_URL = 'https://search.openfoodfacts.org/search'
+
+function sanitizeLuceneWord(word: string): string {
+  return word.replace(/[^\p{L}\p{N}]/gu, '')
+}
+
+// Edit distance 1-2 catches typical typos without matching unrelated short
+// words (ES fuzzy on 1-2 char terms is mostly noise).
+function fuzzinessForWord(word: string): 0 | 1 | 2 {
+  if (word.length <= 2) return 0
+  if (word.length <= 5) return 1
+  return 2
+}
+
+function buildFuzzyQuery(query: string): string | null {
+  const words = query
+    .trim()
+    .split(/\s+/)
+    .map(sanitizeLuceneWord)
+    .filter((word) => word.length > 0)
+  if (words.length === 0) return null
+
+  const wordClauses = words.map((word) => {
+    const fuzziness = fuzzinessForWord(word)
+    const suffix = fuzziness > 0 ? `~${fuzziness}` : ''
+    return `(product_name.sv:${word}${suffix} OR generic_name.sv:${word}${suffix})`
+  })
+
+  // Scoped to Sweden to match se.openfoodfacts.org above, and sorted by scan
+  // popularity since this endpoint's default relevance ranking is noisy for
+  // fuzzy matches (brand-name coincidences outrank the actual product).
+  return `countries_tags:"en:sweden" AND ${wordClauses.join(' AND ')}`
+}
+
+async function searchFoodItemsFuzzy(query: string): Promise<FoodSearchResult[]> {
+  const q = buildFuzzyQuery(query)
+  if (!q) return []
+
+  const url = new URL(FUZZY_SEARCH_URL)
+  url.searchParams.set('q', q)
+  url.searchParams.set('langs', 'sv')
+  url.searchParams.set('page_size', '20')
+  url.searchParams.set('sort_by', 'unique_scans_n')
+  url.searchParams.set('fields', FIELDS)
+
+  const res = await fetch(url.toString())
+  if (!res.ok) return []
+  const data = (await res.json()) as { hits?: OffRawProduct[] }
+  return (data.hits ?? []).map(mapProduct).filter((p): p is FoodSearchResult => p !== null)
+}
+
+async function searchFoodItemsLegacy(query: string): Promise<FoodSearchResult[]> {
   const url = new URL(`${BASE_URL}/cgi/search.pl`)
   url.searchParams.set('search_terms', query)
   url.searchParams.set('search_simple', '1')
@@ -114,6 +171,19 @@ export async function searchFoodItems(query: string): Promise<FoodSearchResult[]
   if (!res.ok) throw new Error('Sökningen misslyckades')
   const data = (await res.json()) as { products?: OffRawProduct[] }
   return (data.products ?? []).map(mapProduct).filter((p): p is FoodSearchResult => p !== null)
+}
+
+// The legacy endpoint occasionally 503s outright (observed 2026-07-22, not
+// just typo-related emptiness) on top of never fuzzy-matching misspellings,
+// so both failure modes fall through to the same fuzzy search-a-licious path.
+export async function searchFoodItems(query: string): Promise<FoodSearchResult[]> {
+  try {
+    const results = await searchFoodItemsLegacy(query)
+    if (results.length > 0) return results
+  } catch {
+    // fall through to fuzzy search below
+  }
+  return searchFoodItemsFuzzy(query)
 }
 
 export async function lookupBarcode(barcode: string): Promise<FoodSearchResult | null> {
