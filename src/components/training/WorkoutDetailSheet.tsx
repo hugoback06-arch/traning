@@ -8,6 +8,7 @@ import { ActivityIcon } from './ActivityIcon'
 import { useWorkoutDetail } from '../../hooks/useWorkoutDetail'
 import { useUpdateWorkout } from '../../hooks/useUpdateWorkout'
 import { useEvaluateWorkout } from '../../hooks/useEvaluateWorkout'
+import { useCreateManualWorkout } from '../../hooks/useCreateManualWorkout'
 import { ACTIVITY_LABELS } from '../../lib/activityTypes'
 import { formatDistance, formatDuration, formatPace } from '../../lib/formatWorkout'
 import type { PlanActivityType, TrainingPlanSession, WorkoutDetail, WorkoutSetWithExercise } from '../../types/domain'
@@ -59,7 +60,7 @@ export function WorkoutDetailSheet({ target, onClose }: WorkoutDetailSheetProps)
           </button>
         </div>
         {target.type === 'session' ? (
-          <SessionOnlyDetail session={target.session} />
+          <SessionOnlyDetail session={target.session} onClose={onClose} />
         ) : (
           <WorkoutDetailContent workoutId={target.workoutId} />
         )}
@@ -68,7 +69,11 @@ export function WorkoutDetailSheet({ target, onClose }: WorkoutDetailSheetProps)
   )
 }
 
-function SessionOnlyDetail({ session }: { session: TrainingPlanSession }) {
+function SessionOnlyDetail({ session, onClose }: { session: TrainingPlanSession; onClose: () => void }) {
+  const createManualWorkout = useCreateManualWorkout()
+  // Narrowed to a local const: TS control-flow narrowing on session.activity_type
+  // doesn't survive into the onClick closure below otherwise.
+  const loggableActivityType = session.activity_type !== 'rest' ? session.activity_type : null
   const targetData = (session.target_data ?? {}) as Record<string, unknown>
   const exercises = Array.isArray(targetData.exercises) ? (targetData.exercises as SessionExercise[]) : null
   const segments = Array.isArray(targetData.segments) ? (targetData.segments as SessionSegment[]) : null
@@ -131,6 +136,31 @@ function SessionOnlyDetail({ session }: { session: TrainingPlanSession }) {
               )}
             </div>
           ))}
+        </div>
+      )}
+
+      {loggableActivityType && (
+        <div>
+          <Button
+            className="w-full"
+            disabled={createManualWorkout.isPending}
+            onClick={() =>
+              createManualWorkout.mutate(
+                {
+                  sessionId: session.id,
+                  activityType: loggableActivityType,
+                  title: session.title,
+                  scheduledDate: session.scheduled_date,
+                },
+                { onSuccess: onClose },
+              )
+            }
+          >
+            {createManualWorkout.isPending ? 'Sparar…' : '✓ Markera som klart'}
+          </Button>
+          {createManualWorkout.isError && (
+            <p className="mt-1 text-sm text-warning">Något gick fel, försök igen.</p>
+          )}
         </div>
       )}
     </div>
