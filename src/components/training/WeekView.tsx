@@ -3,10 +3,8 @@ import { addDays, format } from 'date-fns'
 import { Card } from '../common/Card'
 import { DayCard } from './DayCard'
 import { WeekProgressRing } from './WeekProgressRing'
-import { IntensityControl } from './IntensityControl'
 import { useTrainingPlanSessionsInRange } from '../../hooks/useTrainingPlanSessionsInRange'
 import { useWorkoutsInRange } from '../../hooks/useWorkoutsInRange'
-import { useActiveTrainingPlan } from '../../hooks/useActiveTrainingPlan'
 import { nextWeek, prevWeek, weekDays, weekRangeLabel } from '../../lib/weekGrid'
 import { weekComplianceStats, weekSummaryLabel } from '../../lib/workoutTotals'
 import type { DetailTarget } from './WorkoutDetailSheet'
@@ -26,7 +24,6 @@ export function WeekView({ onSelectDay }: WeekViewProps) {
 
   const { data: sessions } = useTrainingPlanSessionsInRange(startDateKey, endDateKey)
   const { data: workouts } = useWorkoutsInRange(startIso, endIsoExclusive)
-  const { data: activePlan } = useActiveTrainingPlan()
 
   const complianceStats = weekComplianceStats(sessions ?? [])
 
@@ -91,8 +88,6 @@ export function WeekView({ onSelectDay }: WeekViewProps) {
       </div>
 
       <p className="text-xs text-ink-secondary">{weekSummaryLabel(workouts ?? [])}</p>
-
-      {activePlan && <IntensityControl trainingPlanId={activePlan.id} current={activePlan.intensity_preference} />}
     </Card>
   )
 }

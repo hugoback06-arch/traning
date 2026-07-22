@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Kost- och träningsapp (webbapp/PWA, mobil-först), produktnamn **Strikt**. MVP = kost-spårning: onboarding med auto-beräknat kalori-/makromål, dagsöversikt, kalender, fyra loggningssätt (sökning, streckkod, fotoanalys, textbeskrivning), måltidshistorik, profilinställningar. Fullständig spec: `app-spec-mvp.md`.
 
-Träningsdelen byggs som ett tillägg ovanpå MVP:t: automatisk Strava-synk (webhook, ej manuell loggning i huvudflödet), AI-schemagenerator med adaptiv justering, AI-utvärdering av pass, och en osynlig kalori-koppling till kost-målet. Spec: `app-spec-training.md` + `app-spec-training-addendum.md` (läs båda, addendumet är tillägg/ändringar, inte ersättning).
+Träningsdelen byggs som ett tillägg ovanpå MVP:t: automatisk Strava-synk (webhook, ej manuell loggning i huvudflödet), AI-schemagenerator, AI-utvärdering av pass, och en osynlig kalori-koppling till kost-målet. Spec: `app-spec-training.md` + `app-spec-training-addendum.md` (läs båda, addendumet är tillägg/ändringar, inte ersättning).
 
 ## Tech-stack
 
@@ -18,7 +18,7 @@ Träningsdelen byggs som ett tillägg ovanpå MVP:t: automatisk Strava-synk (web
 - **Supabase** (Postgres + Auth + Edge Functions): magic-link login, RLS per användare
 - Open Food Facts API (publik, ingen nyckel) för sökning/streckkod
 - Claude API (vision) för fotoanalys, via Edge Function `supabase/functions/analyze-meal-photo` (håller `ANTHROPIC_API_KEY` server-side)
-- Claude API (text/tool-use) för AI-schema (`generate-training-plan`), pass-utvärdering (`evaluate-workout`) och adaptiv schemajustering (`adjust-training-plan`) — delad system-prompt med säkerhetsramar i `supabase/functions/_shared/safetyPrompt.ts`
+- Claude API (text/tool-use) för AI-schema (`generate-training-plan`) och pass-utvärdering (`evaluate-workout`) — delad system-prompt med säkerhetsramar i `supabase/functions/_shared/safetyPrompt.ts`
 - Strava API (OAuth + push-webhook) för automatisk träningssynk — `strava-oauth-start`/`strava-oauth-callback` (anslutning), `strava-webhook` (push-events, huvudflöde), `strava-manual-sync` (diskret fallback-knapp i Profil). Delad mappnings-/upsert-logik i `supabase/functions/_shared/stravaActivity.ts`
 - `barcode-detector` (native + WASM-fallback för Safari/iOS)
 - Dexie installerat men **oanvänt** (relik från tidigare lokal-first-idé) — kan tas bort ur `package.json`
@@ -34,7 +34,7 @@ Ursprungligt scaffold var lokalt (IndexedDB/Dexie, ingen auth). Nu gäller istä
 
 ## Status
 
-Kost-MVP (M1–M10) klar. Träningsdelen: datamodell, `/training`-UI (Idag/Schema/Historik/passdetalj), Hem-skärm och ny nav (Hem/Kost/Träning/Profil), AI-schemagenerator (flerveckors, historik-baserad), AI-utvärdering, adaptiv schemajustering, och Strava OAuth + webhook-synk är byggda och deployade. Kvar: Garmin-synk, automatisk avvikelse-detektering i den adaptiva justeringen (bara den knapp-triggade vägen är byggd).
+Kost-MVP (M1–M10) klar. Träningsdelen: datamodell, `/training`-UI (Idag/Schema/Historik/passdetalj), Hem-skärm och ny nav (Hem/Kost/Träning/Profil), AI-schemagenerator (flerveckors, historik-baserad), AI-utvärdering, och Strava OAuth + webhook-synk är byggda och deployade. Adaptiv schemajustering (knapparna "För intensivt"/"Lagom"/"Vill ha mer") togs bort — schemaändringar görs istället direkt i schemabyggaren. Kvar: Garmin-synk.
 
 ## Driftsättning
 
@@ -68,7 +68,7 @@ Engångssteg per Supabase-projekt/Strava-app (inte något som görs i UI:t):
 - `vite.config.ts` — plugins: react, tailwind, pwa
 - `src/index.css` — Tailwind + design tokens (teal accent `#1D9E75`, makro-färger, aktivitetstyp-färger, surface/ink/border/warning)
 - `src/components/layout/` — `AppShell`, `BottomNav`
-- `src/components/training/` — träningsdelens UI-byggstenar (vecko-vy, passdetalj-sheet, AI-schemagenerator, adaptiv-justering-knappar)
+- `src/components/training/` — träningsdelens UI-byggstenar (vecko-vy, passdetalj-sheet, AI-schemagenerator)
 - `src/routes/` — en fil per toppnivå-sida, `src/routes/training/` för Idag/Schema/Historik
 - `src/lib/queryClient.ts` — delad `QueryClient`
 - `supabase/` — migrations + Edge Functions (`_shared/` för kod som delas mellan flera funktioner, t.ex. säkerhets-system-prompten och Strava-mappningen)

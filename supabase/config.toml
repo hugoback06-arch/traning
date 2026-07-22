@@ -399,9 +399,6 @@ verify_jwt = true
 [functions.evaluate-workout]
 verify_jwt = true
 
-[functions.adjust-training-plan]
-verify_jwt = true
-
 [functions.strava-oauth-start]
 verify_jwt = true
 
