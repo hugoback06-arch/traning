@@ -78,8 +78,8 @@ export function WorkoutDetailPage() {
 
   return (
     <div className="space-y-4">
-      <Link to="/training/history" className="text-sm text-ink-secondary">
-        ← Historik
+      <Link to="/training" className="text-sm text-ink-secondary">
+        ← Träning
       </Link>
 
       {isLoading || !workout ? (
