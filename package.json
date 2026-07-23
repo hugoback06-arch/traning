@@ -17,7 +17,6 @@
     "@vercel/speed-insights": "^2.0.0",
     "barcode-detector": "^3.2.1",
     "date-fns": "^4.4.0",
-    "dexie": "^4.4.4",
     "fuse.js": "^7.5.0",
     "leaflet": "^1.9.4",
     "lucide-react": "^1.25.0",

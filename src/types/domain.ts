@@ -110,7 +110,6 @@ export type WorkoutSource = 'manual' | 'strava' | 'garmin' | 'ai_plan'
 export type ActivityType = 'running' | 'cycling' | 'swimming' | 'strength' | 'walking' | 'other'
 export type PlanActivityType = ActivityType | 'rest'
 export type TrainingPlanStatus = 'active' | 'completed' | 'archived'
-export type IntensityPreference = 'lower' | 'as_planned' | 'higher'
 export type FitnessProvider = 'strava' | 'garmin'
 
 export interface FitnessConnection {
@@ -201,15 +200,6 @@ export interface TrainingPlan {
   start_date: string
   end_date: string | null
   status: TrainingPlanStatus
-  intensity_preference: IntensityPreference
-  created_at: string
-}
-
-export interface TrainingPlanAdjustment {
-  id: string
-  training_plan_id: string
-  user_id: string
-  note: string
   created_at: string
 }
 
