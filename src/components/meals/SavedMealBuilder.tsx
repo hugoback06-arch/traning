@@ -1,5 +1,7 @@
 import { useState } from 'react'
+import { X } from 'lucide-react'
 import { Card } from '../common/Card'
+import { BackButton } from '../common/BackButton'
 import { Button } from '../common/Button'
 import { FoodSearchList } from './FoodSearchList'
 import { AmountInput } from './AmountInput'
@@ -49,9 +51,7 @@ export function SavedMealBuilder({ onBack, onSaved }: SavedMealBuilderProps) {
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-sm text-ink-secondary">
-        ← Tillbaka
-      </button>
+      <BackButton onClick={onBack} />
 
       {pendingResult ? (
         <Card className="space-y-4">
@@ -102,7 +102,7 @@ export function SavedMealBuilder({ onBack, onSaved }: SavedMealBuilderProps) {
                     {Math.round((item.foodResult.caloriesPer100g * item.amountG) / 100)} kcal
                   </span>
                   <button aria-label="Ta bort" onClick={() => handleRemove(index)} className="text-ink-secondary">
-                    ✕
+                    <X size={15} />
                   </button>
                 </div>
               </li>

@@ -1,7 +1,9 @@
 import { useState } from 'react'
+import { Save } from 'lucide-react'
 import { Button } from '../common/Button'
 import { AmountInput } from './AmountInput'
 import { MealTypeSelect } from './MealTypeSelect'
+import { SaveMealNameDialog } from './SaveMealNameDialog'
 import { useUpdateMealLog } from '../../hooks/useUpdateMealLog'
 import { useDeleteMealLog } from '../../hooks/useDeleteMealLog'
 import { MEAL_TYPE_LABELS } from '../../lib/mealTypeLabels'
@@ -15,6 +17,7 @@ export function MealListItem({ log }: MealListItemProps) {
   const [expanded, setExpanded] = useState(false)
   const [amountG, setAmountG] = useState(log.amount_g)
   const [mealType, setMealType] = useState<MealType>(log.meal_type)
+  const [saving, setSaving] = useState(false)
   const updateMealLog = useUpdateMealLog()
   const deleteMealLog = useDeleteMealLog()
 
@@ -77,6 +80,21 @@ export function MealListItem({ log }: MealListItemProps) {
           {updateMealLog.isPending ? 'Sparar…' : 'Spara'}
         </Button>
       </div>
+      <button
+        onClick={() => setSaving(true)}
+        className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-surface-muted py-2 text-sm text-ink-secondary"
+      >
+        <Save size={15} /> Spara som måltid
+      </button>
+      {saving && (
+        <SaveMealNameDialog
+          items={[{ foodItemId: log.food_item_id, amountG }]}
+          totalKcal={kcal}
+          defaultName={log.food_item.name}
+          onClose={() => setSaving(false)}
+          onSaved={() => setSaving(false)}
+        />
+      )}
     </div>
   )
 }

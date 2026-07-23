@@ -1,5 +1,6 @@
 import { format, isToday } from 'date-fns'
 import { sv } from 'date-fns/locale'
+import { Check, ChevronRight } from 'lucide-react'
 import { ActivityIcon } from './ActivityIcon'
 import { ACTIVITY_LABELS } from '../../lib/activityTypes'
 import type { PlanActivityType, TrainingPlanSession, Workout } from '../../types/domain'
@@ -40,14 +41,14 @@ export function DayCard({ date, session, workouts, onClick }: DayCardProps) {
       {differs ? (
         <div className="flex shrink-0 items-center gap-1">
           <ActivityIcon type={plannedType} size="sm" />
-          <span className="text-xs text-ink-secondary">→</span>
+          <ChevronRight size={14} className="text-ink-secondary" />
           <ActivityIcon type={actualType} />
         </div>
       ) : (
         <ActivityIcon type={displayType} />
       )}
       <span className="min-w-0 flex-1 truncate text-sm font-medium text-ink-primary">{label}</span>
-      {isDone && <span className="shrink-0 text-lg text-accent">✓</span>}
+      {isDone && <Check size={18} className="shrink-0 text-accent" />}
     </button>
   )
 }

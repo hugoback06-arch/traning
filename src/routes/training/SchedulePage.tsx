@@ -1,6 +1,8 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
+import { Bot } from 'lucide-react'
 import { AiPlanGenerator } from '../../components/training/AiPlanGenerator'
+import { BackButton } from '../../components/common/BackButton'
 import { PlanWeekSchedule } from '../../components/training/PlanWeekSchedule'
 import { WorkoutDetailSheet } from '../../components/training/WorkoutDetailSheet'
 import type { DetailTarget } from '../../components/training/WorkoutDetailSheet'
@@ -17,10 +19,10 @@ export function SchedulePage() {
 
   return (
     <div className="space-y-4">
-      <Link to="/training" className="text-sm text-ink-secondary">
-        ← Träning
-      </Link>
-      <h1 className="font-display text-lg font-semibold">🤖 Schemabyggare</h1>
+      <BackButton to="/training" label="Träning" />
+      <h1 className="flex items-center gap-2 font-display text-lg font-semibold">
+        <Bot size={20} /> Schemabyggare
+      </h1>
       <AiPlanGenerator />
       <PlanWeekSchedule onSelect={handleSelect} />
       {selectedSession && <WorkoutDetailSheet session={selectedSession} onClose={() => setSelectedSession(null)} />}

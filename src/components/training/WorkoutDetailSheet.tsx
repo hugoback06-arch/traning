@@ -1,3 +1,4 @@
+import { Check, X } from 'lucide-react'
 import { Button } from '../common/Button'
 import { ActivityIcon } from './ActivityIcon'
 import { useCreateManualWorkout } from '../../hooks/useCreateManualWorkout'
@@ -41,8 +42,8 @@ export function WorkoutDetailSheet({ session, onClose }: WorkoutDetailSheetProps
       <button aria-label="Stäng" onClick={onClose} className="backdrop-in absolute inset-0 bg-black/40" />
       <div className="sheet-up relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-surface p-4 pb-8">
         <div className="mb-4 flex items-center justify-end">
-          <button onClick={onClose} aria-label="Stäng" className="press text-lg leading-none text-ink-secondary">
-            ✕
+          <button onClick={onClose} aria-label="Stäng" className="press text-ink-secondary">
+            <X size={20} />
           </button>
         </div>
         <SessionOnlyDetail session={session} onClose={onClose} />
@@ -138,7 +139,13 @@ function SessionOnlyDetail({ session, onClose }: { session: TrainingPlanSession;
               )
             }
           >
-            {createManualWorkout.isPending ? 'Sparar…' : '✓ Markera som klart'}
+            {createManualWorkout.isPending ? (
+              'Sparar…'
+            ) : (
+              <span className="flex items-center justify-center gap-1.5">
+                <Check size={16} /> Markera som klart
+              </span>
+            )}
           </Button>
           {createManualWorkout.isError && (
             <p className="mt-1 text-sm text-warning">Något gick fel, försök igen.</p>

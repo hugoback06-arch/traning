@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { AiEstimateReviewForm } from './AiEstimateReviewForm'
+import { BackButton } from '../common/BackButton'
 import { Button } from '../common/Button'
 import { Spinner } from '../common/Spinner'
 import { useAnalyzeMealText } from '../../hooks/useAnalyzeMealText'
@@ -46,9 +47,7 @@ export function AddMealTextStep({ initialMealType, onBack, onSaved }: AddMealTex
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-sm text-ink-secondary">
-        ← Tillbaka
-      </button>
+      <BackButton onClick={onBack} />
 
       <label className="block text-sm text-ink-secondary">
         Vad åt du?

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useSearchParams } from 'react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { Bell, Lightbulb, Palette, User } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { Spinner } from '../components/common/Spinner'
@@ -162,7 +163,9 @@ export function ProfileSettingsPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-lg font-semibold">👤 Profil</h1>
+      <h1 className="flex items-center gap-2 font-display text-lg font-semibold">
+        <User size={20} /> Profil
+      </h1>
 
       {displayStravaStatus && (
         <p className="rounded-lg bg-accent-light px-3 py-2 text-sm text-accent">
@@ -228,14 +231,18 @@ export function ProfileSettingsPage() {
       </Card>
 
       <Card className="space-y-3">
-        <h2 className="text-sm font-medium text-ink-primary">🎨 Utseende</h2>
+        <h2 className="flex items-center gap-1.5 text-sm font-medium text-ink-primary">
+          <Palette size={16} /> Utseende
+        </h2>
         <SegmentedControl options={THEME_OPTIONS} value={preference} onChange={setPreference} />
       </Card>
 
       <Card className="space-y-2">
         <div className="flex items-center justify-between gap-3">
           <div>
-            <h2 className="text-sm font-medium text-ink-primary">🔔 Notiser</h2>
+            <h2 className="flex items-center gap-1.5 text-sm font-medium text-ink-primary">
+              <Bell size={16} /> Notiser
+            </h2>
             <p className="text-xs text-ink-secondary">Påminnelser och uppdateringar från appen.</p>
           </div>
           <Switch checked={profile.notifications_enabled} onChange={handleNotificationsToggle} label="Notiser" />
@@ -245,7 +252,9 @@ export function ProfileSettingsPage() {
 
       <Card className="space-y-3">
         <div>
-          <h2 className="text-sm font-medium text-ink-primary">💡 Föreslå en ändring</h2>
+          <h2 className="flex items-center gap-1.5 text-sm font-medium text-ink-primary">
+            <Lightbulb size={16} /> Föreslå en ändring
+          </h2>
           <p className="text-xs text-ink-secondary">Tips, buggar eller önskemål — skriv fritt, vi läser allt.</p>
         </div>
         <textarea

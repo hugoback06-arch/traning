@@ -1,8 +1,8 @@
 import { useState } from 'react'
+import { Plus } from 'lucide-react'
 import { MealListItem } from './MealListItem'
 import { AddMealModal } from './AddMealModal'
-import { SaveMealNameDialog } from './SaveMealNameDialog'
-import { MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../../lib/mealTypeLabels'
+import { MEAL_TYPE_ICONS, MEAL_TYPE_LABELS, MEAL_TYPE_ORDER } from '../../lib/mealTypeLabels'
 import { sumMealTotals } from '../../lib/dailyTotals'
 import type { MealLogWithFood, MealType } from '../../types/domain'
 
@@ -13,7 +13,6 @@ interface MealTypeSectionProps {
 export function MealTypeSection({ logs }: MealTypeSectionProps) {
   const [expandedType, setExpandedType] = useState<MealType | null>(null)
   const [addingType, setAddingType] = useState<MealType | null>(null)
-  const [savingType, setSavingType] = useState<MealType | null>(null)
 
   return (
     <div className="space-y-2">
@@ -21,6 +20,7 @@ export function MealTypeSection({ logs }: MealTypeSectionProps) {
         const logsForType = logs.filter((log) => log.meal_type === type)
         const kcal = Math.round(sumMealTotals(logsForType).kcal)
         const isExpanded = expandedType === type
+        const Icon = MEAL_TYPE_ICONS[type]
 
         return (
           <div key={type} className="overflow-hidden rounded-xl border border-border bg-surface">
@@ -29,26 +29,19 @@ export function MealTypeSection({ logs }: MealTypeSectionProps) {
                 onClick={() => setExpandedType(isExpanded ? null : type)}
                 className="flex flex-1 items-center justify-between text-left"
               >
-                <span className="text-sm font-medium text-ink-primary">{MEAL_TYPE_LABELS[type]}</span>
+                <span className="flex items-center gap-1.5 text-sm font-medium text-ink-primary">
+                  <Icon size={15} className="text-ink-secondary" /> {MEAL_TYPE_LABELS[type]}
+                </span>
                 <span className="text-xs text-ink-secondary">
                   {logsForType.length > 0 ? `${kcal} kcal · ${logsForType.length} st` : 'Inget loggat'}
                 </span>
               </button>
-              {logsForType.length > 0 && (
-                <button
-                  aria-label={`Spara ${MEAL_TYPE_LABELS[type]} som måltid`}
-                  onClick={() => setSavingType(type)}
-                  className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-surface-muted text-sm leading-none text-ink-secondary"
-                >
-                  💾
-                </button>
-              )}
               <button
                 aria-label={`Lägg till i ${MEAL_TYPE_LABELS[type]}`}
                 onClick={() => setAddingType(type)}
-                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-light text-lg leading-none text-accent"
+                className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent-light text-accent"
               >
-                +
+                <Plus size={16} />
               </button>
             </div>
             {isExpanded && (
@@ -64,16 +57,6 @@ export function MealTypeSection({ logs }: MealTypeSectionProps) {
         )
       })}
       {addingType && <AddMealModal mealType={addingType} onClose={() => setAddingType(null)} />}
-      {savingType && (
-        <SaveMealNameDialog
-          items={logs
-            .filter((log) => log.meal_type === savingType)
-            .map((log) => ({ foodItemId: log.food_item_id, amountG: log.amount_g }))}
-          totalKcal={sumMealTotals(logs.filter((log) => log.meal_type === savingType)).kcal}
-          onClose={() => setSavingType(null)}
-          onSaved={() => setSavingType(null)}
-        />
-      )}
     </div>
   )
 }

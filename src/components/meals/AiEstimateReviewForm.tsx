@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Card } from '../common/Card'
+import { BackButton } from '../common/BackButton'
 import { Button } from '../common/Button'
 import { MealTypeSelect } from './MealTypeSelect'
 import { useLogMeal } from '../../hooks/useLogMeal'
@@ -94,9 +95,7 @@ export function AiEstimateReviewForm({
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-sm text-ink-secondary">
-        ← {backLabel}
-      </button>
+      <BackButton onClick={onBack} label={backLabel} />
       <Card className="space-y-4">
         {estimate.confidence === 'low' && (
           <p className="rounded-lg bg-warning-light px-3 py-2 text-xs text-warning">

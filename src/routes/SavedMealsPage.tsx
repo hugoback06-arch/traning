@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Pencil } from 'lucide-react'
 import { Card } from '../components/common/Card'
+import { BackButton } from '../components/common/BackButton'
 import { Spinner } from '../components/common/Spinner'
 import { useSavedMeals } from '../hooks/useSavedMeals'
 import { useRenameSavedMeal } from '../hooks/useRenameSavedMeal'
@@ -53,9 +54,9 @@ function SavedMealRow({ savedMeal }: { savedMeal: SavedMealWithItems }) {
         <button
           aria-label="Byt namn"
           onClick={() => setEditingName(savedMeal.name)}
-          className="shrink-0 text-sm text-ink-secondary"
+          className="shrink-0 text-ink-secondary"
         >
-          ✎
+          <Pencil size={15} />
         </button>
         <button
           aria-label="Ta bort"
@@ -85,9 +86,7 @@ export function SavedMealsPage() {
   return (
     <div className="space-y-4">
       <div>
-        <Link to="/nutrition" className="text-sm text-ink-secondary">
-          ← Kost
-        </Link>
+        <BackButton to="/nutrition" label="Kost" />
         <h1 className="font-display text-lg font-semibold">Sparade måltider</h1>
       </div>
 

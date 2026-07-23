@@ -20,7 +20,6 @@ export function useWorkoutHistory() {
         .select('*, workout_evaluations(*)')
         .eq('user_id', userId as string)
         .order('started_at', { ascending: false })
-        .limit(50)
 
       if (error) throw error
       return data as unknown as WorkoutHistoryItem[]

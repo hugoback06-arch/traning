@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { addDays, format } from 'date-fns'
 import { Card } from '../common/Card'
 import { DayCard } from './DayCard'
@@ -42,7 +43,7 @@ export function WeekView({ onSelectDay }: WeekViewProps) {
           className="press rounded-lg px-2 py-1 text-sm text-ink-secondary"
           aria-label="Föregående vecka"
         >
-          ←
+          <ChevronLeft size={18} />
         </button>
         <span className="text-sm font-medium text-ink-primary">{weekRangeLabel(referenceDate)}</span>
         <button
@@ -50,7 +51,7 @@ export function WeekView({ onSelectDay }: WeekViewProps) {
           className="press rounded-lg px-2 py-1 text-sm text-ink-secondary"
           aria-label="Nästa vecka"
         >
-          →
+          <ChevronRight size={18} />
         </button>
       </div>
 

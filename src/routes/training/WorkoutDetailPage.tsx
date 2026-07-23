@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { Link, useParams } from 'react-router'
+import { useParams } from 'react-router'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
+import { Check } from 'lucide-react'
 import { Button } from '../../components/common/Button'
+import { BackButton } from '../../components/common/BackButton'
 import { Spinner } from '../../components/common/Spinner'
 import { ActivityIcon } from '../../components/training/ActivityIcon'
 import { WorkoutMap } from '../../components/training/WorkoutMap'
@@ -42,6 +44,7 @@ function formatSpeedAsPace(metersPerSecond: number): string {
 function StreamCharts({ streams }: { streams: WorkoutStreams }) {
   const hasHeartrate = streams.heartrate && streams.heartrate.some((v) => v > 0)
   const hasPace = streams.velocity_smooth && streams.velocity_smooth.some((v) => v > 0)
+  const [expanded, setExpanded] = useState<'heartrate' | 'pace' | null>(null)
 
   if (!hasHeartrate && !hasPace) return null
 
@@ -55,6 +58,7 @@ function StreamCharts({ streams }: { streams: WorkoutStreams }) {
           values={streams.heartrate!}
           formatValue={(v) => `${Math.round(v)} bpm`}
           formatTime={formatElapsed}
+          onExpand={() => setExpanded('heartrate')}
         />
       )}
       {hasPace && (
@@ -65,7 +69,48 @@ function StreamCharts({ streams }: { streams: WorkoutStreams }) {
           values={streams.velocity_smooth!}
           formatValue={formatSpeedAsPace}
           formatTime={formatElapsed}
+          onExpand={() => setExpanded('pace')}
         />
+      )}
+      {expanded && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center">
+          <button
+            aria-label="Stäng"
+            onClick={() => setExpanded(null)}
+            className="backdrop-in absolute inset-0 bg-black/40"
+          />
+          <div className="sheet-up relative z-10 w-full max-w-md rounded-t-2xl bg-surface p-4 pb-8">
+            <div className="mb-3 flex items-center justify-between">
+              <h2 className="text-base font-semibold text-ink-primary">
+                {expanded === 'heartrate' ? 'Puls' : 'Tempo'}
+              </h2>
+              <button onClick={() => setExpanded(null)} className="text-sm text-ink-secondary">
+                Stäng
+              </button>
+            </div>
+            {expanded === 'heartrate' ? (
+              <StreamChart
+                label="Puls"
+                colorVar="var(--color-chart-heartrate)"
+                timeSeconds={streams.time}
+                values={streams.heartrate!}
+                formatValue={(v) => `${Math.round(v)} bpm`}
+                formatTime={formatElapsed}
+                height={220}
+              />
+            ) : (
+              <StreamChart
+                label="Tempo"
+                colorVar="var(--color-chart-pace)"
+                timeSeconds={streams.time}
+                values={streams.velocity_smooth!}
+                formatValue={formatSpeedAsPace}
+                formatTime={formatElapsed}
+                height={220}
+              />
+            )}
+          </div>
+        </div>
       )}
     </div>
   )
@@ -78,9 +123,7 @@ export function WorkoutDetailPage() {
 
   return (
     <div className="space-y-4">
-      <Link to="/training" className="text-sm text-ink-secondary">
-        ← Träning
-      </Link>
+      <BackButton to="/training" label="Träning" />
 
       {isLoading || !workout ? (
         <Spinner />
@@ -100,11 +143,11 @@ export function WorkoutDetailPage() {
 
           {workout.map_polyline && <WorkoutMap polyline={workout.map_polyline} />}
 
-          {workout.streams && <StreamCharts streams={workout.streams} />}
-
           {workout.session && <PlanVsActual session={workout.session} workout={workout} />}
 
           <StatsGrid workout={workout} />
+
+          {workout.streams && <StreamCharts streams={workout.streams} />}
 
           {workout.splits && workout.splits.length > 1 && <SplitsTable splits={workout.splits} />}
 
@@ -152,7 +195,11 @@ function PlanVsActual({ session, workout }: { session: TrainingPlanSession; work
     Math.abs(actualDistanceKm - targetDistanceKm) / targetDistanceKm > DISTANCE_TOLERANCE
 
   if (!activityDiffers && !distanceDiffers) {
-    return <p className="text-xs text-ink-secondary">✓ Genomfört enligt plan: {session.title}</p>
+    return (
+      <p className="flex items-center gap-1 text-xs text-ink-secondary">
+        <Check size={13} className="shrink-0 text-accent" /> Genomfört enligt plan: {session.title}
+      </p>
+    )
   }
 
   return (

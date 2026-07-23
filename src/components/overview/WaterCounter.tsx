@@ -1,3 +1,4 @@
+import { Droplet, Minus, Plus } from 'lucide-react'
 import { Card } from '../common/Card'
 import { Button } from '../common/Button'
 import { GLASS_ML } from '../../lib/constants'
@@ -17,7 +18,9 @@ export function WaterCounter({ currentMl, goalMl, onAdd, onRemove }: WaterCounte
     <Card>
       <div className="flex items-center justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-ink-primary">💧 Vatten</p>
+          <p className="flex items-center gap-1.5 text-sm font-medium text-ink-primary">
+            <Droplet size={16} className="text-accent" /> Vatten
+          </p>
           <p className="text-xs text-ink-secondary">
             {currentMl} / {goalMl} ml
           </p>
@@ -25,15 +28,15 @@ export function WaterCounter({ currentMl, goalMl, onAdd, onRemove }: WaterCounte
         <div className="flex items-center gap-2">
           <Button
             variant="secondary"
-            className="h-8 w-8 px-0 text-base leading-none"
+            className="h-8 w-8 px-0"
             onClick={onRemove}
             disabled={currentMl <= 0}
             aria-label="Ta bort ett glas"
           >
-            −
+            <Minus size={16} className="mx-auto" />
           </Button>
-          <Button className="px-4" onClick={onAdd}>
-            + Glas
+          <Button className="flex items-center gap-1 px-4" onClick={onAdd}>
+            <Plus size={15} /> Glas
           </Button>
         </div>
       </div>

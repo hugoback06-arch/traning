@@ -1,4 +1,5 @@
 import { Link } from 'react-router'
+import { ChevronRight, Star, UtensilsCrossed } from 'lucide-react'
 import { CalorieRing } from '../components/overview/CalorieRing'
 import { MacroCard } from '../components/overview/MacroCard'
 import { StreakBadge } from '../components/overview/StreakBadge'
@@ -33,7 +34,9 @@ export function DailyOverviewPage() {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h1 className="font-display text-lg font-semibold">🍽️ Kost</h1>
+        <h1 className="flex items-center gap-2 font-display text-lg font-semibold">
+          <UtensilsCrossed size={20} /> Kost
+        </h1>
         <div className="flex items-center gap-2">
           <StreakBadge days={streakDays} />
           <Link to="/nutrition/calendar" className="text-sm text-ink-secondary underline">
@@ -63,8 +66,10 @@ export function DailyOverviewPage() {
         to="/nutrition/saved-meals"
         className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium text-ink-primary"
       >
-        <span>⭐ Sparade rätter &amp; livsmedel</span>
-        <span className="text-ink-secondary">›</span>
+        <span className="flex items-center gap-1.5">
+          <Star size={16} /> Sparade rätter &amp; livsmedel
+        </span>
+        <ChevronRight size={16} className="text-ink-secondary" />
       </Link>
     </div>
   )

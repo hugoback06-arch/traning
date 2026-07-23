@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
+import { Calendar, CalendarDays, Dumbbell, Plus, UtensilsCrossed } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { StreakBadge } from '../components/overview/StreakBadge'
 import { TrainingStatusCard } from '../components/training/TrainingStatusCard'
@@ -39,8 +40,8 @@ export function Home() {
 
       <Card className="space-y-3">
         <div className="flex items-center justify-between">
-          <Link to="/nutrition" className="font-display text-base font-semibold text-ink-primary">
-            🍽️ Kost
+          <Link to="/nutrition" className="flex items-center gap-1.5 font-display text-base font-semibold text-ink-primary">
+            <UtensilsCrossed size={17} /> Kost
           </Link>
           <div className="flex items-center gap-2">
             {streakDays > 0 && <StreakBadge days={streakDays} />}
@@ -83,17 +84,17 @@ export function Home() {
           <span className="text-sm text-ink-primary">{MEAL_TYPE_LABELS[activeMealType]}</span>
           <button
             onClick={() => setAddingMeal(true)}
-            className="press rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground"
+            className="press flex items-center gap-1 rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground"
           >
-            + Lägg till
+            <Plus size={13} /> Lägg till
           </button>
         </div>
       </Card>
 
       <div className="space-y-2">
         <div className="px-1">
-          <Link to="/training" className="font-display text-base font-semibold text-ink-primary">
-            🏋️ Träning
+          <Link to="/training" className="flex items-center gap-1.5 font-display text-base font-semibold text-ink-primary">
+            <Dumbbell size={17} /> Träning
           </Link>
         </div>
         <Link to="/training" className="press block">
@@ -103,8 +104,11 @@ export function Home() {
 
       <div className="space-y-2">
         <div className="px-1">
-          <Link to="/training/schedule" className="font-display text-base font-semibold text-ink-primary">
-            📅 Schema
+          <Link
+            to="/training/schedule"
+            className="flex items-center gap-1.5 font-display text-base font-semibold text-ink-primary"
+          >
+            <Calendar size={17} /> Schema
           </Link>
         </div>
         <Link to="/training/schedule" className="press block">
@@ -126,8 +130,11 @@ export function Home() {
 
       <div className="space-y-2">
         <div className="px-1">
-          <Link to="/nutrition/calendar" className="font-display text-base font-semibold text-ink-primary">
-            🗓️ Kalender
+          <Link
+            to="/nutrition/calendar"
+            className="flex items-center gap-1.5 font-display text-base font-semibold text-ink-primary"
+          >
+            <CalendarDays size={17} /> Kalender
           </Link>
         </div>
         <Link to="/nutrition/calendar" className="press block">

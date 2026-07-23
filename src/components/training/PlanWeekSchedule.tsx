@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { addDays, differenceInCalendarDays, format, isToday, parseISO } from 'date-fns'
 import { sv } from 'date-fns/locale'
 import { Card } from '../common/Card'
@@ -46,7 +47,7 @@ export function PlanWeekSchedule({ onSelect }: PlanWeekScheduleProps) {
           disabled={weekIndex === 0}
           aria-label="Föregående vecka"
         >
-          ←
+          <ChevronLeft size={18} />
         </button>
         <div className="text-center">
           <p className="text-sm font-medium text-ink-primary">
@@ -60,7 +61,7 @@ export function PlanWeekSchedule({ onSelect }: PlanWeekScheduleProps) {
           disabled={weekIndex >= totalWeeks - 1}
           aria-label="Nästa vecka"
         >
-          →
+          <ChevronRight size={18} />
         </button>
       </div>
 
@@ -92,9 +93,9 @@ export function PlanWeekSchedule({ onSelect }: PlanWeekScheduleProps) {
               </div>
               <ActivityIcon type={session?.activity_type ?? 'rest'} size="sm" />
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium text-ink-primary">
-                  {session?.completed_workout_id ? '✓ ' : ''}
-                  {session?.title ?? '—'}
+                <p className="flex items-center gap-1 truncate text-sm font-medium text-ink-primary">
+                  {session?.completed_workout_id && <Check size={13} className="shrink-0 text-accent" />}
+                  <span className="truncate">{session?.title ?? '—'}</span>
                 </p>
                 {session?.description && <p className="truncate text-xs text-ink-secondary">{session.description}</p>}
               </div>

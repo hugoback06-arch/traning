@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react'
 import { Card } from '../common/Card'
 import { ActivityIcon } from './ActivityIcon'
 import { ACTIVITY_LABELS } from '../../lib/activityTypes'
@@ -19,8 +20,9 @@ export function WorkoutSummaryCard({ workout, onClick }: WorkoutSummaryCardProps
       <div className="flex items-center gap-3">
         <ActivityIcon type={workout.activity_type} />
         <div className="min-w-0 flex-1">
-          <p className="font-display text-base font-semibold text-ink-primary">
-            ✓ {workout.title ?? ACTIVITY_LABELS[workout.activity_type]}
+          <p className="flex items-center gap-1.5 font-display text-base font-semibold text-ink-primary">
+            <Check size={16} className="shrink-0 text-accent" />
+            <span className="truncate">{workout.title ?? ACTIVITY_LABELS[workout.activity_type]}</span>
           </p>
           <p className="text-xs text-ink-secondary">
             {[formatDistance(workout.distance_meters), formatDuration(workout.duration_seconds)]

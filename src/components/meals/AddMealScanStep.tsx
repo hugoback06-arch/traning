@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { BarcodeScanner } from './BarcodeScanner'
 import { LogMealForm } from './LogMealForm'
+import { BackButton } from '../common/BackButton'
 import { Button } from '../common/Button'
 import { Spinner } from '../common/Spinner'
 import { lookupBarcode } from '../../lib/openFoodFacts'
@@ -49,9 +50,7 @@ export function AddMealScanStep({ initialMealType, onBack, onSaved }: AddMealSca
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-sm text-ink-secondary">
-        ← Tillbaka
-      </button>
+      <BackButton onClick={onBack} />
 
       {scanning && (
         <>

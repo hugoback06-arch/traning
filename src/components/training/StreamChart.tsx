@@ -7,17 +7,28 @@ interface StreamChartProps {
   values: number[]
   formatValue: (v: number) => string
   formatTime: (t: number) => string
+  height?: number
+  onExpand?: () => void
 }
 
 const WIDTH = 300
-const HEIGHT = 88
 const PADDING_X = 4
 const PADDING_Y = 10
 
 // Single-metric line (puls OR tempo, never both on one axis — two different
 // scales on one chart is the classic dual-axis mistake) with a hover
 // crosshair+tooltip, per the dataviz skill's interaction guidance.
-export function StreamChart({ label, colorVar, timeSeconds, values, formatValue, formatTime }: StreamChartProps) {
+export function StreamChart({
+  label,
+  colorVar,
+  timeSeconds,
+  values,
+  formatValue,
+  formatTime,
+  height = 88,
+  onExpand,
+}: StreamChartProps) {
+  const HEIGHT = height
   const [hoverIndex, setHoverIndex] = useState<number | null>(null)
   const svgRef = useRef<SVGSVGElement>(null)
 
@@ -56,9 +67,15 @@ export function StreamChart({ label, colorVar, timeSeconds, values, formatValue,
   const active = hoverIndex ?? timeSeconds.length - 1
 
   return (
-    <div className="rounded-lg border border-border p-2.5">
+    <div
+      className={`rounded-lg border border-border p-2.5 ${onExpand ? 'press' : ''}`}
+      onClick={onExpand}
+      role={onExpand ? 'button' : undefined}
+    >
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-ink-secondary">{label}</p>
+        <p className="text-xs font-medium text-ink-secondary">
+          {label} {onExpand && <span className="text-ink-secondary">⤢</span>}
+        </p>
         <p className="text-xs font-medium text-ink-primary">
           {formatValue(values[active])} <span className="text-ink-secondary">· {formatTime(timeSeconds[active])}</span>
         </p>

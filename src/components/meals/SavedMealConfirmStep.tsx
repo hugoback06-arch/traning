@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Card } from '../common/Card'
+import { BackButton } from '../common/BackButton'
 import { Button } from '../common/Button'
 import { MealTypeSelect } from './MealTypeSelect'
 import { useLogSavedMeal } from '../../hooks/useLogSavedMeal'
@@ -27,9 +28,7 @@ export function SavedMealConfirmStep({ savedMeal, initialMealType, onBack, onSav
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-sm text-ink-secondary">
-        ← Tillbaka
-      </button>
+      <BackButton onClick={onBack} />
       <Card className="space-y-4">
         <div>
           <h1 className="text-lg font-semibold">{savedMeal.name}</h1>

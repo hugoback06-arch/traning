@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Card } from '../common/Card'
+import { BackButton } from '../common/BackButton'
 import { Button } from '../common/Button'
 import { AmountInput } from './AmountInput'
 import { MealTypeSelect } from './MealTypeSelect'
@@ -32,9 +33,7 @@ export function LogMealForm({ foodResult, initialMealType, onBack, onSaved }: Lo
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-sm text-ink-secondary">
-        ← Tillbaka
-      </button>
+      <BackButton onClick={onBack} />
       <Card className="space-y-4">
         <div>
           <h1 className="text-lg font-semibold">{foodResult.name}</h1>

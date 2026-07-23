@@ -1,3 +1,4 @@
+import { Check } from 'lucide-react'
 import { Card } from '../common/Card'
 import { ActivityIcon } from './ActivityIcon'
 import { WorkoutSummaryCard } from './WorkoutSummaryCard'
@@ -36,9 +37,9 @@ export function TrainingStatusCard({ onSelect }: TrainingStatusCardProps) {
         <div className="flex items-center gap-3">
           <ActivityIcon type={session.activity_type} />
           <div className="min-w-0 flex-1">
-            <p className="font-display text-base font-semibold text-ink-primary">
-              {isDone && '✓ '}
-              {session.title}
+            <p className="flex items-center gap-1 font-display text-base font-semibold text-ink-primary">
+              {isDone && <Check size={16} className="shrink-0 text-accent" />}
+              <span className="truncate">{session.title}</span>
               {!isDone && plannedDistance && <span className="text-ink-secondary"> · {plannedDistance}</span>}
             </p>
             {isDone && matchedWorkout ? (

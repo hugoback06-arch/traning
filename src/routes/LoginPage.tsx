@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { Navigate } from 'react-router'
+import { ChevronLeft } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { Card } from '../components/common/Card'
 
@@ -95,9 +96,9 @@ export function LoginPage() {
                 setStatus('idle')
                 setCode('')
               }}
-              className="w-full text-center text-xs text-ink-secondary"
+              className="flex w-full items-center justify-center gap-0.5 text-center text-xs text-ink-secondary"
             >
-              ← Ange en annan e-postadress
+              <ChevronLeft size={13} /> Ange en annan e-postadress
             </button>
           </form>
         )}

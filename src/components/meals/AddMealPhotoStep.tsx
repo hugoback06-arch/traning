@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { PhotoCapture } from './PhotoCapture'
 import { AiEstimateReviewForm } from './AiEstimateReviewForm'
+import { BackButton } from '../common/BackButton'
 import { Button } from '../common/Button'
 import { Spinner } from '../common/Spinner'
 import { useAnalyzeMealPhoto } from '../../hooks/useAnalyzeMealPhoto'
@@ -16,10 +17,10 @@ export function AddMealPhotoStep({ initialMealType, onBack, onSaved }: AddMealPh
   const analyze = useAnalyzeMealPhoto()
   const [showError, setShowError] = useState(false)
 
-  async function handleCapture(file: File) {
+  async function handleCapture(file: File, description?: string) {
     setShowError(false)
     try {
-      await analyze.mutateAsync(file)
+      await analyze.mutateAsync({ file, description })
     } catch {
       setShowError(true)
     }
@@ -38,9 +39,7 @@ export function AddMealPhotoStep({ initialMealType, onBack, onSaved }: AddMealPh
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-sm text-ink-secondary">
-        ← Tillbaka
-      </button>
+      <BackButton onClick={onBack} />
 
       {analyze.isPending && <Spinner />}
       {!analyze.isPending && <PhotoCapture onCapture={handleCapture} />}

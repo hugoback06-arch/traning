@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link, useNavigate } from 'react-router'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
+import { Bot, ChevronRight, Dumbbell, History as HistoryIcon } from 'lucide-react'
 import { Card } from '../../components/common/Card'
 import { TrainingStatusCard } from '../../components/training/TrainingStatusCard'
 import { WorkoutSummaryCard } from '../../components/training/WorkoutSummaryCard'
@@ -25,7 +26,9 @@ export function TrainingPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="font-display text-lg font-semibold">🏋️ Träning</h1>
+      <h1 className="flex items-center gap-2 font-display text-lg font-semibold">
+        <Dumbbell size={20} /> Träning
+      </h1>
 
       <TrainingStatusCard onSelect={handleSelect} />
 
@@ -47,19 +50,23 @@ export function TrainingPage() {
         <Link to="/training/schedule" className="press block">
           <Card className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-ink-primary">🤖 Schemabyggare</p>
+              <p className="flex items-center gap-1.5 text-sm font-medium text-ink-primary">
+                <Bot size={16} /> Schemabyggare
+              </p>
               <p className="mt-0.5 text-xs text-ink-secondary">Generera/uppdatera schema</p>
             </div>
-            <span className="text-ink-secondary">→</span>
+            <ChevronRight size={16} className="text-ink-secondary" />
           </Card>
         </Link>
         <Link to="/training/history" className="press block">
           <Card className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-ink-primary">📜 Historik</p>
+              <p className="flex items-center gap-1.5 text-sm font-medium text-ink-primary">
+                <HistoryIcon size={16} /> Historik
+              </p>
               <p className="mt-0.5 text-xs text-ink-secondary">Tidigare pass</p>
             </div>
-            <span className="text-ink-secondary">→</span>
+            <ChevronRight size={16} className="text-ink-secondary" />
           </Card>
         </Link>
       </div>

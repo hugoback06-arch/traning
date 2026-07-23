@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react'
-import { Link, useNavigate } from 'react-router'
+import { useNavigate } from 'react-router'
 import { addDays, format, startOfMonth } from 'date-fns'
 import { sv } from 'date-fns/locale'
+import { Calendar, Check, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Card } from '../components/common/Card'
+import { BackButton } from '../components/common/BackButton'
 import { MonthCalendar } from '../components/calendar/MonthCalendar'
 import { MealList } from '../components/meals/MealList'
 import { Spinner } from '../components/common/Spinner'
@@ -63,10 +65,10 @@ export function CalendarPage() {
   return (
     <div className="space-y-4">
       <div>
-        <Link to="/nutrition" className="text-sm text-ink-secondary">
-          ← Kost
-        </Link>
-        <h1 className="font-display text-lg font-semibold">📅 Kalender</h1>
+        <BackButton to="/nutrition" label="Kost" />
+        <h1 className="flex items-center gap-2 font-display text-lg font-semibold">
+          <Calendar size={20} /> Kalender
+        </h1>
       </div>
 
       <Card>
@@ -76,7 +78,7 @@ export function CalendarPage() {
             className="rounded-lg px-2 py-1 text-sm text-ink-secondary"
             aria-label="Föregående månad"
           >
-            ←
+            <ChevronLeft size={18} />
           </button>
           <span className="text-sm font-medium text-ink-primary">
             {capitalize(format(visibleMonth, 'MMMM yyyy', { locale: sv }))}
@@ -86,7 +88,7 @@ export function CalendarPage() {
             className="rounded-lg px-2 py-1 text-sm text-ink-secondary"
             aria-label="Nästa månad"
           >
-            →
+            <ChevronRight size={18} />
           </button>
         </div>
         <MonthCalendar
@@ -120,8 +122,8 @@ export function CalendarPage() {
             className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
           >
             <ActivityIcon type={selectedSession.activity_type} size="sm" />
-            <span className="text-sm text-ink-primary">
-              {selectedIsDone && '✓ '}
+            <span className="flex items-center gap-1 text-sm text-ink-primary">
+              {selectedIsDone && <Check size={14} className="shrink-0 text-accent" />}
               {selectedSession.title}
             </span>
           </button>
@@ -131,8 +133,9 @@ export function CalendarPage() {
             className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
           >
             <ActivityIcon type={selectedWorkout.activity_type} size="sm" />
-            <span className="text-sm text-ink-primary">
-              ✓ {selectedWorkout.title ?? ACTIVITY_LABELS[selectedWorkout.activity_type]}
+            <span className="flex items-center gap-1 text-sm text-ink-primary">
+              <Check size={14} className="shrink-0 text-accent" />
+              {selectedWorkout.title ?? ACTIVITY_LABELS[selectedWorkout.activity_type]}
               {[formatDistance(selectedWorkout.distance_meters), formatDuration(selectedWorkout.duration_seconds)]
                 .filter(Boolean)
                 .length > 0

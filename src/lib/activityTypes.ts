@@ -1,3 +1,4 @@
+import { Activity, Bike, Dumbbell, Footprints, Moon, Waves, Zap, type LucideIcon } from 'lucide-react'
 import type { PlanActivityType } from '../types/domain'
 
 export const ACTIVITY_LABELS: Record<PlanActivityType, string> = {
@@ -10,14 +11,14 @@ export const ACTIVITY_LABELS: Record<PlanActivityType, string> = {
   other: 'Träning',
 }
 
-export const ACTIVITY_ICONS: Record<PlanActivityType, string> = {
-  running: '🏃',
-  cycling: '🚴',
-  swimming: '🏊',
-  strength: '🏋️',
-  walking: '🚶',
-  rest: '😴',
-  other: '⚡',
+export const ACTIVITY_ICONS: Record<PlanActivityType, LucideIcon> = {
+  running: Activity,
+  cycling: Bike,
+  swimming: Waves,
+  strength: Dumbbell,
+  walking: Footprints,
+  rest: Moon,
+  other: Zap,
 }
 
 // Full literal class names (not composed at runtime) so Tailwind's JIT scanner

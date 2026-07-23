@@ -19,11 +19,11 @@ interface MealPhotoErrorBody {
 
 export function useAnalyzeMealPhoto() {
   return useMutation({
-    mutationFn: async (file: File): Promise<MealPhotoEstimate> => {
+    mutationFn: async ({ file, description }: { file: File; description?: string }): Promise<MealPhotoEstimate> => {
       const { base64, mimeType } = await compressImage(file)
       const { data, error } = await supabase.functions.invoke<MealPhotoEstimate | MealPhotoErrorBody>(
         'analyze-meal-photo',
-        { body: { image_base64: base64, mime_type: mimeType } },
+        { body: { image_base64: base64, mime_type: mimeType, description } },
       )
 
       if (error) throw error

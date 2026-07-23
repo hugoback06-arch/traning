@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FoodSearchList } from './FoodSearchList'
 import { LogMealForm } from './LogMealForm'
+import { BackButton } from '../common/BackButton'
 import type { FoodSearchResult, MealType } from '../../types/domain'
 
 interface AddMealSearchStepProps {
@@ -26,9 +27,7 @@ export function AddMealSearchStep({ initialMealType, onBack, onSaved }: AddMealS
 
   return (
     <div className="space-y-4">
-      <button onClick={onBack} className="text-sm text-ink-secondary">
-        ← Tillbaka
-      </button>
+      <BackButton onClick={onBack} />
       <input
         type="text"
         placeholder="Sök på namn…"

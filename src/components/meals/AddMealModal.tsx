@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Plus, X } from 'lucide-react'
 import { Card } from '../common/Card'
 import { AddMealSearchStep } from './AddMealSearchStep'
 import { AddMealScanStep } from './AddMealScanStep'
@@ -42,12 +43,8 @@ export function AddMealModal({ mealType, onClose }: AddMealModalProps) {
           <h2 className="text-base font-semibold text-ink-primary">
             Lägg till i {MEAL_TYPE_LABELS[mealType].toLowerCase()}
           </h2>
-          <button
-            onClick={onClose}
-            aria-label="Stäng"
-            className="press text-lg leading-none text-ink-secondary"
-          >
-            ✕
+          <button onClick={onClose} aria-label="Stäng" className="press text-ink-secondary">
+            <X size={20} />
           </button>
         </div>
 
@@ -55,8 +52,11 @@ export function AddMealModal({ mealType, onClose }: AddMealModalProps) {
           <div className="space-y-4">
             <QuickFoodPicks onSelect={openQuick} />
             <SavedMealPicks onSelect={openSavedMeal} />
-            <button className="press w-full text-left text-sm text-accent" onClick={() => setMode('savedMealBuilder')}>
-              + Ny sparad måltid
+            <button
+              className="press flex w-full items-center gap-1 text-left text-sm text-accent"
+              onClick={() => setMode('savedMealBuilder')}
+            >
+              <Plus size={16} /> Ny sparad måltid
             </button>
             <div className="grid grid-cols-2 gap-3">
               <button className="press" onClick={() => setMode('search')}>

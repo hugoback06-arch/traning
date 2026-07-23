@@ -6,12 +6,13 @@ import { useSaveMeal } from '../../hooks/useSaveMeal'
 interface SaveMealNameDialogProps {
   items: { foodItemId: string; amountG: number }[]
   totalKcal: number
+  defaultName?: string
   onClose: () => void
   onSaved: () => void
 }
 
-export function SaveMealNameDialog({ items, totalKcal, onClose, onSaved }: SaveMealNameDialogProps) {
-  const [name, setName] = useState('')
+export function SaveMealNameDialog({ items, totalKcal, defaultName, onClose, onSaved }: SaveMealNameDialogProps) {
+  const [name, setName] = useState(defaultName ?? '')
   const saveMeal = useSaveMeal()
 
   async function handleSave() {
