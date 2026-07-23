@@ -146,6 +146,12 @@ export interface WorkoutSplit {
   average_heartrate: number | null
 }
 
+export interface WorkoutStreams {
+  time: number[]
+  heartrate: number[] | null
+  velocity_smooth: number[] | null
+}
+
 export interface Workout {
   id: string
   user_id: string
@@ -164,6 +170,7 @@ export interface Workout {
   training_plan_session_id: string | null
   map_polyline: string | null
   splits: WorkoutSplit[] | null
+  streams: WorkoutStreams | null
   raw_data: unknown
   created_at: string
   updated_at: string

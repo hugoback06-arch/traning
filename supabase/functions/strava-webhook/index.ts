@@ -77,7 +77,7 @@ async function processStravaEvent(event: StravaEvent) {
   try {
     const accessToken = await ensureValidStravaToken(supabase, connection)
     const activity = await fetchStravaActivity(accessToken, event.object_id)
-    await upsertWorkoutFromStravaActivity(supabase, connection.user_id, activity)
+    await upsertWorkoutFromStravaActivity(supabase, connection.user_id, activity, accessToken)
 
     await supabase.from('fitness_connections').update({ last_synced_at: new Date().toISOString() }).eq('id', connection.id)
   } catch (error) {

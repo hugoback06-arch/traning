@@ -1,12 +1,19 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { AiPlanGenerator } from '../../components/training/AiPlanGenerator'
 import { PlanWeekSchedule } from '../../components/training/PlanWeekSchedule'
 import { WorkoutDetailSheet } from '../../components/training/WorkoutDetailSheet'
 import type { DetailTarget } from '../../components/training/WorkoutDetailSheet'
+import type { TrainingPlanSession } from '../../types/domain'
 
 export function SchedulePage() {
-  const [detailTarget, setDetailTarget] = useState<DetailTarget | null>(null)
+  const navigate = useNavigate()
+  const [selectedSession, setSelectedSession] = useState<TrainingPlanSession | null>(null)
+
+  function handleSelect(target: DetailTarget) {
+    if (target.type === 'workout') navigate(`/training/workout/${target.workoutId}`)
+    else setSelectedSession(target.session)
+  }
 
   return (
     <div className="space-y-4">
@@ -15,8 +22,8 @@ export function SchedulePage() {
       </Link>
       <h1 className="font-display text-lg font-semibold">🤖 Schemabyggare</h1>
       <AiPlanGenerator />
-      <PlanWeekSchedule onSelect={setDetailTarget} />
-      {detailTarget && <WorkoutDetailSheet target={detailTarget} onClose={() => setDetailTarget(null)} />}
+      <PlanWeekSchedule onSelect={handleSelect} />
+      {selectedSession && <WorkoutDetailSheet session={selectedSession} onClose={() => setSelectedSession(null)} />}
     </div>
   )
 }

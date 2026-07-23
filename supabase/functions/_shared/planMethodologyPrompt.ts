@@ -37,5 +37,33 @@ nära det snabbaste hållbara tempot i historiken, intervalltempo ≈ något sna
 tröskeltempo för korta repetitioner. Om ingen tempo-data finns alls, ange tempo som ett spann
 eller "efter känsla" istället för att gissa en exakt siffra.
 
-STYRKA: Variera övningsval och fokus (helkropp/överkropp/underkropp/core) mellan pass, och öka
-belastning eller volym gradvis vecka för vecka snarare än att upprepa exakt samma pass.`
+STYRKA — bygg riktiga, evidensbaserade pass, inte en slumpad övningslista: Varje styrkepass ska
+kunna motiveras av en erfaren styrketränare, inte se ut som en generisk "5 random övningar"-lista.
+
+- ÖVNINGSVAL EFTER RÖRELSEMÖNSTER: Bygg varje pass runt grundläggande rörelsemönster — knäböj
+  (squat), höftfällning (hinge, t.ex. marklyft/RDL), press horisontellt/vertikalt (bänkpress/
+  militärpress), drag horisontellt/vertikalt (rodd/pullups), samt core/bärande (planka, farmer's
+  walk). Ett bra pass täcker flera mönster, inte bara ett upprepat. Prioritera fleredsövningar
+  (compound: knäböj, marklyft, bänkpress, rodd, press) före isolationsövningar, och lägg
+  isolationsövningar (bicepscurl, sidolyft, tricepspress etc.) sist i passet som komplement,
+  inte som huvudinnehåll.
+- STRUKTUR PER PASS: 4–6 övningar för ett fokuserat pass (helkropp kan ha upp till 6–7). Börja
+  med den tyngsta/mest tekniska fleredsövningen medan användaren är pigg, avsluta med
+  isolation/core. Ange alltid vilofunktion i rest_seconds kalibrerad efter syfte: 90–180s för
+  tunga fleredsövningar (styrkefokus, låga reps), 60–90s för hypertrofi-fokuserade set,
+  30–60s för isolation/core.
+- SET/REPS EFTER MÅL: Matcha reps-intervall och set-antal mot vad passets fokus faktiskt är —
+  styrka: 3–5 set × 3–6 reps på tunga fleredsövningar; hypertrofi (muskeltillväxt): 3–4 set ×
+  8–12 reps; uthållighet/metabol stress: 2–3 set × 12–20 reps. Om användarens mål är otydligt,
+  utgå från hypertrofi/allmän styrka (8–12 reps) som bas men variera mellan pass.
+- PROGRESSIV ÖVERBELASTNING: Öka belastning, reps eller set gradvis vecka för vecka (t.ex. samma
+  övning men 1 rep mer per set, eller ett extra set, eller en notering om att öka vikten från
+  föregående pass) — upprepa aldrig exakt samma set×reps-recept på samma övning identiskt varje
+  vecka. Använd notes-fältet för konkret progressionsvägledning, t.ex. "sikta på 1-2 fler reps
+  än förra veckans pass" eller "öka vikten om du klarade alla reps med god teknik förra gången".
+- VECKOSTRUKTUR OCH ÅTERHÄMTNING: Låt inte samma muskelgrupp tränas tungt två dagar i rad — växla
+  fokus (t.ex. underkropp/överkropp, eller push/pull/ben) så det finns minst 48h återhämtning för
+  samma muskelgrupp innan den belastas tungt igen. Variera fokus mellan veckans pass istället för
+  att köra identiskt helkroppspass varje gång.
+- TEKNIK OCH SÄKERHET: Ge en kort teknikpåminnelse i notes för tunga/tekniska lyft (marklyft,
+  knäböj, olympiska varianter), t.ex. "håll ryggen neutral, stångens bana nära kroppen".`

@@ -74,6 +74,34 @@ export async function fetchStravaActivity(accessToken: string, activityId: strin
   return res.json()
 }
 
+export interface WorkoutStreams {
+  time: number[]
+  heartrate: number[] | null
+  velocity_smooth: number[] | null
+}
+
+// Second-by-second (well, resolution=medium-downsampled) puls/tempo-data för
+// grafen i passdetaljvyn. Inte alla pass har streams (styrkepass, manuellt
+// inlagda aktiviteter, pass utan GPS/puls) — 404/tomt svar är ett normalt
+// utfall, inte ett fel, så anroparen ska bara få null tillbaka då.
+export async function fetchStravaStreams(accessToken: string, activityId: string | number): Promise<WorkoutStreams | null> {
+  const res = await fetch(
+    `https://www.strava.com/api/v3/activities/${activityId}/streams?keys=time,heartrate,velocity_smooth&key_by_type=true&resolution=medium`,
+    { headers: { Authorization: `Bearer ${accessToken}` } },
+  )
+  if (!res.ok) return null
+
+  const body = await res.json()
+  const time = body?.time?.data as number[] | undefined
+  if (!time || time.length === 0) return null
+
+  return {
+    time,
+    heartrate: (body?.heartrate?.data as number[] | undefined) ?? null,
+    velocity_smooth: (body?.velocity_smooth?.data as number[] | undefined) ?? null,
+  }
+}
+
 // Paginates through all activities since afterEpochSeconds — a first-time
 // historical sync can easily exceed a single page (Strava caps per_page at 200).
 // deno-lint-ignore no-explicit-any
@@ -95,13 +123,26 @@ export async function fetchStravaActivities(accessToken: string, afterEpochSecon
 }
 
 // deno-lint-ignore no-explicit-any
-export async function upsertWorkoutFromStravaActivity(supabase: SupabaseClient<any>, userId: string, activity: any) {
+export async function upsertWorkoutFromStravaActivity(
+  supabase: SupabaseClient<any>,
+  userId: string,
+  activity: any,
+  accessToken?: string,
+) {
   const activityType = mapStravaActivityType(activity.sport_type ?? activity.type)
   const startedAt = activity.start_date as string
   // start_date is UTC; use start_date_local for the calendar-day match below
   // so a late-evening activity doesn't get compared against the wrong day
   // for users outside UTC.
   const scheduledDate = ((activity.start_date_local as string | undefined) ?? startedAt).slice(0, 10)
+
+  // Streams (puls/tempo över tid) only make sense for GPS/HR-recorded
+  // activities, not strength/manual entries — and fetching them is an extra
+  // Strava API call, so only do it when we have a token and it's worth it.
+  const streams =
+    accessToken && activityType !== 'strength' && activityType !== 'other'
+      ? await fetchStravaStreams(accessToken, activity.id).catch(() => null)
+      : null
 
   const { data: workout, error: workoutError } = await supabase
     .from('workouts')
@@ -121,6 +162,7 @@ export async function upsertWorkoutFromStravaActivity(supabase: SupabaseClient<a
         elevation_gain_meters: activity.total_elevation_gain ?? null,
         map_polyline: activity.map?.polyline ?? activity.map?.summary_polyline ?? null,
         splits: activity.splits_metric ?? null,
+        streams,
         raw_data: activity,
       },
       { onConflict: 'user_id,source,external_id' },

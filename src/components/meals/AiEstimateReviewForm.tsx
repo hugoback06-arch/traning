@@ -57,6 +57,24 @@ export function AiEstimateReviewForm({
   const [fatG, setFatG] = useState(estimate.fat_g)
   const [mealType, setMealType] = useState<MealType>(initialMealType ?? defaultMealTypeForNow())
 
+  // Per-gram rates from the original AI estimate, used to rescale
+  // calories/macros when the user adjusts the weight.
+  const initialWeight = estimate.estimated_weight_g > 0 ? estimate.estimated_weight_g : 1
+  const ratesPerGram = {
+    calories: estimate.calories / initialWeight,
+    proteinG: estimate.protein_g / initialWeight,
+    carbsG: estimate.carbs_g / initialWeight,
+    fatG: estimate.fat_g / initialWeight,
+  }
+
+  function handleWeightChange(newWeightG: number) {
+    setWeightG(newWeightG)
+    setCalories(Math.round(ratesPerGram.calories * newWeightG))
+    setProteinG(Math.round(ratesPerGram.proteinG * newWeightG))
+    setCarbsG(Math.round(ratesPerGram.carbsG * newWeightG))
+    setFatG(Math.round(ratesPerGram.fatG * newWeightG))
+  }
+
   async function handleSave() {
     const safeWeight = weightG > 0 ? weightG : 1
     const foodResult: FoodSearchResult = {
@@ -94,7 +112,7 @@ export function AiEstimateReviewForm({
           />
         </label>
         <div className="grid grid-cols-2 gap-3">
-          <NumberField label="Vikt (g)" value={weightG} onChange={setWeightG} />
+          <NumberField label="Vikt (g)" value={weightG} onChange={handleWeightChange} />
           <NumberField label="Kalorier (kcal)" value={calories} onChange={setCalories} />
           <NumberField label="Protein (g)" value={proteinG} onChange={setProteinG} />
           <NumberField label="Kolhydrater (g)" value={carbsG} onChange={setCarbsG} />

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
 import { Card } from '../../components/common/Card'
@@ -10,23 +10,30 @@ import { WorkoutDetailSheet } from '../../components/training/WorkoutDetailSheet
 import type { DetailTarget } from '../../components/training/WorkoutDetailSheet'
 import { useTrainingForDate } from '../../hooks/useTrainingForDate'
 import { useFitnessConnection } from '../../hooks/useFitnessConnection'
+import type { TrainingPlanSession } from '../../types/domain'
 
 export function TrainingPage() {
-  const [detailTarget, setDetailTarget] = useState<DetailTarget | null>(null)
+  const navigate = useNavigate()
+  const [selectedSession, setSelectedSession] = useState<TrainingPlanSession | null>(null)
   const { secondaryWorkouts } = useTrainingForDate()
   const { data: stravaConnection } = useFitnessConnection('strava')
+
+  function handleSelect(target: DetailTarget) {
+    if (target.type === 'workout') navigate(`/training/workout/${target.workoutId}`)
+    else setSelectedSession(target.session)
+  }
 
   return (
     <div className="space-y-4">
       <h1 className="font-display text-lg font-semibold">🏋️ Träning</h1>
 
-      <TrainingStatusCard onSelect={setDetailTarget} />
+      <TrainingStatusCard onSelect={handleSelect} />
 
       {secondaryWorkouts.map((workout) => (
         <WorkoutSummaryCard
           key={workout.id}
           workout={workout}
-          onClick={() => setDetailTarget({ type: 'workout', workoutId: workout.id })}
+          onClick={() => navigate(`/training/workout/${workout.id}`)}
         />
       ))}
 
@@ -57,9 +64,9 @@ export function TrainingPage() {
         </Link>
       </div>
 
-      <WeekView onSelectDay={setDetailTarget} />
+      <WeekView onSelectDay={handleSelect} />
 
-      {detailTarget && <WorkoutDetailSheet target={detailTarget} onClose={() => setDetailTarget(null)} />}
+      {selectedSession && <WorkoutDetailSheet session={selectedSession} onClose={() => setSelectedSession(null)} />}
     </div>
   )
 }

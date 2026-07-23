@@ -28,6 +28,13 @@
   --color-activity-rest: #9aa39d;
   --color-activity-other: #5a5f5c;
 
+  /* Puls-/tempografen i passdetaljvyn — validerade separat mot ljust/mörkt
+     underlag via dataviz-skillets validate_palette.js (två egna
+     enkel-serie-diagram, aldrig samma axel, så inbördes kontrast mellan de
+     två är "trevligt att ha" snarare än ett CVD-krav). */
+  --color-chart-heartrate: #c2255c;
+  --color-chart-pace: #1f6fb2;
+
   --font-sans: system-ui, 'Segoe UI', Roboto, sans-serif;
   --font-display: 'Manrope Variable', var(--font-sans);
 }
@@ -55,6 +62,8 @@
   --color-ink-primary: #f2f3f1;
   --color-ink-secondary: #a5aba6;
   --color-border: #33362f;
+  --color-chart-heartrate: #e0568a;
+  --color-chart-pace: #3a8fd6;
 }
 
 body {
@@ -62,6 +71,15 @@ body {
   background-color: var(--color-surface-muted);
   color: var(--color-ink-primary);
   font-family: var(--font-sans);
+}
+
+/* iOS/Android zoomar in sidan automatiskt när ett fält får fokus om dess
+   font-size är under 16px (t.ex. Tailwinds text-sm, 14px). Tvinga 16px på
+   alla formulärfält så fokusering aldrig triggar den inzoomningen. */
+input,
+textarea,
+select {
+  font-size: 16px;
 }
 
 @layer utilities {

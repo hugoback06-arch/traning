@@ -16,6 +16,7 @@ import { ProfileSettingsPage } from './routes/ProfileSettingsPage'
 import { TrainingPage } from './routes/training/TrainingPage'
 import { SchedulePage } from './routes/training/SchedulePage'
 import { History } from './routes/training/History'
+import { WorkoutDetailPage } from './routes/training/WorkoutDetailPage'
 
 function App() {
   return (
@@ -36,6 +37,7 @@ function App() {
                     <Route path="/training" element={<TrainingPage />} />
                     <Route path="/training/schedule" element={<SchedulePage />} />
                     <Route path="/training/history" element={<History />} />
+                    <Route path="/training/workout/:workoutId" element={<WorkoutDetailPage />} />
                     <Route path="/profile" element={<ProfileSettingsPage />} />
                   </Route>
                 </Route>

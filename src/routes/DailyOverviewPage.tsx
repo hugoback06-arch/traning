@@ -36,9 +36,6 @@ export function DailyOverviewPage() {
         <h1 className="font-display text-lg font-semibold">🍽️ Kost</h1>
         <div className="flex items-center gap-2">
           <StreakBadge days={streakDays} />
-          <Link to="/nutrition/saved-meals" className="text-sm text-ink-secondary underline">
-            Sparade
-          </Link>
           <Link to="/nutrition/calendar" className="text-sm text-ink-secondary underline">
             Kalender
           </Link>
@@ -61,6 +58,14 @@ export function DailyOverviewPage() {
         onAdd={() => addWater.mutate()}
         onRemove={() => removeWater.mutate()}
       />
+
+      <Link
+        to="/nutrition/saved-meals"
+        className="flex items-center justify-between rounded-xl border border-border bg-surface px-4 py-3 text-sm font-medium text-ink-primary"
+      >
+        <span>⭐ Sparade rätter &amp; livsmedel</span>
+        <span className="text-ink-secondary">›</span>
+      </Link>
     </div>
   )
 }

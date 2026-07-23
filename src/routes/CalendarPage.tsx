@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link } from 'react-router'
+import { Link, useNavigate } from 'react-router'
 import { addDays, format, startOfMonth } from 'date-fns'
 import { sv } from 'date-fns/locale'
 import { Card } from '../components/common/Card'
@@ -8,7 +8,6 @@ import { MealList } from '../components/meals/MealList'
 import { Spinner } from '../components/common/Spinner'
 import { ActivityIcon } from '../components/training/ActivityIcon'
 import { WorkoutDetailSheet } from '../components/training/WorkoutDetailSheet'
-import type { DetailTarget } from '../components/training/WorkoutDetailSheet'
 import { useMealLogDatesInRange } from '../hooks/useMealLogDatesInRange'
 import { useMealLogsForDate } from '../hooks/useMealLogsForDate'
 import { useTrainingPlanSessionsInRange } from '../hooks/useTrainingPlanSessionsInRange'
@@ -18,16 +17,17 @@ import { sumMealTotals } from '../lib/dailyTotals'
 import { monthGridDays, nextMonth, prevMonth } from '../lib/monthGrid'
 import { ACTIVITY_LABELS } from '../lib/activityTypes'
 import { formatDistance, formatDuration } from '../lib/formatWorkout'
-import type { PlanActivityType } from '../types/domain'
+import type { PlanActivityType, TrainingPlanSession } from '../types/domain'
 
 function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
 export function CalendarPage() {
+  const navigate = useNavigate()
   const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()))
   const [selectedDate, setSelectedDate] = useState(() => new Date())
-  const [detailTarget, setDetailTarget] = useState<DetailTarget | null>(null)
+  const [selectedSessionForDetail, setSelectedSessionForDetail] = useState<TrainingPlanSession | null>(null)
 
   const gridDays = useMemo(() => monthGridDays(visibleMonth), [visibleMonth])
   const rangeStartIso = gridDays[0].toISOString()
@@ -114,8 +114,8 @@ export function CalendarPage() {
           <button
             onClick={() =>
               selectedWorkout
-                ? setDetailTarget({ type: 'workout', workoutId: selectedWorkout.id })
-                : setDetailTarget({ type: 'session', session: selectedSession })
+                ? navigate(`/training/workout/${selectedWorkout.id}`)
+                : setSelectedSessionForDetail(selectedSession)
             }
             className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
           >
@@ -127,7 +127,7 @@ export function CalendarPage() {
           </button>
         ) : selectedWorkout ? (
           <button
-            onClick={() => setDetailTarget({ type: 'workout', workoutId: selectedWorkout.id })}
+            onClick={() => navigate(`/training/workout/${selectedWorkout.id}`)}
             className="flex w-full items-center gap-2.5 rounded-xl border border-border bg-surface px-3 py-2.5 text-left"
           >
             <ActivityIcon type={selectedWorkout.activity_type} size="sm" />
@@ -145,7 +145,9 @@ export function CalendarPage() {
         )}
       </div>
 
-      {detailTarget && <WorkoutDetailSheet target={detailTarget} onClose={() => setDetailTarget(null)} />}
+      {selectedSessionForDetail && (
+        <WorkoutDetailSheet session={selectedSessionForDetail} onClose={() => setSelectedSessionForDetail(null)} />
+      )}
     </div>
   )
 }

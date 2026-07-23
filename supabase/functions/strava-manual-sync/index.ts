@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
     for (const activityId of activityIds) {
       try {
         const activity = await fetchStravaActivity(accessToken, activityId)
-        const result = await upsertWorkoutFromStravaActivity(supabase, user.id, activity)
+        const result = await upsertWorkoutFromStravaActivity(supabase, user.id, activity, accessToken)
         if (result.data) syncedCount += 1
       } catch (error) {
         console.error('strava-manual-sync: kunde inte synka aktivitet', activityId, error)
