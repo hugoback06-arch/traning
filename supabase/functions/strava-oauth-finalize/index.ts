@@ -13,6 +13,7 @@
 // victim to complete the Strava consent screen can no longer have the
 // victim's tokens land on the attacker's account.
 import { createClient } from 'npm:@supabase/supabase-js@2'
+import { fetchStravaHeartRateZones } from '../_shared/stravaActivity.ts'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -82,6 +83,10 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Anslutningen är inte klar än, försök igen', code: 'NOT_READY' }, 409)
   }
 
+  // Best-effort — inte alla atleter har satt upp pulszoner i Strava, och det
+  // ska aldrig blockera själva anslutningen om det här anropet misslyckas.
+  const heartRateZones = await fetchStravaHeartRateZones(stateRow.pending_access_token).catch(() => null)
+
   const { error: upsertError } = await supabase.from('fitness_connections').upsert(
     {
       user_id: user.id,
@@ -91,6 +96,7 @@ Deno.serve(async (req) => {
       refresh_token: stateRow.pending_refresh_token,
       expires_at: stateRow.pending_expires_at,
       scope: stateRow.pending_scope,
+      heart_rate_zones: heartRateZones,
       connected_at: new Date().toISOString(),
     },
     { onConflict: 'user_id,provider' },

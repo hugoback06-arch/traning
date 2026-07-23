@@ -11,6 +11,8 @@ export interface WorkoutRow {
   started_at: string
   duration_seconds: number | null
   distance_meters: number | null
+  avg_heart_rate: number | null
+  elevation_gain_meters: number | null
 }
 
 // Effectively "all" logged history — a cost/safety ceiling, not a meaningful
@@ -54,6 +56,18 @@ function summarizeByType(workouts: WorkoutRow[]): string[] {
         )
         parts.push(`snabbaste hållbara tempo ~${formatPace(bestPaceSecPerKm)}`)
       }
+    }
+
+    const hrRows = rows.filter((w) => (w.avg_heart_rate ?? 0) > 0)
+    if (hrRows.length > 0) {
+      const avgHr = hrRows.reduce((sum, w) => sum + w.avg_heart_rate!, 0) / hrRows.length
+      parts.push(`snittpuls ~${Math.round(avgHr)} bpm`)
+    }
+
+    const elevRows = rows.filter((w) => (w.elevation_gain_meters ?? 0) > 0)
+    if (elevRows.length > 0) {
+      const totalElev = elevRows.reduce((sum, w) => sum + w.elevation_gain_meters!, 0)
+      parts.push(`snitt ${Math.round(totalElev / rows.length)} höjdmeter/pass`)
     }
 
     return `${type}: ${parts.join(', ')}`
@@ -112,10 +126,94 @@ export function summarizeHistory(workouts: WorkoutRow[]): string {
 export async function fetchHistorySummary(supabase: SupabaseClient, userId: string): Promise<string> {
   const { data } = await supabase
     .from('workouts')
-    .select('activity_type, started_at, duration_seconds, distance_meters')
+    .select('activity_type, started_at, duration_seconds, distance_meters, avg_heart_rate, elevation_gain_meters')
     .eq('user_id', userId)
     .order('started_at', { ascending: false })
     .limit(HISTORY_LIMIT)
 
   return summarizeHistory((data ?? []) as WorkoutRow[])
+}
+
+// Age/kön/vikt/aktivitetsnivå från onboarding — används idag bara i kost-delen,
+// men ger bättre kalibrerad belastning/volym än att gissa utifrån historik ensamt.
+export interface ProfileRow {
+  birth_date: string | null
+  sex: 'male' | 'female' | 'other' | null
+  height_cm: number | null
+  weight_kg: number | null
+  activity_level: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active' | null
+}
+
+const ACTIVITY_LEVEL_LABELS: Record<NonNullable<ProfileRow['activity_level']>, string> = {
+  sedentary: 'stillasittande vardag',
+  light: 'lätt aktiv vardag',
+  moderate: 'måttligt aktiv vardag',
+  active: 'aktiv vardag',
+  very_active: 'mycket aktiv vardag',
+}
+
+const SEX_LABELS: Record<NonNullable<ProfileRow['sex']>, string> = {
+  male: 'man',
+  female: 'kvinna',
+  other: 'annat',
+}
+
+function calculateAge(birthDateIso: string): number {
+  const birth = new Date(birthDateIso)
+  const now = new Date()
+  let age = now.getFullYear() - birth.getFullYear()
+  const hasHadBirthdayThisYear =
+    now.getMonth() > birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() >= birth.getDate())
+  if (!hasHadBirthdayThisYear) age--
+  return age
+}
+
+export function summarizeProfile(profile: ProfileRow | null): string {
+  if (!profile) return ''
+  const parts: string[] = []
+  if (profile.birth_date) parts.push(`${calculateAge(profile.birth_date)} år`)
+  if (profile.sex) parts.push(SEX_LABELS[profile.sex])
+  if (profile.weight_kg) parts.push(`${profile.weight_kg} kg`)
+  if (profile.height_cm) parts.push(`${profile.height_cm} cm`)
+  if (profile.activity_level) parts.push(ACTIVITY_LEVEL_LABELS[profile.activity_level])
+  if (parts.length === 0) return ''
+  return `Användarens profil: ${parts.join(', ')}. `
+}
+
+export async function fetchProfileSummary(supabase: SupabaseClient, userId: string): Promise<string> {
+  const { data } = await supabase
+    .from('profiles')
+    .select('birth_date, sex, height_cm, weight_kg, activity_level')
+    .eq('id', userId)
+    .maybeSingle()
+
+  return summarizeProfile((data ?? null) as ProfileRow | null)
+}
+
+interface HeartRateZoneRow {
+  min: number
+  max: number
+}
+
+const ZONE_NAMES = ['Zon 1 (återhämtning)', 'Zon 2 (lugnt)', 'Zon 3 (tempo)', 'Zon 4 (tröskel)', 'Zon 5 (max)']
+
+export function summarizeHeartRateZones(zones: HeartRateZoneRow[] | null): string {
+  if (!zones || zones.length === 0) return ''
+  const parts = zones.map((zone, i) => {
+    const label = ZONE_NAMES[i] ?? `Zon ${i + 1}`
+    const max = zone.max > 0 ? zone.max : '∞'
+    return `${label}: ${zone.min}-${max} bpm`
+  })
+  return `Användarens pulszoner från Strava: ${parts.join(', ')}. Använd dessa EXAKTA zoner istället för att gissa pulsintervall när passen ska ha en pulsangivelse. `
+}
+
+export async function fetchHeartRateZonesSummary(supabase: SupabaseClient, userId: string): Promise<string> {
+  const { data } = await supabase
+    .from('fitness_connections')
+    .select('heart_rate_zones')
+    .eq('user_id', userId)
+    .eq('provider', 'strava')
+    .maybeSingle()
+
+  return summarizeHeartRateZones((data?.heart_rate_zones ?? null) as HeartRateZoneRow[] | null)
 }

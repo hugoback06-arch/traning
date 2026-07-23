@@ -86,7 +86,7 @@ Deno.serve(async (req) => {
         pending_refresh_token: token.refresh_token,
         pending_expires_at: new Date(token.expires_at * 1000).toISOString(),
         pending_external_athlete_id: String(token.athlete?.id ?? ''),
-        pending_scope: 'read,activity:read_all',
+        pending_scope: 'read,activity:read_all,profile:read_all',
       })
       .eq('state', state)
 

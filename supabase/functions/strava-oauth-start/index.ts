@@ -10,7 +10,9 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
-const SCOPE = 'read,activity:read_all'
+// profile:read_all krävs för athlete/zones (pulszoner) — utan den scopen
+// returnerar Strava 401 på det anropet.
+const SCOPE = 'read,activity:read_all,profile:read_all'
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {

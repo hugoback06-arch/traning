@@ -12,6 +12,7 @@ import {
   ensureValidStravaToken,
   fetchStravaActivities,
   fetchStravaActivity,
+  fetchStravaHeartRateZones,
   upsertWorkoutFromStravaActivity,
 } from '../_shared/stravaActivity.ts'
 
@@ -71,20 +72,27 @@ Deno.serve(async (req) => {
     // to backfill map/splits for historical activities too.
     const summaries = await fetchStravaActivities(accessToken, afterEpoch)
 
-    // Rows synced before map/splits backfilling existed (or that failed
-    // mid-loop earlier) stay outside the `after=` window forever, since it's
-    // keyed off last_synced_at rather than "row still missing data" — so
-    // separately re-fetch any already-stored Strava activity that's still
-    // missing its map, regardless of when it was created.
-    const { data: missingMapRows } = await supabase
-      .from('workouts')
-      .select('external_id')
-      .eq('user_id', user.id)
-      .eq('source', 'strava')
-      .is('map_polyline', null)
+    // Rows synced before map/splits/streams backfilling existed (or that
+    // failed mid-loop earlier) stay outside the `after=` window forever,
+    // since it's keyed off last_synced_at rather than "row still missing
+    // data" — so separately re-fetch any already-stored Strava activity
+    // that's still missing its map or its puls/tempo-streams, regardless of
+    // when it was created. Two separate filters (not .or()) because a row
+    // with a map but no streams — the common case once streams shipped
+    // after map/splits did — needs to match too.
+    const [{ data: missingMapRows }, { data: missingStreamsRows }] = await Promise.all([
+      supabase.from('workouts').select('external_id').eq('user_id', user.id).eq('source', 'strava').is('map_polyline', null),
+      supabase
+        .from('workouts')
+        .select('external_id')
+        .eq('user_id', user.id)
+        .eq('source', 'strava')
+        .is('streams', null)
+        .not('activity_type', 'in', '(strength,other)'),
+    ])
 
     const activityIds = new Set<string>(summaries.map((summary: { id: number | string }) => String(summary.id)))
-    for (const row of missingMapRows ?? []) {
+    for (const row of [...(missingMapRows ?? []), ...(missingStreamsRows ?? [])]) {
       if (row.external_id) activityIds.add(row.external_id)
     }
 
@@ -99,7 +107,17 @@ Deno.serve(async (req) => {
       }
     }
 
-    await supabase.from('fitness_connections').update({ last_synced_at: new Date().toISOString() }).eq('id', connection.id)
+    // Best-effort uppdatering — täcker in fallet där anslutningen nyss fick
+    // profile:read_all via en återanslutning och därför saknar zoner sen tidigare.
+    const heartRateZones = await fetchStravaHeartRateZones(accessToken).catch(() => null)
+
+    await supabase
+      .from('fitness_connections')
+      .update({
+        last_synced_at: new Date().toISOString(),
+        ...(heartRateZones ? { heart_rate_zones: heartRateZones } : {}),
+      })
+      .eq('id', connection.id)
 
     return jsonResponse({ synced_count: syncedCount })
   } catch (error) {

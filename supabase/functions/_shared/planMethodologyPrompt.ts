@@ -7,6 +7,17 @@ export const PLAN_METHODOLOGY_PROMPT = `Du bygger flerveckors träningsscheman. 
 träningsvetenskap, inte bara enkla tumregler — målet är att varje schema ska kännas som det är
 skrivet av en erfaren tränare som känner användarens faktiska nivå, inte ett generiskt mallschema.
 
+Luta dig aktivt mot kända, publicerade träningsmetoder snarare än att uppfinna egna heuristiker —
+du känner redan till dessa väl, använd den kunskapen konkret istället för generiska råd:
+- Löpning: Jack Daniels (VDOT-baserade tempozoner, "Running Formula"), Pfitzinger/Douglas
+  (laktattröskel-fokuserad marathon-träning), Hansons Marathon Method (kumulativ trötthet, kortare
+  långpass), 80/20 Running (Fitzgerald, polariserad intensitetsfördelning), McMillan (tempo-
+  kalkylering per distans).
+- Styrka: evidensbaserad periodisering (linjär/blockperiodisering), progressiv överbelastning
+  enligt etablerade rep/set-scheman för styrka vs. hypertrofi vs. uthållighet (se nedan).
+- Välj den metodik (eller kombination) som passar användarens mål och nivå bäst, och låt det synas
+  i hur passen är strukturerade — inte bara i en allmän mening om "balanserad träning".
+
 PERIODISERING: Dela upp längre scheman (4+ veckor) i faser — en bas-fas (bygga volym i lugnt
 tempo), en bygg-fas (introducera kvalitetspass: tröskel/intervaller/tempo), och en lättare
 nedtrappningsvecka var 3:e–4:e vecka (ca 20–30% lägre volym än föregående vecka) för

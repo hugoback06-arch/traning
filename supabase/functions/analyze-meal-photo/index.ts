@@ -50,8 +50,9 @@ Deno.serve(async (req) => {
 
   let image_base64: unknown
   let mime_type: unknown
+  let description: unknown
   try {
-    ;({ image_base64, mime_type } = await req.json())
+    ;({ image_base64, mime_type, description } = await req.json())
   } catch {
     return jsonResponse({ error: 'Ogiltig begäran', code: 'INVALID_IMAGE' }, 400)
   }
@@ -59,6 +60,13 @@ Deno.serve(async (req) => {
   if (typeof image_base64 !== 'string' || typeof mime_type !== 'string' || !image_base64) {
     return jsonResponse({ error: 'image_base64 och mime_type krävs', code: 'INVALID_IMAGE' }, 400)
   }
+  if (description !== undefined && typeof description !== 'string') {
+    return jsonResponse({ error: 'Ogiltig beskrivning', code: 'INVALID_IMAGE' }, 400)
+  }
+
+  const promptText =
+    'Uppskatta kalorier och makronutrienter (protein, kolhydrater, fett) för maten på bilden. Svara på svenska. Om bilden inte tydligt visar mat, gör en bästa gissning ändå men sätt confidence till "low".' +
+    (description ? ` Användarens egen beskrivning av rätten (använd som hjälp, bilden väger tyngst): "${description}"` : '')
 
   try {
     const message = await anthropic.messages.create({
@@ -71,10 +79,7 @@ Deno.serve(async (req) => {
           role: 'user',
           content: [
             { type: 'image', source: { type: 'base64', media_type: mime_type, data: image_base64 } },
-            {
-              type: 'text',
-              text: 'Uppskatta kalorier och makronutrienter (protein, kolhydrater, fett) för maten på bilden. Svara på svenska. Om bilden inte tydligt visar mat, gör en bästa gissning ändå men sätt confidence till "low".',
-            },
+            { type: 'text', text: promptText },
           ],
         },
       ],

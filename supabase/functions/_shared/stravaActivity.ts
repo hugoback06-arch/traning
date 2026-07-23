@@ -102,6 +102,29 @@ export async function fetchStravaStreams(accessToken: string, activityId: string
   }
 }
 
+export interface HeartRateZone {
+  min: number
+  max: number
+}
+
+// Athletens pulszoner (kräver scope profile:read_all) — ger AI-schemat riktiga
+// tränings­zoner istället för gissade pulsvärden. Många atleter har aldrig satt
+// upp zoner i Strava, och gamla anslutningar saknar den nya scopen tills de
+// återansluter, så 401/403/tomt svar är förväntat — då returneras null i
+// stället för att kasta, så anroparen (connect/manuell synk) kan fortsätta.
+export async function fetchStravaHeartRateZones(accessToken: string): Promise<HeartRateZone[] | null> {
+  const res = await fetch('https://www.strava.com/api/v3/athlete/zones', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+  })
+  if (!res.ok) return null
+
+  const body = await res.json()
+  const zones = body?.heart_rate?.zones as HeartRateZone[] | undefined
+  if (!zones || zones.length === 0) return null
+
+  return zones
+}
+
 // Paginates through all activities since afterEpochSeconds — a first-time
 // historical sync can easily exceed a single page (Strava caps per_page at 200).
 // deno-lint-ignore no-explicit-any

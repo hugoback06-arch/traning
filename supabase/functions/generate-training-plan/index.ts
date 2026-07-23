@@ -10,7 +10,12 @@ import Anthropic from 'npm:@anthropic-ai/sdk'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { COACH_SAFETY_SYSTEM_PROMPT } from '../_shared/safetyPrompt.ts'
 import { PLAN_METHODOLOGY_PROMPT } from '../_shared/planMethodologyPrompt.ts'
-import { ACTIVITY_TYPES, fetchHistorySummary } from '../_shared/trainingHistory.ts'
+import {
+  ACTIVITY_TYPES,
+  fetchHeartRateZonesSummary,
+  fetchHistorySummary,
+  fetchProfileSummary,
+} from '../_shared/trainingHistory.ts'
 import { computeVdotPaces } from '../_shared/vdot.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
@@ -190,6 +195,8 @@ Deno.serve(async (req) => {
   }
 
   const historySummary = await fetchHistorySummary(supabase, user.id)
+  const profileSummary = await fetchProfileSummary(supabase, user.id)
+  const heartRateZonesSummary = await fetchHeartRateZonesSummary(supabase, user.id)
   const dates = nextNDaysIso(dayCount, startDate)
 
   try {
@@ -208,11 +215,14 @@ Deno.serve(async (req) => {
               text:
                 `Skapa ett träningsschema på ${weeks} veckor (exakt ${dayCount} dagar, i denna ordning): ${dates.join(', ')}. ` +
                 `Använd scheduled_date exakt som angivet för respektive dag. ` +
+                `${profileSummary}` +
+                `${heartRateZonesSummary}` +
                 `${historySummary} ` +
                 `Användarens mål: "${prompt}". ` +
                 `${summarizeAnswers(answers)}` +
                 `${summarizeRecentRace(recentRace)}` +
                 `Basera intensitet, volym och tempo på träningshistoriken ovan när den finns — bygg vidare på nuvarande nivå och uppmätta tempon snarare än att gissa. ` +
+                `Ta hänsyn till användarens profil (ålder, kön, vikt, aktivitetsnivå) när den finns — den påverkar rimlig återhämtningstid, pulszoner och lämplig belastningsprogression. ` +
                 `Ta hänsyn till användarens svar på uppföljningsfrågorna ovan när de finns — de väger tyngre än en gissning baserad på historik eller mål ensamt. ` +
                 `Följ periodisering, 80/20-fördelning och passvariation enligt instruktionerna i systemprompten, och svara på svenska. ` +
                 `Varje tränings dag ska vara fullt specificerad så användaren kan följa passet utan att gissa: styrkepass ska lista varje övning med set/reps i target_data.exercises, ` +
