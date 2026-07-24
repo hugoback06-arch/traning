@@ -1,18 +1,19 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
 import { Calendar, CalendarDays, Dumbbell, Plus, UtensilsCrossed } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { StreakBadge } from '../components/overview/StreakBadge'
+import { StreakMilestoneModal } from '../components/overview/StreakMilestoneModal'
 import { TrainingStatusCard } from '../components/training/TrainingStatusCard'
 import { AddMealModal } from '../components/meals/AddMealModal'
 import { useProfile } from '../hooks/useProfile'
 import { useTodayMealLogs } from '../hooks/useTodayMealLogs'
-import { useMealLogDates } from '../hooks/useMealLogDates'
+import { useStreak } from '../hooks/useStreak'
 import { useActiveTrainingPlan } from '../hooks/useActiveTrainingPlan'
 import { sumMealTotals } from '../lib/dailyTotals'
-import { calculateStreak } from '../lib/streaks'
+import { getStreakMilestone } from '../lib/streaks'
 import { getActiveMealType } from '../lib/activeMealType'
 import { MEAL_TYPE_LABELS } from '../lib/mealTypeLabels'
 
@@ -20,19 +21,31 @@ function capitalize(text: string): string {
   return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
+const MILESTONE_STORAGE_KEY = 'strikt:streak-milestone-celebrated'
+
 export function Home() {
   const [addingMeal, setAddingMeal] = useState(false)
+  const [celebratingMilestone, setCelebratingMilestone] = useState<number | null>(null)
   const { data: profile } = useProfile()
   const { data: mealLogs } = useTodayMealLogs()
-  const { data: mealDates } = useMealLogDates()
+  const streakDays = useStreak()
   const { data: activePlan } = useActiveTrainingPlan()
 
   const totals = sumMealTotals(mealLogs ?? [])
   const goalKcal = profile?.daily_calorie_goal ?? 0
   const remainingKcal = Math.max(0, Math.round(goalKcal - totals.kcal))
   const fraction = goalKcal > 0 ? Math.min(totals.kcal / goalKcal, 1) : 0
-  const streakDays = calculateStreak(mealDates ?? [])
   const activeMealType = getActiveMealType()
+
+  useEffect(() => {
+    const milestone = getStreakMilestone(streakDays)
+    if (!milestone) return
+    const lastCelebrated = Number(localStorage.getItem(MILESTONE_STORAGE_KEY) ?? 0)
+    if (milestone > lastCelebrated) {
+      setCelebratingMilestone(milestone)
+      localStorage.setItem(MILESTONE_STORAGE_KEY, String(milestone))
+    }
+  }, [streakDays])
 
   return (
     <div className="space-y-4">
@@ -148,6 +161,9 @@ export function Home() {
       </div>
 
       {addingMeal && <AddMealModal mealType={activeMealType} onClose={() => setAddingMeal(false)} />}
+      {celebratingMilestone && (
+        <StreakMilestoneModal days={celebratingMilestone} onClose={() => setCelebratingMilestone(null)} />
+      )}
     </div>
   )
 }

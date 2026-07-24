@@ -8,6 +8,8 @@ export const queryKeys = {
   mealLogDatesInRange: (userId: string | undefined, startIso: string, endIsoExclusive: string) =>
     ['meal-logs', 'range', startIso, endIsoExclusive, userId] as const,
   mealLogsPrefix: ['meal-logs'] as const,
+  weeklyMealLogs: (userId: string | undefined, startIso: string, endIsoExclusive: string) =>
+    ['meal-logs', 'weekly', startIso, endIsoExclusive, userId] as const,
   frequentFoodItems: (userId: string | undefined) => ['meal-logs', 'frequent', userId] as const,
   savedMeals: (userId: string | undefined) => ['saved-meals', userId] as const,
 
@@ -20,4 +22,6 @@ export const queryKeys = {
   workoutDetail: (workoutId: string | undefined) => ['workouts', 'detail', workoutId] as const,
   workoutsPrefix: ['workouts'] as const,
   planSessionsPrefix: ['plan-sessions'] as const,
+
+  allFeedbackSuggestions: ['feedback-suggestions', 'all'] as const,
 }

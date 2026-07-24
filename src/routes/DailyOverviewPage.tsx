@@ -3,23 +3,25 @@ import { ChevronRight, Star, UtensilsCrossed } from 'lucide-react'
 import { CalorieRing } from '../components/overview/CalorieRing'
 import { MacroCard } from '../components/overview/MacroCard'
 import { StreakBadge } from '../components/overview/StreakBadge'
+import { WeeklyCalorieChart } from '../components/overview/WeeklyCalorieChart'
 import { WaterCounter } from '../components/overview/WaterCounter'
 import { MealTypeSection } from '../components/meals/MealTypeSection'
 import { Spinner } from '../components/common/Spinner'
 import { useProfile } from '../hooks/useProfile'
 import { useTodayMealLogs } from '../hooks/useTodayMealLogs'
 import { useTodayWater } from '../hooks/useTodayWater'
-import { useMealLogDates } from '../hooks/useMealLogDates'
+import { useStreak } from '../hooks/useStreak'
+import { useWeeklyMealTotals } from '../hooks/useWeeklyMealTotals'
 import { useAddWater } from '../hooks/useAddWater'
 import { useRemoveWater } from '../hooks/useRemoveWater'
 import { sumMealTotals } from '../lib/dailyTotals'
-import { calculateStreak } from '../lib/streaks'
 
 export function DailyOverviewPage() {
   const { data: profile, isLoading: profileLoading } = useProfile()
   const { data: mealLogs, isLoading: mealsLoading } = useTodayMealLogs()
   const { data: waterMl, isLoading: waterLoading } = useTodayWater()
-  const { data: mealDates } = useMealLogDates()
+  const { data: weeklyTotals } = useWeeklyMealTotals()
+  const streakDays = useStreak()
   const addWater = useAddWater()
   const removeWater = useRemoveWater()
 
@@ -28,7 +30,6 @@ export function DailyOverviewPage() {
   }
 
   const totals = sumMealTotals(mealLogs ?? [])
-  const streakDays = calculateStreak(mealDates ?? [])
   const goalKcal = profile.daily_calorie_goal ?? 0
 
   return (
@@ -53,6 +54,8 @@ export function DailyOverviewPage() {
         <MacroCard kind="carbs" label="Kolhydrater" eatenG={totals.carbsG} goalG={profile.carbs_goal_g ?? 0} />
         <MacroCard kind="fat" label="Fett" eatenG={totals.fatG} goalG={profile.fat_goal_g ?? 0} />
       </div>
+
+      {weeklyTotals && <WeeklyCalorieChart days={weeklyTotals} goalKcal={goalKcal} />}
 
       <MealTypeSection logs={mealLogs ?? []} />
 

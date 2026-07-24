@@ -4,6 +4,7 @@ import { queryClient } from './lib/queryClient'
 import { AuthProvider } from './contexts/AuthContext'
 import { ThemeProvider } from './contexts/ThemeProvider'
 import { RequireAuth } from './components/layout/RequireAuth'
+import { RequireOwner } from './components/layout/RequireOwner'
 import { OnboardingGate } from './components/layout/OnboardingGate'
 import { AppShell } from './components/layout/AppShell'
 import { LoginPage } from './routes/LoginPage'
@@ -17,6 +18,7 @@ import { TrainingPage } from './routes/training/TrainingPage'
 import { SchedulePage } from './routes/training/SchedulePage'
 import { History } from './routes/training/History'
 import { WorkoutDetailPage } from './routes/training/WorkoutDetailPage'
+import { AdminFeedbackPage } from './routes/AdminFeedbackPage'
 
 function App() {
   return (
@@ -39,6 +41,9 @@ function App() {
                     <Route path="/training/history" element={<History />} />
                     <Route path="/training/workout/:workoutId" element={<WorkoutDetailPage />} />
                     <Route path="/profile" element={<ProfileSettingsPage />} />
+                    <Route element={<RequireOwner />}>
+                      <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
+                    </Route>
                   </Route>
                 </Route>
               </Route>

@@ -18,3 +18,10 @@ export function calculateStreak(loggedDates: Date[]): number {
 
   return streak
 }
+
+const STREAK_MILESTONES = [7, 30, 100, 365]
+
+/** Returns the milestone reached if `days` exactly matches one, otherwise null. */
+export function getStreakMilestone(days: number): number | null {
+  return STREAK_MILESTONES.find((milestone) => milestone === days) ?? null
+}

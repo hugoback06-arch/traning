@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useSearchParams } from 'react-router'
+import { Link, useSearchParams } from 'react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Bell, Lightbulb, Palette, User } from 'lucide-react'
 import { Card } from '../components/common/Card'
@@ -289,6 +289,12 @@ export function ProfileSettingsPage() {
           </div>
         )}
       </Card>
+
+      {session?.user.email === 'hugoback06@gmail.com' && (
+        <Link to="/admin/feedback" className="block text-center text-sm text-ink-secondary underline">
+          Alla feedback-förslag (admin)
+        </Link>
+      )}
     </div>
   )
 }
