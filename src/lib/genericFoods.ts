@@ -56,6 +56,7 @@ const GENERIC_FOODS: GenericFood[] = [
   { slug: 'morot', name: 'Morot', caloriesPer100g: 41, proteinPer100g: 0.9, carbsPer100g: 9.6, fatPer100g: 0.2 },
   { slug: 'tomat', name: 'Tomat', caloriesPer100g: 18, proteinPer100g: 0.9, carbsPer100g: 3.9, fatPer100g: 0.2 },
   { slug: 'gurka', name: 'Gurka', caloriesPer100g: 15, proteinPer100g: 0.7, carbsPer100g: 3.6, fatPer100g: 0.1 },
+  { slug: 'majskaka', name: 'Majskaka', aliases: ['majskakor'], caloriesPer100g: 383, proteinPer100g: 7.5, carbsPer100g: 80, fatPer100g: 3, portionG: 10, portionUnit: 'st' },
 
   // Färdiga svenska rätter — kcal/makron är ett genomsnitt för hela rätten, kan
   // såklart variera med recept. portionG är en typisk tallriksportion.
