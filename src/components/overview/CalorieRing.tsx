@@ -32,7 +32,7 @@ export function CalorieRing({ eatenKcal, goalKcal }: CalorieRingProps) {
           className="transition-[stroke-dashoffset] duration-500 ease-out"
         />
       </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-between py-9 text-center">
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-center">
         <span className="text-xs text-ink-secondary">{Math.round(eatenKcal)} kcal ätit</span>
         {overGoal ? (
           <span className="font-display text-4xl font-semibold text-warning">
@@ -41,9 +41,7 @@ export function CalorieRing({ eatenKcal, goalKcal }: CalorieRingProps) {
         ) : (
           <span className="font-display text-5xl font-semibold text-ink-primary">{remaining}</span>
         )}
-        <span className="text-xs text-ink-secondary">
-          {overGoal ? 'kcal över mål' : `av ${Math.round(goalKcal)} kcal`}
-        </span>
+        <span className="text-xs text-ink-secondary">{overGoal ? 'kcal över mål' : 'kcal kvar'}</span>
       </div>
     </div>
   )

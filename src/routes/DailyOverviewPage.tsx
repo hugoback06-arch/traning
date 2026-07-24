@@ -46,6 +46,7 @@ export function DailyOverviewPage() {
       </div>
 
       <CalorieRing eatenKcal={totals.kcal} goalKcal={goalKcal} />
+      <p className="text-center text-sm text-ink-secondary">{Math.round(goalKcal)} kcal per dag</p>
 
       <div className="flex gap-3">
         <MacroCard kind="protein" label="Protein" eatenG={totals.proteinG} goalG={profile.protein_goal_g ?? 0} />
