@@ -272,12 +272,16 @@ function buildStatEntries(workout: WorkoutDetail): [string, string][] {
   if (distance) entries.push(['Distans', distance])
   const duration = formatDuration(workout.duration_seconds)
   if (duration) entries.push(['Tid', duration])
+  const elapsed = formatDuration(workout.elapsed_seconds)
+  if (elapsed && workout.elapsed_seconds !== workout.duration_seconds) entries.push(['Total tid', elapsed])
   if (workout.activity_type === 'cycling') {
     const speed = formatSpeed(workout.distance_meters, workout.duration_seconds)
     if (speed) entries.push(['Snittfart', speed])
+    if (workout.max_speed_ms) entries.push(['Högsta fart', formatSpeedAsKmh(workout.max_speed_ms)])
   } else {
     const pace = formatPace(workout.distance_meters, workout.duration_seconds)
     if (pace) entries.push(['Snittempo', pace])
+    if (workout.max_speed_ms) entries.push(['Högsta tempo', formatSpeedAsPace(workout.max_speed_ms)])
   }
   if (workout.avg_heart_rate) entries.push(['Snittpuls', `${workout.avg_heart_rate} bpm`])
   if (workout.max_heart_rate) entries.push(['Maxpuls', `${workout.max_heart_rate} bpm`])

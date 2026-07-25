@@ -38,9 +38,9 @@ function formatTargetValue(key: string, value: unknown): string {
 
 export function WorkoutDetailSheet({ session, onClose }: WorkoutDetailSheetProps) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center">
+    <div className="fixed inset-0 z-50 flex items-start justify-center">
       <button aria-label="Stäng" onClick={onClose} className="backdrop-in absolute inset-0 bg-black/40" />
-      <div className="sheet-up relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-surface p-4 pb-8">
+      <div className="sheet-down relative z-10 max-h-[90vh] w-full max-w-md overflow-y-auto rounded-b-2xl bg-surface p-4 pb-8">
         <div className="mb-4 flex items-center justify-end">
           <button onClick={onClose} aria-label="Stäng" className="press text-ink-secondary">
             <X size={20} />

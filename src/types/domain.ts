@@ -160,6 +160,8 @@ export interface Workout {
   title: string | null
   started_at: string
   duration_seconds: number | null
+  elapsed_seconds: number | null
+  max_speed_ms: number | null
   distance_meters: number | null
   calories_burned: number | null
   avg_heart_rate: number | null

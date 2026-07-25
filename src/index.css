@@ -123,6 +123,19 @@ select {
   animation: sheet-up 0.25s cubic-bezier(0.32, 0.72, 0, 1) both;
 }
 
+@keyframes sheet-down {
+  from {
+    transform: translateY(-100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.sheet-down {
+  animation: sheet-down 0.25s cubic-bezier(0.32, 0.72, 0, 1) both;
+}
+
 @keyframes backdrop-in {
   from {
     opacity: 0;
@@ -140,6 +153,7 @@ select {
   .press,
   .page-enter,
   .sheet-up,
+  .sheet-down,
   .backdrop-in {
     animation: none !important;
     transition: none !important;

@@ -178,6 +178,8 @@ export async function upsertWorkoutFromStravaActivity(
         title: activity.name ?? null,
         started_at: startedAt,
         duration_seconds: activity.moving_time ?? null,
+        elapsed_seconds: activity.elapsed_time ?? null,
+        max_speed_ms: activity.max_speed ?? null,
         distance_meters: activity.distance ?? null,
         calories_burned: activity.calories ?? null,
         avg_heart_rate: activity.average_heartrate ? Math.round(activity.average_heartrate) : null,
