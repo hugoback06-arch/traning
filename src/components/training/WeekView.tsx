@@ -72,18 +72,35 @@ export function WeekView({ onSelectDay }: WeekViewProps) {
           const dateKey = format(day, 'yyyy-MM-dd')
           const session = sessionsByDate.get(dateKey) ?? null
           const dayWorkouts = workoutsByDate.get(dateKey) ?? []
+          // Only count a linked workout as "the session's pass" when the type
+          // matches — a mismatched Strava sync (e.g. a bike ride auto-linked to
+          // a planned run) should always render as two separate rows: the plan
+          // stays unfulfilled, and the actual activity shows on its own.
+          const primaryWorkout =
+            dayWorkouts.find((w) => w.training_plan_session_id === session?.id && w.activity_type === session?.activity_type) ??
+            (session ? null : (dayWorkouts[0] ?? null))
+          const extraWorkouts = dayWorkouts.filter((w) => w.id !== primaryWorkout?.id)
           return (
-            <DayCard
-              key={dateKey}
-              date={day}
-              session={session}
-              workouts={dayWorkouts}
-              onClick={() => {
-                const matchedWorkout = dayWorkouts.find((w) => w.training_plan_session_id === session?.id) ?? dayWorkouts[0]
-                if (matchedWorkout) onSelectDay({ type: 'workout', workoutId: matchedWorkout.id })
-                else if (session) onSelectDay({ type: 'session', session })
-              }}
-            />
+            <div key={dateKey} className="space-y-2">
+              <DayCard
+                date={day}
+                session={session}
+                workouts={primaryWorkout ? [primaryWorkout] : []}
+                onClick={() => {
+                  if (primaryWorkout) onSelectDay({ type: 'workout', workoutId: primaryWorkout.id })
+                  else if (session) onSelectDay({ type: 'session', session })
+                }}
+              />
+              {extraWorkouts.map((workout) => (
+                <DayCard
+                  key={workout.id}
+                  date={day}
+                  session={null}
+                  workouts={[workout]}
+                  onClick={() => onSelectDay({ type: 'workout', workoutId: workout.id })}
+                />
+              ))}
+            </div>
           )
         })}
       </div>

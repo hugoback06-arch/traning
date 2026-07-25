@@ -19,3 +19,9 @@ export function formatPace(meters: number | null | undefined, seconds: number | 
   const sec = Math.round(secPerKm % 60)
   return `${min}:${sec.toString().padStart(2, '0')} /km`
 }
+
+export function formatSpeed(meters: number | null | undefined, seconds: number | null | undefined): string | null {
+  if (!meters || !seconds) return null
+  const kmh = meters / 1000 / (seconds / 3600)
+  return `${kmh.toFixed(1)} km/h`
+}

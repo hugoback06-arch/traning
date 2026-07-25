@@ -12,8 +12,14 @@ export function useTrainingForDate(date: Date = new Date()) {
 
   const session = sessions?.[0] ?? null
   const allWorkouts = workouts ?? []
+  // A Strava activity can auto-link to a same-day session of a different type
+  // (e.g. a bike ride linked to a planned run). Only treat it as "the
+  // session's workout" when the type actually matches — otherwise the plan
+  // stays unfulfilled and the actual workout shows as its own separate item
+  // via secondaryWorkouts, instead of silently replacing the planned pass.
   const matchedWorkout =
-    allWorkouts.find((w) => w.training_plan_session_id === session?.id) ?? (session ? undefined : allWorkouts[0])
+    allWorkouts.find((w) => w.training_plan_session_id === session?.id && w.activity_type === session?.activity_type) ??
+    (session ? undefined : allWorkouts[0])
   const secondaryWorkouts = allWorkouts.filter((w) => w.id !== matchedWorkout?.id)
 
   const isRestDay = session?.activity_type === 'rest'

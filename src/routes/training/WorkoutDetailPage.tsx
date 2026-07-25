@@ -13,7 +13,7 @@ import { useWorkoutDetail } from '../../hooks/useWorkoutDetail'
 import { useUpdateWorkout } from '../../hooks/useUpdateWorkout'
 import { useEvaluateWorkout } from '../../hooks/useEvaluateWorkout'
 import { ACTIVITY_LABELS } from '../../lib/activityTypes'
-import { formatDistance, formatDuration, formatPace } from '../../lib/formatWorkout'
+import { formatDistance, formatDuration, formatPace, formatSpeed } from '../../lib/formatWorkout'
 import type {
   PlanActivityType,
   TrainingPlanSession,
@@ -41,7 +41,14 @@ function formatSpeedAsPace(metersPerSecond: number): string {
   return `${min}:${sec.toString().padStart(2, '0')} /km`
 }
 
-function StreamCharts({ streams }: { streams: WorkoutStreams }) {
+function formatSpeedAsKmh(metersPerSecond: number): string {
+  return `${(metersPerSecond * 3.6).toFixed(1)} km/h`
+}
+
+function StreamCharts({ streams, activityType }: { streams: WorkoutStreams; activityType: PlanActivityType }) {
+  const isCycling = activityType === 'cycling'
+  const paceLabel = isCycling ? 'Fart' : 'Tempo'
+  const formatPaceValue = isCycling ? formatSpeedAsKmh : formatSpeedAsPace
   const hasHeartrate = streams.heartrate && streams.heartrate.some((v) => v > 0)
   const hasPace = streams.velocity_smooth && streams.velocity_smooth.some((v) => v > 0)
   const [expanded, setExpanded] = useState<'heartrate' | 'pace' | null>(null)
@@ -63,11 +70,11 @@ function StreamCharts({ streams }: { streams: WorkoutStreams }) {
       )}
       {hasPace && (
         <StreamChart
-          label="Tempo"
+          label={paceLabel}
           colorVar="var(--color-chart-pace)"
           timeSeconds={streams.time}
           values={streams.velocity_smooth!}
-          formatValue={formatSpeedAsPace}
+          formatValue={formatPaceValue}
           formatTime={formatElapsed}
           onExpand={() => setExpanded('pace')}
         />
@@ -82,7 +89,7 @@ function StreamCharts({ streams }: { streams: WorkoutStreams }) {
           <div className="sheet-up relative z-10 w-full max-w-md rounded-t-2xl bg-surface p-4 pb-8">
             <div className="mb-3 flex items-center justify-between">
               <h2 className="text-base font-semibold text-ink-primary">
-                {expanded === 'heartrate' ? 'Puls' : 'Tempo'}
+                {expanded === 'heartrate' ? 'Puls' : paceLabel}
               </h2>
               <button onClick={() => setExpanded(null)} className="text-sm text-ink-secondary">
                 Stäng
@@ -100,11 +107,11 @@ function StreamCharts({ streams }: { streams: WorkoutStreams }) {
               />
             ) : (
               <StreamChart
-                label="Tempo"
+                label={paceLabel}
                 colorVar="var(--color-chart-pace)"
                 timeSeconds={streams.time}
                 values={streams.velocity_smooth!}
-                formatValue={formatSpeedAsPace}
+                formatValue={formatPaceValue}
                 formatTime={formatElapsed}
                 height={220}
               />
@@ -147,9 +154,11 @@ export function WorkoutDetailPage() {
 
           <StatsGrid workout={workout} />
 
-          {workout.streams && <StreamCharts streams={workout.streams} />}
+          {workout.streams && <StreamCharts streams={workout.streams} activityType={workout.activity_type} />}
 
-          {workout.splits && workout.splits.length > 1 && <SplitsTable splits={workout.splits} />}
+          {workout.splits && workout.splits.length > 1 && (
+            <SplitsTable splits={workout.splits} activityType={workout.activity_type} />
+          )}
 
           {isStrength(workout.activity_type) && workout.sets.length > 0 && <SetsTable sets={workout.sets} />}
 
@@ -263,8 +272,13 @@ function buildStatEntries(workout: WorkoutDetail): [string, string][] {
   if (distance) entries.push(['Distans', distance])
   const duration = formatDuration(workout.duration_seconds)
   if (duration) entries.push(['Tid', duration])
-  const pace = formatPace(workout.distance_meters, workout.duration_seconds)
-  if (pace) entries.push(['Snittempo', pace])
+  if (workout.activity_type === 'cycling') {
+    const speed = formatSpeed(workout.distance_meters, workout.duration_seconds)
+    if (speed) entries.push(['Snittfart', speed])
+  } else {
+    const pace = formatPace(workout.distance_meters, workout.duration_seconds)
+    if (pace) entries.push(['Snittempo', pace])
+  }
   if (workout.avg_heart_rate) entries.push(['Snittpuls', `${workout.avg_heart_rate} bpm`])
   if (workout.max_heart_rate) entries.push(['Maxpuls', `${workout.max_heart_rate} bpm`])
   if (workout.calories_burned) entries.push(['Kalorier', `${workout.calories_burned} kcal`])
@@ -289,7 +303,8 @@ function StatsGrid({ workout }: { workout: WorkoutDetail }) {
   )
 }
 
-function SplitsTable({ splits }: { splits: WorkoutSplit[] }) {
+function SplitsTable({ splits, activityType }: { splits: WorkoutSplit[]; activityType: PlanActivityType }) {
+  const isCycling = activityType === 'cycling'
   const [expanded, setExpanded] = useState<number | null>(null)
   const [tabOpen, setTabOpen] = useState(false)
 
@@ -318,7 +333,7 @@ function SplitsTable({ splits }: { splits: WorkoutSplit[] }) {
               <div className="flex items-center justify-between gap-2 text-xs">
                 <span className="text-ink-secondary">{split.split} km</span>
                 <span className="font-medium text-ink-primary">
-                  {formatPace(split.distance, split.moving_time) ?? '—'}
+                  {(isCycling ? (speedKmh != null ? `${speedKmh.toFixed(1)} km/h` : null) : formatPace(split.distance, split.moving_time)) ?? '—'}
                 </span>
                 {split.average_heartrate != null && (
                   <span className="text-ink-secondary">{Math.round(split.average_heartrate)} bpm</span>
@@ -333,7 +348,7 @@ function SplitsTable({ splits }: { splits: WorkoutSplit[] }) {
               </div>
               {isOpen && (
                 <div className="mt-2 grid grid-cols-3 gap-2">
-                  {speedKmh != null && (
+                  {!isCycling && speedKmh != null && (
                     <div className="rounded-lg bg-surface-muted p-2">
                       <p className="text-[10px] text-ink-secondary">Snittfart</p>
                       <p className="text-xs font-medium text-ink-primary">{speedKmh.toFixed(1)} km/h</p>
