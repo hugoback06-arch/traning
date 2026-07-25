@@ -15,8 +15,8 @@ export function Switch({ checked, onChange, label }: SwitchProps) {
       className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-surface-muted'}`}
     >
       <span
-        className={`absolute top-0.5 h-6 w-6 rounded-full bg-surface shadow-sm transition-transform ${
-          checked ? 'translate-x-5' : 'translate-x-0.5'
+        className={`absolute top-0.5 left-0.5 h-6 w-6 transform-gpu rounded-full bg-surface shadow-sm transition-transform ${
+          checked ? 'translate-x-5' : 'translate-x-0'
         }`}
       />
     </button>

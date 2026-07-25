@@ -16,7 +16,7 @@ import { useUpdateNotificationsEnabled } from '../hooks/useUpdateNotificationsEn
 import { useSavePushSubscription } from '../hooks/useSavePushSubscription'
 import { useDeletePushSubscription } from '../hooks/useDeletePushSubscription'
 import { isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/pushSubscription'
-import { useFeedbackSuggestions, useSubmitFeedbackSuggestion } from '../hooks/useFeedbackSuggestions'
+import { useSubmitFeedbackSuggestion } from '../hooks/useFeedbackSuggestions'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/queryKeys'
 import type { ThemePreference } from '../types/domain'
@@ -71,7 +71,6 @@ export function ProfileSettingsPage() {
   const savePushSubscription = useSavePushSubscription()
   const deletePushSubscription = useDeletePushSubscription()
   const [notificationsMessage, setNotificationsMessage] = useState<string | null>(null)
-  const { data: suggestions } = useFeedbackSuggestions()
   const submitSuggestion = useSubmitFeedbackSuggestion()
   const [suggestionText, setSuggestionText] = useState('')
 
@@ -288,18 +287,6 @@ export function ProfileSettingsPage() {
         >
           {submitSuggestion.isPending ? 'Skickar…' : 'Skicka förslag'}
         </Button>
-
-        {suggestions && suggestions.length > 0 && (
-          <div className="space-y-2 border-t border-border pt-3">
-            <p className="text-xs font-medium text-ink-secondary">Dina tidigare förslag</p>
-            {suggestions.map((s) => (
-              <div key={s.id} className="text-xs text-ink-secondary">
-                <p className="text-ink-primary">{s.message}</p>
-                <p>{new Date(s.created_at).toLocaleDateString('sv-SE')}</p>
-              </div>
-            ))}
-          </div>
-        )}
       </Card>
 
       {session?.user.email === 'hugoback06@gmail.com' && (
