@@ -13,6 +13,9 @@ import { useProfile } from '../hooks/useProfile'
 import { useFinalizeStrava } from '../hooks/useFinalizeStrava'
 import { useTheme } from '../hooks/useTheme'
 import { useUpdateNotificationsEnabled } from '../hooks/useUpdateNotificationsEnabled'
+import { useSavePushSubscription } from '../hooks/useSavePushSubscription'
+import { useDeletePushSubscription } from '../hooks/useDeletePushSubscription'
+import { isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/pushSubscription'
 import { useFeedbackSuggestions, useSubmitFeedbackSuggestion } from '../hooks/useFeedbackSuggestions'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/queryKeys'
@@ -65,6 +68,8 @@ export function ProfileSettingsPage() {
   const [displayStravaStatus, setDisplayStravaStatus] = useState<string | null>(null)
   const { preference, setPreference } = useTheme()
   const updateNotificationsEnabled = useUpdateNotificationsEnabled()
+  const savePushSubscription = useSavePushSubscription()
+  const deletePushSubscription = useDeletePushSubscription()
   const [notificationsMessage, setNotificationsMessage] = useState<string | null>(null)
   const { data: suggestions } = useFeedbackSuggestions()
   const submitSuggestion = useSubmitFeedbackSuggestion()
@@ -127,23 +132,30 @@ export function ProfileSettingsPage() {
 
   if (isLoading || !profile) return <Spinner />
 
-  function handleNotificationsToggle(next: boolean) {
+  async function handleNotificationsToggle(next: boolean) {
     setNotificationsMessage(null)
     if (!next) {
       updateNotificationsEnabled.mutate(false)
+      const subscription = await unsubscribeFromPush().catch(() => null)
+      if (subscription) deletePushSubscription.mutate(subscription.endpoint)
       return
     }
-    if (!('Notification' in window)) {
+    if (!('Notification' in window) || !isPushSupported()) {
       setNotificationsMessage('Notiser stöds inte i den här webbläsaren.')
       return
     }
-    Notification.requestPermission().then((permission) => {
-      if (permission === 'granted') {
-        updateNotificationsEnabled.mutate(true)
-      } else {
-        setNotificationsMessage('Tillåt notiser i webbläsaren för att slå på.')
-      }
-    })
+    const permission = await Notification.requestPermission()
+    if (permission !== 'granted') {
+      setNotificationsMessage('Tillåt notiser i webbläsaren för att slå på.')
+      return
+    }
+    try {
+      const subscription = await subscribeToPush()
+      await savePushSubscription.mutateAsync(subscription)
+      updateNotificationsEnabled.mutate(true)
+    } catch {
+      setNotificationsMessage('Kunde inte aktivera notiser, försök igen.')
+    }
   }
 
   function handleSubmitSuggestion() {

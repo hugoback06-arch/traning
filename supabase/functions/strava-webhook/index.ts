@@ -14,6 +14,7 @@
 // AI" button in the workout detail sheet instead.
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { ensureValidStravaToken, fetchStravaActivity, upsertWorkoutFromStravaActivity } from '../_shared/stravaActivity.ts'
+import { sendPushToUser } from '../_shared/webPush.ts'
 
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } })
@@ -80,6 +81,24 @@ async function processStravaEvent(event: StravaEvent) {
     await upsertWorkoutFromStravaActivity(supabase, connection.user_id, activity, accessToken)
 
     await supabase.from('fitness_connections').update({ last_synced_at: new Date().toISOString() }).eq('id', connection.id)
+
+    // Only for brand new activities — an update event means the user (or
+    // Strava) edited something on a pass they've already seen synced.
+    if (event.aspect_type === 'create') {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('notifications_enabled')
+        .eq('id', connection.user_id)
+        .maybeSingle()
+
+      if (profile?.notifications_enabled) {
+        await sendPushToUser(supabase, connection.user_id, {
+          title: 'Nytt pass synkat',
+          body: 'Ditt pass från Strava är synkat och redo att utvärderas.',
+          url: '/training',
+        })
+      }
+    }
   } catch (error) {
     console.error('strava-webhook processing failed', error)
   }
