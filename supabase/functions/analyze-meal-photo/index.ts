@@ -2,6 +2,8 @@
 // ANTHROPIC_API_KEY never reaches the browser. Auth is enforced by the platform
 // (verify_jwt = true in supabase/config.toml) before this code even runs.
 import Anthropic from 'npm:@anthropic-ai/sdk'
+import { createClient } from 'npm:@supabase/supabase-js@2'
+import { buildFoodCorrectionsPromptSection } from '../_shared/foodCorrections.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
@@ -104,12 +106,28 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Ogiltig beskrivning', code: 'INVALID_IMAGE' }, 400)
   }
 
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader) {
+    return jsonResponse({ error: 'Saknar autentisering', code: 'UNAUTHORIZED' }, 401)
+  }
+  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    global: { headers: { Authorization: authHeader } },
+  })
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return jsonResponse({ error: 'Saknar autentisering', code: 'UNAUTHORIZED' }, 401)
+  }
+  const correctionsSection = await buildFoodCorrectionsPromptSection(supabase, user.id)
+
   const promptText =
     'Uppskatta kalorier och makronutrienter (protein, kolhydrater, fett) för maten på bilden. ' +
     'Titta noga på bilden först och beskriv vad som faktiskt syns (form, färg, textur, sås, garnering, tillagningsmetod) innan du namnger rätten — gissa inte på en rätt som inte stöds av det du ser. ' +
     'Dela sedan upp maten i sina synliga beståndsdelar och uppskatta varje del för sig utifrån dess synliga portionsstorlek, inklusive synligt tillagningsfett (t.ex. olja/smör om maten ser stekt/friterad ut). Summera delarna till totalen. ' +
     'Svara på svenska. Om bilden inte tydligt visar mat, eller om identifieringen är osäker, gör en rimlig bästa gissning ändå men sätt confidence till "low".' +
-    (description ? ` Användarens egen beskrivning av rätten (använd som hjälp, bilden väger tyngst): "${description}"` : '')
+    (description ? ` Användarens egen beskrivning av rätten (använd som hjälp, bilden väger tyngst): "${description}"` : '') +
+    correctionsSection
 
   try {
     const message = await anthropic.messages.create({

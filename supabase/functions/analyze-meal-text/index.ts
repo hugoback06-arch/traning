@@ -3,6 +3,8 @@
 // platform (verify_jwt = true in supabase/config.toml) before this code runs.
 // Mirrors analyze-meal-photo/index.ts, swapping the image content block for text.
 import Anthropic from 'npm:@anthropic-ai/sdk'
+import { createClient } from 'npm:@supabase/supabase-js@2'
+import { buildFoodCorrectionsPromptSection } from '../_shared/foodCorrections.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
@@ -81,6 +83,21 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'En beskrivning av måltiden krävs', code: 'INVALID_TEXT' }, 400)
   }
 
+  const authHeader = req.headers.get('Authorization')
+  if (!authHeader) {
+    return jsonResponse({ error: 'Saknar autentisering', code: 'UNAUTHORIZED' }, 401)
+  }
+  const supabase = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_ANON_KEY')!, {
+    global: { headers: { Authorization: authHeader } },
+  })
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) {
+    return jsonResponse({ error: 'Saknar autentisering', code: 'UNAUTHORIZED' }, 401)
+  }
+  const correctionsSection = await buildFoodCorrectionsPromptSection(supabase, user.id)
+
   try {
     const message = await anthropic.messages.create({
       model: MODEL,
@@ -94,7 +111,7 @@ Deno.serve(async (req) => {
 
 Dela först upp måltiden i sina beståndsdelar (t.ex. bas, pålägg, tillbehör, tillagningsfett) och uppskatta varje del för sig baserat på typiska portionsstorlekar och eventuella mängdledtrådar i texten (dl, msk, antal, "stor"/"liten" etc). Glöm inte tillagningsmetod och tillsatt fett (t.ex. stekt i olja/smör) som ofta ger stora kaloritillskott. Summera sedan delarna till totalen — totalen ska vara summan av ingredienserna, inte en separat gissning.
 
-Svara på svenska. Om beskrivningen är vag på portionsstorlek, gör en rimlig bästa gissning för en normalportion men sätt confidence till "low".`,
+Svara på svenska. Om beskrivningen är vag på portionsstorlek, gör en rimlig bästa gissning för en normalportion men sätt confidence till "low".${correctionsSection}`,
         },
       ],
     })

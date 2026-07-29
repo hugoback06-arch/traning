@@ -4,9 +4,13 @@ import { BackButton } from '../common/BackButton'
 import { Button } from '../common/Button'
 import { MealTypeSelect } from './MealTypeSelect'
 import { useLogMeal } from '../../hooks/useLogMeal'
+import { useAuth } from '../../hooks/useAuth'
 import { defaultMealTypeForNow } from '../../lib/mealTypeDefault'
+import { upsertFoodCorrection } from '../../lib/foodCorrections'
 import type { MealPhotoEstimate } from '../../hooks/useAnalyzeMealPhoto'
 import type { FoodSearchResult, FoodSource, MealType } from '../../types/domain'
+
+const AI_SOURCES: FoodSource[] = ['ai_estimate', 'ai_text_estimate']
 
 function NumberField({
   label,
@@ -50,6 +54,7 @@ export function AiEstimateReviewForm({
   onSaved,
 }: AiEstimateReviewFormProps) {
   const logMeal = useLogMeal()
+  const { session } = useAuth()
   const [name, setName] = useState(estimate.food_name)
   const [weightG, setWeightG] = useState(estimate.estimated_weight_g)
   const [calories, setCalories] = useState(estimate.calories)
@@ -90,6 +95,18 @@ export function AiEstimateReviewForm({
       imageUrl: null,
     }
     await logMeal.mutateAsync({ foodResult, amountG: weightG, mealType })
+
+    if (AI_SOURCES.includes(source) && session?.user.id) {
+      void upsertFoodCorrection(session.user.id, name, {
+        calories: foodResult.caloriesPer100g,
+        protein: foodResult.proteinPer100g,
+        carbs: foodResult.carbsPer100g,
+        fat: foodResult.fatPer100g,
+      }).catch(() => {
+        // Best-effort — never block saving the meal because this failed.
+      })
+    }
+
     onSaved()
   }
 
