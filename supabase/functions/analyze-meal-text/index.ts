@@ -15,23 +15,46 @@ const CORS_HEADERS = {
 
 const ESTIMATE_TOOL = {
   name: 'record_meal_estimate',
-  description: 'Record a nutritional estimate for the meal described in the text.',
+  description:
+    'Record a nutritional estimate for the meal described in the text. Break the meal into its individual ' +
+    'components first, estimate each one, then report the sum as the total — this produces far more accurate ' +
+    'totals than guessing a single aggregate number.',
   input_schema: {
     type: 'object' as const,
     properties: {
       food_name: { type: 'string', description: 'Short name for the dish/food, in Swedish.' },
-      estimated_weight_g: { type: 'number', description: 'Estimated total weight of the described portion, in grams.' },
-      calories: { type: 'number', description: 'Estimated total calories (kcal) for the whole portion described.' },
-      protein_g: { type: 'number', description: 'Estimated total protein in grams for the whole portion.' },
-      carbs_g: { type: 'number', description: 'Estimated total carbohydrates in grams for the whole portion.' },
-      fat_g: { type: 'number', description: 'Estimated total fat in grams for the whole portion.' },
+      ingredients: {
+        type: 'array',
+        description:
+          'The meal broken down into its distinct components (e.g. "havregryn", "banan", "honung"). Estimate ' +
+          'each one individually based on typical portion sizes and any quantity cues in the description ' +
+          '(dl, msk, antal, "stor"/"liten", etc.) before totalling.',
+        items: {
+          type: 'object' as const,
+          properties: {
+            name: { type: 'string', description: 'Name of this component, in Swedish.' },
+            estimated_weight_g: { type: 'number', description: 'Estimated weight of this component, in grams.' },
+            calories: { type: 'number', description: 'Estimated calories (kcal) for this component.' },
+            protein_g: { type: 'number', description: 'Estimated protein in grams for this component.' },
+            carbs_g: { type: 'number', description: 'Estimated carbohydrates in grams for this component.' },
+            fat_g: { type: 'number', description: 'Estimated fat in grams for this component.' },
+          },
+          required: ['name', 'estimated_weight_g', 'calories', 'protein_g', 'carbs_g', 'fat_g'],
+        },
+        minItems: 1,
+      },
+      estimated_weight_g: { type: 'number', description: 'Total weight — the sum of all ingredients\' estimated_weight_g.' },
+      calories: { type: 'number', description: 'Total calories (kcal) — the sum of all ingredients\' calories.' },
+      protein_g: { type: 'number', description: 'Total protein in grams — the sum of all ingredients\' protein_g.' },
+      carbs_g: { type: 'number', description: 'Total carbohydrates in grams — the sum of all ingredients\' carbs_g.' },
+      fat_g: { type: 'number', description: 'Total fat in grams — the sum of all ingredients\' fat_g.' },
       confidence: {
         type: 'string',
         enum: ['low', 'medium', 'high'],
-        description: 'Confidence in this estimate given how specific/vague the description is.',
+        description: 'Confidence in this estimate given how specific/vague the description is, especially around portion size.',
       },
     },
-    required: ['food_name', 'estimated_weight_g', 'calories', 'protein_g', 'carbs_g', 'fat_g', 'confidence'],
+    required: ['food_name', 'ingredients', 'estimated_weight_g', 'calories', 'protein_g', 'carbs_g', 'fat_g', 'confidence'],
   },
 }
 
@@ -61,13 +84,17 @@ Deno.serve(async (req) => {
   try {
     const message = await anthropic.messages.create({
       model: MODEL,
-      max_tokens: 1024,
+      max_tokens: 1536,
       tools: [ESTIMATE_TOOL],
       tool_choice: { type: 'tool', name: 'record_meal_estimate' },
       messages: [
         {
           role: 'user',
-          content: `Uppskatta kalorier och makronutrienter (protein, kolhydrater, fett) för följande måltid, beskriven av användaren: "${description.trim()}". Svara på svenska. Om beskrivningen är vag, gör en bästa gissning ändå men sätt confidence till "low".`,
+          content: `Uppskatta kalorier och makronutrienter (protein, kolhydrater, fett) för följande måltid, beskriven av användaren: "${description.trim()}".
+
+Dela först upp måltiden i sina beståndsdelar (t.ex. bas, pålägg, tillbehör, tillagningsfett) och uppskatta varje del för sig baserat på typiska portionsstorlekar och eventuella mängdledtrådar i texten (dl, msk, antal, "stor"/"liten" etc). Glöm inte tillagningsmetod och tillsatt fett (t.ex. stekt i olja/smör) som ofta ger stora kaloritillskott. Summera sedan delarna till totalen — totalen ska vara summan av ingredienserna, inte en separat gissning.
+
+Svara på svenska. Om beskrivningen är vag på portionsstorlek, gör en rimlig bästa gissning för en normalportion men sätt confidence till "low".`,
         },
       ],
     })

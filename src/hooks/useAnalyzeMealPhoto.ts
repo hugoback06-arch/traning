@@ -2,6 +2,15 @@ import { useMutation } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
 import { compressImage } from '../lib/imageCompression'
 
+export interface MealEstimateIngredient {
+  name: string
+  estimated_weight_g: number
+  calories: number
+  protein_g: number
+  carbs_g: number
+  fat_g: number
+}
+
 export interface MealPhotoEstimate {
   food_name: string
   estimated_weight_g: number
@@ -10,6 +19,7 @@ export interface MealPhotoEstimate {
   carbs_g: number
   fat_g: number
   confidence: 'low' | 'medium' | 'high'
+  ingredients?: MealEstimateIngredient[]
 }
 
 interface MealPhotoErrorBody {

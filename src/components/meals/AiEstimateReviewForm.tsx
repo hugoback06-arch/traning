@@ -117,6 +117,21 @@ export function AiEstimateReviewForm({
           <NumberField label="Kolhydrater (g)" value={carbsG} onChange={setCarbsG} />
           <NumberField label="Fett (g)" value={fatG} onChange={setFatG} />
         </div>
+        {estimate.ingredients && estimate.ingredients.length > 0 && (
+          <details className="text-xs text-ink-secondary">
+            <summary className="cursor-pointer select-none">Så räknades totalen ut</summary>
+            <ul className="mt-2 space-y-1">
+              {estimate.ingredients.map((ingredient, index) => (
+                <li key={index} className="flex justify-between gap-2">
+                  <span>
+                    {ingredient.name} ({Math.round(ingredient.estimated_weight_g)} g)
+                  </span>
+                  <span>{Math.round(ingredient.calories)} kcal</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
         <MealTypeSelect value={mealType} onChange={setMealType} />
         {logMeal.isError && <p className="text-sm text-warning">Något gick fel, försök igen.</p>}
         <Button className="w-full" disabled={logMeal.isPending} onClick={handleSave}>

@@ -54,11 +54,14 @@ export function AddMealTextStep({ initialMealType, onBack, onSaved }: AddMealTex
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="T.ex. en skål havregrynsgröt med banan och honung"
+          placeholder="T.ex. 2 dl havregrynsgröt med en banan och 1 msk honung"
           rows={3}
           disabled={analyze.isPending}
           className="mt-1 w-full rounded-lg border border-border px-3 py-2 text-sm text-ink-primary outline-none focus:border-accent"
         />
+        <p className="mt-1 text-xs text-ink-secondary">
+          Ju mer specifik mängd (dl, msk, antal, gram), desto träffsäkrare uppskattning.
+        </p>
       </label>
 
       {analyze.isPending && <Spinner />}
