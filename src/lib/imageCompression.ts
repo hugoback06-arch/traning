@@ -1,5 +1,5 @@
-const MAX_DIMENSION = 1024
-const JPEG_QUALITY = 0.8
+const MAX_DIMENSION = 1568
+const JPEG_QUALITY = 0.85
 
 export interface CompressedImage {
   base64: string
