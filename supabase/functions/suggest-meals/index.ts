@@ -21,6 +21,10 @@ const WEB_SEARCH_TOOL = {
   name: 'web_search' as const,
   max_uses: 3,
   allowed_domains: RECIPE_DOMAINS,
+  // CLAUDE_TEXT_MODEL is shared with cost-sensitive text functions and may be
+  // set to a model (e.g. Haiku) without programmatic tool calling support.
+  // Force direct calling so web_search still works on any such model.
+  allowed_callers: ['direct'] as const,
 }
 
 const SUBMIT_TOOL = {
