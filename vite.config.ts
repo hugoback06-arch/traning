@@ -10,6 +10,11 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // The default injected registerSW.js only calls navigator.serviceWorker.register()
+      // — it never detects updates or tells a waiting worker to activate. We register
+      // manually via virtual:pwa-register in main.tsx instead, which drives the
+      // SKIP_WAITING handshake with src/sw.ts and reloads once the new worker takes over.
+      injectRegister: false,
       strategies: 'injectManifest',
       srcDir: 'src',
       filename: 'sw.ts',
