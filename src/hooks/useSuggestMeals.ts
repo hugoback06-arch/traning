@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import type { DietaryPreference } from '../types/domain'
 
 export interface MealSuggestion {
   name: string
@@ -23,6 +24,7 @@ interface SuggestMealsInput {
   remainingProteinG: number
   remainingCarbsG: number
   remainingFatG: number
+  dietaryPreference: DietaryPreference
 }
 
 export function useSuggestMeals() {

@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { ExternalLink, X } from 'lucide-react'
 import { Spinner } from '../common/Spinner'
 import { useSuggestMeals } from '../../hooks/useSuggestMeals'
+import { useProfile } from '../../hooks/useProfile'
 
 interface MealSuggestionsModalProps {
   remainingKcal: number
@@ -19,11 +20,19 @@ export function MealSuggestionsModal({
   onClose,
 }: MealSuggestionsModalProps) {
   const suggestMeals = useSuggestMeals()
+  const { data: profile } = useProfile()
 
   useEffect(() => {
-    suggestMeals.mutate({ remainingKcal, remainingProteinG, remainingCarbsG, remainingFatG })
+    if (!profile) return
+    suggestMeals.mutate({
+      remainingKcal,
+      remainingProteinG,
+      remainingCarbsG,
+      remainingFatG,
+      dietaryPreference: profile.dietary_preference,
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [profile])
 
   return (
     <div className="fixed inset-0 z-50 flex items-end justify-center">
@@ -36,7 +45,7 @@ export function MealSuggestionsModal({
           </button>
         </div>
 
-        {suggestMeals.isPending && (
+        {(!profile || suggestMeals.isPending) && (
           <div className="py-8">
             <Spinner />
           </div>

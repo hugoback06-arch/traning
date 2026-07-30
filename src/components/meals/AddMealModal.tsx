@@ -87,7 +87,12 @@ export function AddMealModal({ mealType, onClose }: AddMealModalProps) {
           <AddMealSearchStep initialMealType={mealType} onBack={() => setMode('choose')} onSaved={onClose} />
         )}
         {mode === 'scan' && (
-          <AddMealScanStep initialMealType={mealType} onBack={() => setMode('choose')} onSaved={onClose} />
+          <AddMealScanStep
+            initialMealType={mealType}
+            onBack={() => setMode('choose')}
+            onSaved={onClose}
+            onSearchInstead={() => setMode('search')}
+          />
         )}
         {mode === 'photo' && (
           <AddMealPhotoStep initialMealType={mealType} onBack={() => setMode('choose')} onSaved={onClose} />

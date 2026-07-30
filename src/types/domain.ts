@@ -4,6 +4,7 @@ export type WeightGoal = 'lose' | 'maintain' | 'gain'
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 export type FoodSource = 'open_food_facts' | 'ai_estimate' | 'ai_text_estimate' | 'generic'
 export type ThemePreference = 'system' | 'light' | 'dark'
+export type DietaryPreference = 'any' | 'meat_fish_poultry' | 'vegetarian' | 'vegan'
 
 export interface Profile {
   id: string
@@ -20,6 +21,7 @@ export interface Profile {
   fat_goal_g: number | null
   water_goal_ml: number
   theme_preference: ThemePreference
+  dietary_preference: DietaryPreference
   notifications_enabled: boolean
   onboarding_completed_at: string | null
   created_at: string

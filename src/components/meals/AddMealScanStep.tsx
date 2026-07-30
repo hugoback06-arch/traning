@@ -13,9 +13,10 @@ interface AddMealScanStepProps {
   initialMealType: MealType
   onBack: () => void
   onSaved: () => void
+  onSearchInstead: () => void
 }
 
-export function AddMealScanStep({ initialMealType, onBack, onSaved }: AddMealScanStepProps) {
+export function AddMealScanStep({ initialMealType, onBack, onSaved, onSearchInstead }: AddMealScanStepProps) {
   const [scanning, setScanning] = useState(true)
   const [lookupState, setLookupState] = useState<LookupState>('idle')
   const [selected, setSelected] = useState<FoodSearchResult | null>(null)
@@ -64,18 +65,24 @@ export function AddMealScanStep({ initialMealType, onBack, onSaved }: AddMealSca
       {lookupState === 'not-found' && (
         <div className="space-y-2 text-center">
           <p className="text-sm text-ink-secondary">Hittade ingen produkt med den streckkoden.</p>
-          <Button variant="secondary" onClick={reset}>
-            Försök igen
-          </Button>
+          <div className="flex justify-center gap-2">
+            <Button variant="secondary" onClick={reset}>
+              Försök igen
+            </Button>
+            <Button onClick={onSearchInstead}>Sök istället</Button>
+          </div>
         </div>
       )}
 
       {lookupState === 'error' && (
         <div className="space-y-2 text-center">
           <p className="text-sm text-warning">Något gick fel vid uppslagningen.</p>
-          <Button variant="secondary" onClick={reset}>
-            Försök igen
-          </Button>
+          <div className="flex justify-center gap-2">
+            <Button variant="secondary" onClick={reset}>
+              Försök igen
+            </Button>
+            <Button onClick={onSearchInstead}>Sök istället</Button>
+          </div>
         </div>
       )}
     </div>

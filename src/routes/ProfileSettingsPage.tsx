@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bell, Lightbulb, Palette, User } from 'lucide-react'
+import { Bell, Lightbulb, Palette, User, Utensils } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { Spinner } from '../components/common/Spinner'
@@ -13,18 +13,26 @@ import { useProfile } from '../hooks/useProfile'
 import { useFinalizeStrava } from '../hooks/useFinalizeStrava'
 import { useTheme } from '../hooks/useTheme'
 import { useUpdateNotificationsEnabled } from '../hooks/useUpdateNotificationsEnabled'
+import { useUpdateDietaryPreference } from '../hooks/useUpdateDietaryPreference'
 import { useSavePushSubscription } from '../hooks/useSavePushSubscription'
 import { useDeletePushSubscription } from '../hooks/useDeletePushSubscription'
 import { isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/pushSubscription'
 import { useSubmitFeedbackSuggestion } from '../hooks/useFeedbackSuggestions'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/queryKeys'
-import type { ThemePreference } from '../types/domain'
+import type { DietaryPreference, ThemePreference } from '../types/domain'
 
 const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
   { value: 'system', label: 'Auto' },
   { value: 'light', label: 'Ljust' },
   { value: 'dark', label: 'Mörkt' },
+]
+
+const DIETARY_OPTIONS: { value: DietaryPreference; label: string }[] = [
+  { value: 'any', label: 'Allätare' },
+  { value: 'meat_fish_poultry', label: 'Kött & fisk' },
+  { value: 'vegetarian', label: 'Vegetariskt' },
+  { value: 'vegan', label: 'Veganskt' },
 ]
 
 const STRAVA_STATUS_MESSAGES: Record<string, string> = {
@@ -68,6 +76,7 @@ export function ProfileSettingsPage() {
   const [displayStravaStatus, setDisplayStravaStatus] = useState<string | null>(null)
   const { preference, setPreference } = useTheme()
   const updateNotificationsEnabled = useUpdateNotificationsEnabled()
+  const updateDietaryPreference = useUpdateDietaryPreference()
   const savePushSubscription = useSavePushSubscription()
   const deletePushSubscription = useDeletePushSubscription()
   const [notificationsMessage, setNotificationsMessage] = useState<string | null>(null)
@@ -246,6 +255,30 @@ export function ProfileSettingsPage() {
           <Palette size={16} /> Utseende
         </h2>
         <SegmentedControl options={THEME_OPTIONS} value={preference} onChange={setPreference} />
+      </Card>
+
+      <Card className="space-y-3">
+        <div>
+          <h2 className="flex items-center gap-1.5 text-sm font-medium text-ink-primary">
+            <Utensils size={16} /> Kostpreferens
+          </h2>
+          <p className="text-xs text-ink-secondary">Styr AI-måltidsförslagen på Hem-skärmen.</p>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {DIETARY_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              onClick={() => updateDietaryPreference.mutate(option.value)}
+              className={`press rounded-lg py-2 text-sm font-medium transition-colors ${
+                profile.dietary_preference === option.value
+                  ? 'bg-accent text-accent-foreground'
+                  : 'bg-surface-muted text-ink-secondary'
+              }`}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
       </Card>
 
       <Card className="space-y-2">

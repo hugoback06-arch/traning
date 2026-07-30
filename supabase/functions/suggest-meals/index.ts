@@ -54,6 +54,34 @@ const SUBMIT_TOOL = {
   },
 }
 
+interface RawSuggestion {
+  name?: unknown
+  description?: unknown
+  kcal?: unknown
+  protein_g?: unknown
+  recipe_url?: unknown
+}
+
+// Web search results occasionally leak <cite>-style citation markup into the
+// model's tool-call text even when told not to — strip any HTML/XML tags
+// server-side rather than trusting the prompt instruction alone, since
+// name/description render as plain text in the app.
+function stripTags(value: unknown): unknown {
+  return typeof value === 'string' ? value.replace(/<[^>]*>/g, '').trim() : value
+}
+
+function sanitizeSuggestions(input: unknown): unknown {
+  if (!input || typeof input !== 'object' || !Array.isArray((input as { suggestions?: unknown }).suggestions)) {
+    return input
+  }
+  const suggestions = (input as { suggestions: RawSuggestion[] }).suggestions.map((s) => ({
+    ...s,
+    name: stripTags(s.name),
+    description: stripTags(s.description),
+  }))
+  return { ...(input as object), suggestions }
+}
+
 function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), {
     status,
@@ -61,11 +89,22 @@ function jsonResponse(body: unknown, status = 200): Response {
   })
 }
 
+type DietaryPreference = 'any' | 'meat_fish_poultry' | 'vegetarian' | 'vegan'
+
+const DIETARY_PREFERENCE_INSTRUCTIONS: Record<DietaryPreference, string> = {
+  any: '',
+  meat_fish_poultry:
+    'Jag föredrar måltider baserade på kött, fisk eller kyckling – undvik vegetariska/veganska förslag om det inte är omöjligt att nå proteinmålet på annat sätt. ',
+  vegetarian: 'Föreslå enbart vegetariska måltider (inget kött eller fisk, mjölk/ägg/ost är ok). ',
+  vegan: 'Föreslå enbart veganska måltider (inga animaliska produkter alls). ',
+}
+
 interface SuggestMealsRequest {
   remainingKcal: number
   remainingProteinG: number
   remainingCarbsG: number
   remainingFatG: number
+  dietaryPreference?: DietaryPreference
 }
 
 Deno.serve(async (req) => {
@@ -80,7 +119,7 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Ogiltig begäran', code: 'INVALID_INPUT' }, 400)
   }
 
-  const { remainingKcal, remainingProteinG, remainingCarbsG, remainingFatG } = body
+  const { remainingKcal, remainingProteinG, remainingCarbsG, remainingFatG, dietaryPreference } = body
   if (
     typeof remainingKcal !== 'number' ||
     typeof remainingProteinG !== 'number' ||
@@ -89,6 +128,8 @@ Deno.serve(async (req) => {
   ) {
     return jsonResponse({ error: 'Kvarvarande kcal/makron krävs', code: 'INVALID_INPUT' }, 400)
   }
+
+  const dietaryInstruction = DIETARY_PREFERENCE_INSTRUCTIONS[dietaryPreference ?? 'any'] ?? ''
 
   try {
     const message = await anthropic.messages.create({
@@ -103,9 +144,10 @@ Deno.serve(async (req) => {
             `Föreslå 2-3 hälsosamma, proteinrika och enkla måltider som får plats i det jag har kvar att äta idag: ` +
             `${Math.round(remainingKcal)} kcal, ${Math.round(remainingProteinG)}g protein, ` +
             `${Math.round(remainingCarbsG)}g kolhydrater, ${Math.round(remainingFatG)}g fett. ` +
-            `Jag föredrar måltider baserade på kött, fisk eller kyckling – undvik vegetariska/veganska förslag om det inte är omöjligt att nå proteinmålet på annat sätt. ` +
+            dietaryInstruction +
             `Sök alltid upp en riktig receptlänk med web_search innan du svarar (från en svensk receptsajt). ` +
             `Om det är väldigt lite kvar, föreslå något lätt/litet istället för att hoppa över förslag. ` +
+            `Skriv name och description med egna ord – aldrig <cite>-taggar, källhänvisningar eller annan HTML/markup från sökresultaten. ` +
             `Svara alltid till sist med submit_suggestions-verktyget, på svenska.`,
         },
       ],
@@ -118,7 +160,7 @@ Deno.serve(async (req) => {
       return jsonResponse({ error: 'Kunde inte ta fram förslag, försök igen', code: 'SUGGEST_API_ERROR' }, 502)
     }
 
-    return jsonResponse(toolUse.input)
+    return jsonResponse(sanitizeSuggestions(toolUse.input))
   } catch (error) {
     const isRateLimit = error instanceof Anthropic.RateLimitError
     const message = error instanceof Error ? error.message : 'Okänt fel'
