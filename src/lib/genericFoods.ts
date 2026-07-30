@@ -18,8 +18,9 @@ interface GenericFood {
 // Curated Swedish staples + common home-cooked dishes, for when Open Food
 // Facts' barcode-centric database doesn't have a plain "banan" or "köttbullar".
 // Kept in sync by hand with supabase/migrations/0003_seed_generic_foods.sql,
-// 0004_more_generic_foods.sql, 0014_more_generic_dishes.sql and
-// 0016_even_more_generic_dishes.sql (portionG/portionUnit are UI-only and not persisted).
+// 0004_more_generic_foods.sql, 0014_more_generic_dishes.sql,
+// 0016_even_more_generic_dishes.sql, 0026_generic_foods_batch.sql and
+// 0028_more_generic_foods_batch.sql (portionG/portionUnit are UI-only and not persisted).
 const GENERIC_FOODS: GenericFood[] = [
   // Raw ingredients / staples
   { slug: 'banan', name: 'Banan', caloriesPer100g: 89, proteinPer100g: 1.1, carbsPer100g: 22.8, fatPer100g: 0.3, portionG: 120, portionUnit: 'st' },
@@ -393,6 +394,102 @@ const GENERIC_FOODS: GenericFood[] = [
   { slug: 'proteinshake', name: 'Proteinshake', caloriesPer100g: 110, proteinPer100g: 20, carbsPer100g: 4, fatPer100g: 1.5, portionG: 300 },
   { slug: 'smoothie-frukt', name: 'Fruktsmoothie', aliases: ['smoothie'], caloriesPer100g: 60, proteinPer100g: 1, carbsPer100g: 14, fatPer100g: 0.2, portionG: 300 },
   { slug: 'risgrynsgrot', name: 'Risgrynsgröt', aliases: ['risgrynsgröt'], caloriesPer100g: 120, proteinPer100g: 3, carbsPer100g: 20, fatPer100g: 3, portionG: 300 },
+
+  // Fler ikoniska svenska rätter
+  { slug: 'pannbiff-lok', name: 'Pannbiff med lök och gräddsås', aliases: ['pannbiff'], caloriesPer100g: 220, proteinPer100g: 14, carbsPer100g: 8, fatPer100g: 15, portionG: 350 },
+  { slug: 'flygande-jacob', name: 'Flygande Jacob', caloriesPer100g: 280, proteinPer100g: 15, carbsPer100g: 8, fatPer100g: 21, portionG: 350 },
+  { slug: 'leverpastejmacka', name: 'Leverpastejmacka', caloriesPer100g: 260, proteinPer100g: 9, carbsPer100g: 20, fatPer100g: 16, portionG: 100 },
+  { slug: 'jagarschnitzel', name: 'Jägarschnitzel med svampsås', aliases: ['jägarschnitzel'], caloriesPer100g: 210, proteinPer100g: 13, carbsPer100g: 10, fatPer100g: 13, portionG: 350 },
+  { slug: 'kokt-flasklagg-rotmos', name: 'Kokt fläsklägg med rotmos', aliases: ['fläsklägg'], caloriesPer100g: 220, proteinPer100g: 14, carbsPer100g: 10, fatPer100g: 14, portionG: 400 },
+  { slug: 'fransk-loksoppa', name: 'Fransk löksoppa', aliases: ['löksoppa'], caloriesPer100g: 70, proteinPer100g: 3, carbsPer100g: 7, fatPer100g: 3, portionG: 350 },
+  { slug: 'biff-lindstrom', name: 'Biff Lindström', caloriesPer100g: 230, proteinPer100g: 13, carbsPer100g: 10, fatPer100g: 15, portionG: 300 },
+
+  // Växtbaserade alternativ
+  { slug: 'havremjolk', name: 'Havremjölk', caloriesPer100g: 47, proteinPer100g: 1, carbsPer100g: 7.5, fatPer100g: 1.5 },
+  { slug: 'mandelmjolk', name: 'Mandelmjölk, osötad', aliases: ['mandelmjölk'], caloriesPer100g: 13, proteinPer100g: 0.5, carbsPer100g: 0.3, fatPer100g: 1.1 },
+  { slug: 'sojamjolk', name: 'Sojamjölk', caloriesPer100g: 33, proteinPer100g: 3.3, carbsPer100g: 0.5, fatPer100g: 1.8 },
+  { slug: 'vegofars', name: 'Vegofärs', caloriesPer100g: 170, proteinPer100g: 18, carbsPer100g: 7, fatPer100g: 7 },
+  { slug: 'vegokorv', name: 'Vegokorv', caloriesPer100g: 180, proteinPer100g: 15, carbsPer100g: 10, fatPer100g: 9 },
+  { slug: 'seitan', name: 'Seitan, tillagad', caloriesPer100g: 120, proteinPer100g: 21, carbsPer100g: 4, fatPer100g: 1.9 },
+
+  // Fler grönsaker
+  { slug: 'vitlok', name: 'Vitlök', caloriesPer100g: 149, proteinPer100g: 6.4, carbsPer100g: 33, fatPer100g: 0.5 },
+  { slug: 'ingefara', name: 'Ingefära', caloriesPer100g: 80, proteinPer100g: 1.8, carbsPer100g: 18, fatPer100g: 0.8 },
+  { slug: 'chili', name: 'Chili', caloriesPer100g: 40, proteinPer100g: 1.9, carbsPer100g: 9, fatPer100g: 0.4 },
+  { slug: 'rodlok', name: 'Rödlök', caloriesPer100g: 40, proteinPer100g: 1.1, carbsPer100g: 9.3, fatPer100g: 0.1 },
+  { slug: 'sockerartor', name: 'Sockerärtor', caloriesPer100g: 42, proteinPer100g: 2.8, carbsPer100g: 7.5, fatPer100g: 0.2 },
+  { slug: 'kronartskocka', name: 'Kronärtskocka', caloriesPer100g: 47, proteinPer100g: 3.3, carbsPer100g: 10.5, fatPer100g: 0.2 },
+  { slug: 'fankal', name: 'Fänkål', caloriesPer100g: 31, proteinPer100g: 1.2, carbsPer100g: 7.3, fatPer100g: 0.2 },
+
+  // Fler frukter
+  { slug: 'citron', name: 'Citron', caloriesPer100g: 29, proteinPer100g: 1.1, carbsPer100g: 9.3, fatPer100g: 0.3 },
+  { slug: 'lime', name: 'Lime', caloriesPer100g: 30, proteinPer100g: 0.7, carbsPer100g: 10.5, fatPer100g: 0.2 },
+  { slug: 'nektarin', name: 'Nektarin', caloriesPer100g: 44, proteinPer100g: 1.1, carbsPer100g: 10.5, fatPer100g: 0.3, portionG: 140, portionUnit: 'st' },
+  { slug: 'passionsfrukt', name: 'Passionsfrukt', caloriesPer100g: 97, proteinPer100g: 2.2, carbsPer100g: 23, fatPer100g: 0.4 },
+  { slug: 'aprikos-torkad', name: 'Aprikoser, torkade', aliases: ['torkad aprikos'], caloriesPer100g: 241, proteinPer100g: 3.4, carbsPer100g: 63, fatPer100g: 0.5 },
+
+  // Fler fisk/skaldjur
+  { slug: 'rokt-lax', name: 'Rökt lax', caloriesPer100g: 117, proteinPer100g: 18, carbsPer100g: 0, fatPer100g: 4.3 },
+  { slug: 'makrill', name: 'Makrill', caloriesPer100g: 205, proteinPer100g: 19, carbsPer100g: 0, fatPer100g: 14 },
+  { slug: 'sej', name: 'Sej, tillagad', caloriesPer100g: 105, proteinPer100g: 23, carbsPer100g: 0, fatPer100g: 1 },
+  { slug: 'kolja', name: 'Kolja, tillagad', caloriesPer100g: 90, proteinPer100g: 20, carbsPer100g: 0, fatPer100g: 0.7 },
+  { slug: 'tilapia', name: 'Tilapia, tillagad', caloriesPer100g: 128, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 3 },
+
+  // Bröd
+  { slug: 'ragbrod', name: 'Rågbröd', caloriesPer100g: 259, proteinPer100g: 8, carbsPer100g: 48, fatPer100g: 2 },
+  { slug: 'surdegsbrod', name: 'Surdegsbröd', caloriesPer100g: 260, proteinPer100g: 9, carbsPer100g: 50, fatPer100g: 1.5 },
+  { slug: 'hamburgerbrod', name: 'Hamburgerbröd', caloriesPer100g: 280, proteinPer100g: 9, carbsPer100g: 50, fatPer100g: 5, portionG: 60, portionUnit: 'st' },
+
+  // Drycker
+  { slug: 'ol-folkol', name: 'Öl, folköl', caloriesPer100g: 40, proteinPer100g: 0.4, carbsPer100g: 3.5, fatPer100g: 0 },
+  { slug: 'ol-starkol', name: 'Öl, starköl/lager', aliases: ['öl'], caloriesPer100g: 43, proteinPer100g: 0.4, carbsPer100g: 3.5, fatPer100g: 0 },
+  { slug: 'vin-rott', name: 'Vin, rött', caloriesPer100g: 85, proteinPer100g: 0.1, carbsPer100g: 2.6, fatPer100g: 0 },
+  { slug: 'vin-vitt', name: 'Vin, vitt', caloriesPer100g: 82, proteinPer100g: 0.1, carbsPer100g: 2.6, fatPer100g: 0 },
+  { slug: 'lask-cola', name: 'Läsk/cola', aliases: ['cola', 'läsk'], caloriesPer100g: 42, proteinPer100g: 0, carbsPer100g: 10.6, fatPer100g: 0 },
+  { slug: 'lask-light', name: 'Lightläsk', aliases: ['cola light'], caloriesPer100g: 1, proteinPer100g: 0, carbsPer100g: 0, fatPer100g: 0 },
+  { slug: 'energidryck', name: 'Energidryck', caloriesPer100g: 45, proteinPer100g: 0, carbsPer100g: 11, fatPer100g: 0 },
+
+  // Matlagningsbas
+  { slug: 'kokosmjolk', name: 'Kokosmjölk', caloriesPer100g: 197, proteinPer100g: 2.3, carbsPer100g: 2.8, fatPer100g: 21 },
+  { slug: 'buljong', name: 'Buljong, färdig', caloriesPer100g: 5, proteinPer100g: 0.5, carbsPer100g: 0.5, fatPer100g: 0.2 },
+  { slug: 'krossade-tomater', name: 'Krossade tomater, konserv', caloriesPer100g: 24, proteinPer100g: 1.2, carbsPer100g: 4.5, fatPer100g: 0.2 },
+  { slug: 'tomatpure', name: 'Tomatpuré', caloriesPer100g: 82, proteinPer100g: 4.3, carbsPer100g: 17, fatPer100g: 0.5 },
+
+  // Fler kötträtter
+  { slug: 'korvgryta', name: 'Korvgryta med potatis', caloriesPer100g: 160, proteinPer100g: 7, carbsPer100g: 14, fatPer100g: 8, portionG: 400 },
+  { slug: 'kalvfile-stroganoff', name: 'Kalvfilé stroganoff med ris', caloriesPer100g: 190, proteinPer100g: 13, carbsPer100g: 15, fatPer100g: 9, portionG: 400 },
+  { slug: 'lammgryta', name: 'Lammgryta med rotfrukter', caloriesPer100g: 160, proteinPer100g: 12, carbsPer100g: 10, fatPer100g: 8, portionG: 400 },
+  { slug: 'lammkotletter', name: 'Lammkotletter, tillagade', caloriesPer100g: 294, proteinPer100g: 25, carbsPer100g: 0, fatPer100g: 21 },
+  { slug: 'entrecote', name: 'Entrecote, tillagad', caloriesPer100g: 250, proteinPer100g: 26, carbsPer100g: 0, fatPer100g: 16 },
+  { slug: 'flaskkarre', name: 'Fläskkarré, tillagad', caloriesPer100g: 210, proteinPer100g: 27, carbsPer100g: 0, fatPer100g: 11 },
+
+  // Frukost
+  { slug: 'fiberflingor', name: 'Fiberrika frukostflingor', caloriesPer100g: 350, proteinPer100g: 10, carbsPer100g: 68, fatPer100g: 3 },
+  { slug: 'fralla', name: 'Frukostfralla', caloriesPer100g: 270, proteinPer100g: 9, carbsPer100g: 48, fatPer100g: 4.5, portionG: 60, portionUnit: 'st' },
+
+  // Fler nötter/frön
+  { slug: 'jordnotter-rostade', name: 'Jordnötter, rostade', aliases: ['jordnötter'], caloriesPer100g: 567, proteinPer100g: 25, carbsPer100g: 16, fatPer100g: 49 },
+  { slug: 'pinjenotter', name: 'Pinjenötter', caloriesPer100g: 673, proteinPer100g: 14, carbsPer100g: 13, fatPer100g: 68 },
+  { slug: 'sesamfron', name: 'Sesamfrön', caloriesPer100g: 573, proteinPer100g: 18, carbsPer100g: 23, fatPer100g: 50 },
+  { slug: 'linfron', name: 'Linfrön', caloriesPer100g: 534, proteinPer100g: 18, carbsPer100g: 29, fatPer100g: 42 },
+
+  // Fler internationella rätter
+  { slug: 'enchiladas', name: 'Enchiladas med kött', caloriesPer100g: 190, proteinPer100g: 10, carbsPer100g: 18, fatPer100g: 9, portionG: 350 },
+  { slug: 'fajitas-kyckling', name: 'Fajitas med kyckling', caloriesPer100g: 170, proteinPer100g: 12, carbsPer100g: 15, fatPer100g: 7, portionG: 350 },
+  { slug: 'caesarwrap', name: 'Caesarwrap', caloriesPer100g: 220, proteinPer100g: 11, carbsPer100g: 20, fatPer100g: 10, portionG: 250 },
+  { slug: 'laksa', name: 'Laksa', caloriesPer100g: 130, proteinPer100g: 7, carbsPer100g: 12, fatPer100g: 6, portionG: 500 },
+  { slug: 'anka-hoisin', name: 'Anka i hoisinsås med ris', caloriesPer100g: 210, proteinPer100g: 10, carbsPer100g: 20, fatPer100g: 9, portionG: 400 },
+  { slug: 'ceviche', name: 'Ceviche', caloriesPer100g: 100, proteinPer100g: 15, carbsPer100g: 5, fatPer100g: 2, portionG: 250 },
+  { slug: 'empanadas', name: 'Empanadas', caloriesPer100g: 260, proteinPer100g: 8, carbsPer100g: 26, fatPer100g: 13, portionG: 200 },
+
+  // Fler efterrätter
+  { slug: 'creme-brulee', name: 'Crème brûlée', caloriesPer100g: 300, proteinPer100g: 4, carbsPer100g: 25, fatPer100g: 20, portionG: 100 },
+  { slug: 'macarons', name: 'Macarons', caloriesPer100g: 400, proteinPer100g: 6, carbsPer100g: 55, fatPer100g: 18, portionG: 8, portionUnit: 'st' },
+  { slug: 'brownie', name: 'Brownie', caloriesPer100g: 430, proteinPer100g: 5, carbsPer100g: 50, fatPer100g: 23, portionG: 60 },
+
+  // Specialkost
+  { slug: 'glutenfritt-brod', name: 'Glutenfritt bröd', caloriesPer100g: 240, proteinPer100g: 4, carbsPer100g: 45, fatPer100g: 3 },
+  { slug: 'laktosfri-mjolk', name: 'Laktosfri mjölk', caloriesPer100g: 46, proteinPer100g: 3.4, carbsPer100g: 4.9, fatPer100g: 1.5 },
 ]
 
 function toSearchResult(food: GenericFood): FoodSearchResult {
