@@ -103,6 +103,7 @@ Deno.serve(async (req) => {
             `Föreslå 2-3 hälsosamma, proteinrika och enkla måltider som får plats i det jag har kvar att äta idag: ` +
             `${Math.round(remainingKcal)} kcal, ${Math.round(remainingProteinG)}g protein, ` +
             `${Math.round(remainingCarbsG)}g kolhydrater, ${Math.round(remainingFatG)}g fett. ` +
+            `Jag föredrar måltider baserade på kött, fisk eller kyckling – undvik vegetariska/veganska förslag om det inte är omöjligt att nå proteinmålet på annat sätt. ` +
             `Sök alltid upp en riktig receptlänk med web_search innan du svarar (från en svensk receptsajt). ` +
             `Om det är väldigt lite kvar, föreslå något lätt/litet istället för att hoppa över förslag. ` +
             `Svara alltid till sist med submit_suggestions-verktyget, på svenska.`,
