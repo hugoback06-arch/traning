@@ -16,7 +16,7 @@ export function useSaveMeal() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: ({ name, items }: SaveMealInput) => createSavedMeal(userId, name, items),
+    mutationFn: ({ name, items }: SaveMealInput) => createSavedMeal(name, items),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.savedMeals(userId) })
     },

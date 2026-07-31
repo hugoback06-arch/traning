@@ -24,9 +24,8 @@ export function mapStravaActivityType(stravaType: string): string {
   return STRAVA_TYPE_MAP[stravaType] ?? 'other'
 }
 
-interface FitnessConnectionRow {
+interface FitnessConnectionSecret {
   id: string
-  user_id: string
   access_token: string
   refresh_token: string | null
   expires_at: string | null
@@ -34,10 +33,10 @@ interface FitnessConnectionRow {
 
 // Returns a valid access_token, refreshing (and persisting) it first if expired.
 // deno-lint-ignore no-explicit-any
-export async function ensureValidStravaToken(supabase: SupabaseClient<any>, connection: FitnessConnectionRow): Promise<string> {
-  const expiresAt = connection.expires_at ? Date.parse(connection.expires_at) : 0
+export async function ensureValidStravaToken(supabase: SupabaseClient<any>, secret: FitnessConnectionSecret): Promise<string> {
+  const expiresAt = secret.expires_at ? Date.parse(secret.expires_at) : 0
   if (expiresAt > Date.now() + 60_000) {
-    return connection.access_token
+    return secret.access_token
   }
 
   const res = await fetch('https://www.strava.com/oauth/token', {
@@ -47,7 +46,7 @@ export async function ensureValidStravaToken(supabase: SupabaseClient<any>, conn
       client_id: Deno.env.get('STRAVA_CLIENT_ID'),
       client_secret: Deno.env.get('STRAVA_CLIENT_SECRET'),
       grant_type: 'refresh_token',
-      refresh_token: connection.refresh_token,
+      refresh_token: secret.refresh_token,
     }),
   })
 
@@ -55,13 +54,13 @@ export async function ensureValidStravaToken(supabase: SupabaseClient<any>, conn
   const refreshed = await res.json()
 
   await supabase
-    .from('fitness_connections')
+    .from('fitness_connection_secrets')
     .update({
       access_token: refreshed.access_token,
       refresh_token: refreshed.refresh_token,
       expires_at: new Date(refreshed.expires_at * 1000).toISOString(),
     })
-    .eq('id', connection.id)
+    .eq('connection_id', secret.id)
 
   return refreshed.access_token
 }

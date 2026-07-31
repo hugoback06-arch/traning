@@ -41,6 +41,17 @@ async function processStravaEvent(event: StravaEvent) {
 
   if (!connection) return
 
+  const { data: secret } = await supabase
+    .from('fitness_connection_secrets')
+    .select('connection_id, access_token, refresh_token, expires_at')
+    .eq('connection_id', connection.id)
+    .maybeSingle()
+  if (!secret) {
+    console.error('strava-webhook: connection is missing its server-side token')
+    return
+  }
+  const connectionSecret = { ...secret, id: secret.connection_id }
+
   if (event.aspect_type === 'delete') {
     // POST bodies here are unauthenticated (no signature/HMAC — only the GET
     // hub.challenge handshake is protected), and owner_id/object_id are plain,
@@ -50,7 +61,7 @@ async function processStravaEvent(event: StravaEvent) {
     // Re-verify against Strava's own API with the connection's real token —
     // only delete locally if Strava confirms the activity is actually gone.
     try {
-      const accessToken = await ensureValidStravaToken(supabase, connection)
+      const accessToken = await ensureValidStravaToken(supabase, connectionSecret)
       const verifyRes = await fetch(`https://www.strava.com/api/v3/activities/${event.object_id}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       })
@@ -76,7 +87,7 @@ async function processStravaEvent(event: StravaEvent) {
   }
 
   try {
-    const accessToken = await ensureValidStravaToken(supabase, connection)
+    const accessToken = await ensureValidStravaToken(supabase, connectionSecret)
     const activity = await fetchStravaActivity(accessToken, event.object_id)
     await upsertWorkoutFromStravaActivity(supabase, connection.user_id, activity, accessToken)
 

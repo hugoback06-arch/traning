@@ -119,9 +119,6 @@ export interface FitnessConnection {
   user_id: string
   provider: FitnessProvider
   external_athlete_id: string | null
-  access_token: string
-  refresh_token: string | null
-  expires_at: string | null
   scope: string | null
   connected_at: string
   last_synced_at: string | null

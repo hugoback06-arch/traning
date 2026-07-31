@@ -26,7 +26,7 @@ export function useSaveMealFromSearchResults() {
           amountG: item.amountG,
         })),
       )
-      return createSavedMeal(userId, name, resolved)
+      return createSavedMeal(name, resolved)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.savedMeals(userId) })

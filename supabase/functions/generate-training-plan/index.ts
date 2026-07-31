@@ -250,42 +250,18 @@ Deno.serve(async (req) => {
       }[]
     }
 
-    await supabase.from('training_plans').update({ status: 'archived' }).eq('user_id', user.id).eq('status', 'active')
-
-    const { data: newPlan, error: planError } = await supabase
-      .from('training_plans')
-      .insert({
-        user_id: user.id,
-        name: plan.plan_name,
-        goal: plan.goal,
-        source_prompt: prompt,
-        start_date: dates[0],
-        end_date: dates[dates.length - 1],
-        status: 'active',
-      })
-      .select('id')
-      .single()
-
-    if (planError || !newPlan) {
-      return jsonResponse({ error: planError?.message ?? 'Kunde inte spara schema', code: 'DB_ERROR' }, 500)
+    const { data: trainingPlanId, error: saveError } = await supabase.rpc('replace_active_training_plan', {
+      p_name: plan.plan_name,
+      p_goal: plan.goal,
+      p_source_prompt: prompt,
+      p_start_date: dates[0],
+      p_days: plan.days,
+    })
+    if (saveError || !trainingPlanId) {
+      return jsonResponse({ error: saveError?.message ?? 'Kunde inte spara schema', code: 'DB_ERROR' }, 500)
     }
 
-    const { error: sessionsError } = await supabase.from('training_plan_sessions').insert(
-      plan.days.map((day) => ({
-        training_plan_id: newPlan.id,
-        scheduled_date: day.scheduled_date,
-        activity_type: day.activity_type,
-        title: day.title,
-        description: day.description,
-        target_data: day.target_data,
-      })),
-    )
-
-    if (sessionsError) {
-      return jsonResponse({ error: sessionsError.message, code: 'DB_ERROR' }, 500)
-    }
-
-    return jsonResponse({ training_plan_id: newPlan.id })
+    return jsonResponse({ training_plan_id: trainingPlanId })
   } catch (error) {
     const isRateLimit = error instanceof Anthropic.RateLimitError
     const message = error instanceof Error ? error.message : 'Okänt fel'

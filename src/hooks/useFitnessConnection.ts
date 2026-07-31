@@ -14,9 +14,8 @@ export function useFitnessConnection(provider: 'strava' | 'garmin') {
   return useQuery({
     queryKey: ['fitness-connection', provider, userId] as const,
     queryFn: async (): Promise<FitnessConnectionStatus | null> => {
-      // Only ever select non-secret columns from the client — access_token /
-      // refresh_token must stay server-side (Edge Functions), even though RLS
-      // technically permits the owning user to read their own row.
+      // Tokens live in a separate server-only table, so this public row is
+      // safe to read from the browser.
       const { data, error } = await supabase
         .from('fitness_connections')
         .select('id, provider, connected_at, last_synced_at')

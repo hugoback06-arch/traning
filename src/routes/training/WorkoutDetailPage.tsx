@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { lazy, Suspense, useState } from 'react'
 import { useParams } from 'react-router'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
@@ -7,7 +7,6 @@ import { Button } from '../../components/common/Button'
 import { BackButton } from '../../components/common/BackButton'
 import { Spinner } from '../../components/common/Spinner'
 import { ActivityIcon } from '../../components/training/ActivityIcon'
-import { WorkoutMap } from '../../components/training/WorkoutMap'
 import { StreamChart } from '../../components/training/StreamChart'
 import { useWorkoutDetail } from '../../hooks/useWorkoutDetail'
 import { useUpdateWorkout } from '../../hooks/useUpdateWorkout'
@@ -22,6 +21,9 @@ import type {
   WorkoutSplit,
   WorkoutStreams,
 } from '../../types/domain'
+
+// Leaflet only needs to download for workouts that actually include a map.
+const WorkoutMap = lazy(() => import('../../components/training/WorkoutMap').then((module) => ({ default: module.WorkoutMap })))
 
 function isStrength(type: PlanActivityType): boolean {
   return type === 'strength'
@@ -148,7 +150,11 @@ export function WorkoutDetailPage() {
             </div>
           </div>
 
-          {workout.map_polyline && <WorkoutMap polyline={workout.map_polyline} />}
+          {workout.map_polyline && (
+            <Suspense fallback={<div className="h-48 animate-pulse rounded-xl bg-surface-muted" />}>
+              <WorkoutMap polyline={workout.map_polyline} />
+            </Suspense>
+          )}
 
           {workout.session && <PlanVsActual session={workout.session} workout={workout} />}
 

@@ -61,8 +61,19 @@ Deno.serve(async (req) => {
   if (connectionError) return jsonResponse({ error: connectionError.message, code: 'DB_ERROR' }, 500)
   if (!connection) return jsonResponse({ error: 'Ingen Strava-anslutning', code: 'NOT_CONNECTED' }, 400)
 
+  // The caller may read connection status through RLS, but tokens are kept in
+  // a server-only table and are fetched solely with the service-role client.
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+  const { data: secret, error: secretError } = await admin
+    .from('fitness_connection_secrets')
+    .select('connection_id, access_token, refresh_token, expires_at')
+    .eq('connection_id', connection.id)
+    .maybeSingle()
+  if (secretError || !secret) return jsonResponse({ error: 'Strava-token saknas', code: 'NOT_CONNECTED' }, 400)
+  const connectionSecret = { ...secret, id: secret.connection_id }
+
   try {
-    const accessToken = await ensureValidStravaToken(supabase, connection)
+    const accessToken = await ensureValidStravaToken(admin, connectionSecret)
     const afterEpoch = connection.last_synced_at
       ? Math.floor(Date.parse(connection.last_synced_at) / 1000)
       : Math.floor(Date.now() / 1000) - FIRST_SYNC_LOOKBACK_DAYS * 86_400
@@ -97,12 +108,18 @@ Deno.serve(async (req) => {
     }
 
     let syncedCount = 0
+    let failedCount = 0
     for (const activityId of activityIds) {
       try {
         const activity = await fetchStravaActivity(accessToken, activityId)
         const result = await upsertWorkoutFromStravaActivity(supabase, user.id, activity, accessToken)
         if (result.data) syncedCount += 1
+        else {
+          failedCount += 1
+          console.error('strava-manual-sync: kunde inte spara aktivitet', activityId, result.error)
+        }
       } catch (error) {
+        failedCount += 1
         console.error('strava-manual-sync: kunde inte synka aktivitet', activityId, error)
       }
     }
@@ -111,15 +128,19 @@ Deno.serve(async (req) => {
     // profile:read_all via en återanslutning och därför saknar zoner sen tidigare.
     const heartRateZones = await fetchStravaHeartRateZones(accessToken).catch(() => null)
 
+    // Do not advance the checkpoint after a partial sync: an activity that
+    // failed transiently would otherwise fall outside the next `after=` query
+    // and be lost forever. Map/stream backfills can retry independently, but
+    // a row that was never inserted cannot.
     await supabase
       .from('fitness_connections')
       .update({
-        last_synced_at: new Date().toISOString(),
+        ...(failedCount === 0 ? { last_synced_at: new Date().toISOString() } : {}),
         ...(heartRateZones ? { heart_rate_zones: heartRateZones } : {}),
       })
       .eq('id', connection.id)
 
-    return jsonResponse({ synced_count: syncedCount })
+    return jsonResponse({ synced_count: syncedCount, failed_count: failedCount })
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Okänt fel'
     return jsonResponse({ error: message, code: 'SYNC_ERROR' }, 502)

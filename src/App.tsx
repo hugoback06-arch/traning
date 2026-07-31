@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Route, Routes } from 'react-router'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { queryClient } from './lib/queryClient'
@@ -8,17 +9,24 @@ import { RequireOwner } from './components/layout/RequireOwner'
 import { OnboardingGate } from './components/layout/OnboardingGate'
 import { AppShell } from './components/layout/AppShell'
 import { LoginPage } from './routes/LoginPage'
-import { OnboardingPage } from './routes/OnboardingPage'
 import { Home } from './routes/Home'
-import { DailyOverviewPage } from './routes/DailyOverviewPage'
-import { CalendarPage } from './routes/CalendarPage'
-import { SavedMealsPage } from './routes/SavedMealsPage'
-import { ProfileSettingsPage } from './routes/ProfileSettingsPage'
-import { TrainingPage } from './routes/training/TrainingPage'
-import { SchedulePage } from './routes/training/SchedulePage'
-import { History } from './routes/training/History'
-import { WorkoutDetailPage } from './routes/training/WorkoutDetailPage'
-import { AdminFeedbackPage } from './routes/AdminFeedbackPage'
+
+// Keep login and home in the initial bundle. The remaining pages load when
+// visited, so calendar, charts and admin code do not delay app startup.
+const OnboardingPage = lazy(() => import('./routes/OnboardingPage').then((module) => ({ default: module.OnboardingPage })))
+const DailyOverviewPage = lazy(() => import('./routes/DailyOverviewPage').then((module) => ({ default: module.DailyOverviewPage })))
+const CalendarPage = lazy(() => import('./routes/CalendarPage').then((module) => ({ default: module.CalendarPage })))
+const SavedMealsPage = lazy(() => import('./routes/SavedMealsPage').then((module) => ({ default: module.SavedMealsPage })))
+const ProfileSettingsPage = lazy(() => import('./routes/ProfileSettingsPage').then((module) => ({ default: module.ProfileSettingsPage })))
+const TrainingPage = lazy(() => import('./routes/training/TrainingPage').then((module) => ({ default: module.TrainingPage })))
+const SchedulePage = lazy(() => import('./routes/training/SchedulePage').then((module) => ({ default: module.SchedulePage })))
+const History = lazy(() => import('./routes/training/History').then((module) => ({ default: module.History })))
+const WorkoutDetailPage = lazy(() => import('./routes/training/WorkoutDetailPage').then((module) => ({ default: module.WorkoutDetailPage })))
+const AdminFeedbackPage = lazy(() => import('./routes/AdminFeedbackPage').then((module) => ({ default: module.AdminFeedbackPage })))
+
+function RouteLoadingFallback() {
+  return <div className="min-h-32" aria-label="Laddar sida" />
+}
 
 function App() {
   return (
@@ -26,7 +34,8 @@ function App() {
       <BrowserRouter>
         <AuthProvider>
           <ThemeProvider>
-            <Routes>
+            <Suspense fallback={<RouteLoadingFallback />}>
+              <Routes>
               <Route path="/login" element={<LoginPage />} />
               <Route element={<RequireAuth />}>
                 <Route path="/onboarding" element={<OnboardingPage />} />
@@ -47,7 +56,8 @@ function App() {
                   </Route>
                 </Route>
               </Route>
-            </Routes>
+              </Routes>
+            </Suspense>
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>

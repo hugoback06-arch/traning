@@ -79,34 +79,47 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Länken har gått ut, försök ansluta igen', code: 'EXPIRED' }, 400)
   }
 
-  if (!stateRow.pending_access_token) {
+  const admin = createClient(Deno.env.get('SUPABASE_URL')!, Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!)
+  const { data: pendingSecret, error: pendingSecretError } = await admin
+    .from('oauth_pending_secrets')
+    .select('access_token, refresh_token, expires_at')
+    .eq('state', state)
+    .maybeSingle()
+
+  if (pendingSecretError || !pendingSecret) {
     return jsonResponse({ error: 'Anslutningen är inte klar än, försök igen', code: 'NOT_READY' }, 409)
   }
 
   // Best-effort — inte alla atleter har satt upp pulszoner i Strava, och det
   // ska aldrig blockera själva anslutningen om det här anropet misslyckas.
-  const heartRateZones = await fetchStravaHeartRateZones(stateRow.pending_access_token).catch(() => null)
+  const heartRateZones = await fetchStravaHeartRateZones(pendingSecret.access_token).catch(() => null)
 
-  const { error: upsertError } = await supabase.from('fitness_connections').upsert(
+  const { data: connection, error: upsertError } = await supabase.from('fitness_connections').upsert(
     {
       user_id: user.id,
       provider: 'strava',
       external_athlete_id: stateRow.pending_external_athlete_id,
-      access_token: stateRow.pending_access_token,
-      refresh_token: stateRow.pending_refresh_token,
-      expires_at: stateRow.pending_expires_at,
       scope: stateRow.pending_scope,
       heart_rate_zones: heartRateZones,
       connected_at: new Date().toISOString(),
     },
     { onConflict: 'user_id,provider' },
-  )
+  ).select('id').single()
+
+  if (upsertError || !connection) {
+    return jsonResponse({ error: upsertError?.message ?? 'Kunde inte spara anslutningen', code: 'DB_ERROR' }, 500)
+  }
+
+  const { error: saveSecretError } = await admin.from('fitness_connection_secrets').upsert({
+    connection_id: connection.id,
+    access_token: pendingSecret.access_token,
+    refresh_token: pendingSecret.refresh_token,
+    expires_at: pendingSecret.expires_at,
+    updated_at: new Date().toISOString(),
+  })
+  if (saveSecretError) return jsonResponse({ error: saveSecretError.message, code: 'DB_ERROR' }, 500)
 
   await supabase.from('oauth_states').delete().eq('state', state)
-
-  if (upsertError) {
-    return jsonResponse({ error: upsertError.message, code: 'DB_ERROR' }, 500)
-  }
 
   return jsonResponse({ connected: true })
 })

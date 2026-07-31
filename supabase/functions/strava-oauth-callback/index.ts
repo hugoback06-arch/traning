@@ -75,22 +75,26 @@ Deno.serve(async (req) => {
     if (!tokenRes.ok) throw new Error(`token exchange ${tokenRes.status}`)
     const token = await tokenRes.json()
 
-    // Stash the exchanged tokens on the state row rather than linking
-    // fitness_connections directly — strava-oauth-finalize (called with the
-    // completing browser's own JWT) is what actually claims them, so only the
-    // account that started this flow can ever pick them up.
+    // Store non-secret state metadata separately from the exchanged tokens.
+    // The browser may read its own oauth_states row through RLS, but never the
+    // server-only oauth_pending_secrets row.
     const { error: updateError } = await supabase
       .from('oauth_states')
       .update({
-        pending_access_token: token.access_token,
-        pending_refresh_token: token.refresh_token,
-        pending_expires_at: new Date(token.expires_at * 1000).toISOString(),
         pending_external_athlete_id: String(token.athlete?.id ?? ''),
         pending_scope: 'read,activity:read_all,profile:read_all',
       })
       .eq('state', state)
 
     if (updateError) throw new Error(updateError.message)
+
+    const { error: secretError } = await supabase.from('oauth_pending_secrets').upsert({
+      state,
+      access_token: token.access_token,
+      refresh_token: token.refresh_token,
+      expires_at: new Date(token.expires_at * 1000).toISOString(),
+    })
+    if (secretError) throw new Error(secretError.message)
 
     return redirect(`${stateRow.return_origin}/profile?strava=pending&state=${encodeURIComponent(state)}`)
   } catch (error) {

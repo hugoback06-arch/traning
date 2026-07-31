@@ -31,26 +31,21 @@ export async function fetchSavedMealsWithItems(userId: string): Promise<SavedMea
 }
 
 export async function createSavedMeal(
-  userId: string,
   name: string,
   items: { foodItemId: string; amountG: number }[],
 ): Promise<SavedMeal> {
-  const { data: meal, error: mealError } = await supabase
-    .from('saved_meals')
-    .insert({ user_id: userId, name })
-    .select()
-    .single()
-  if (mealError) throw mealError
-
-  const { error: itemsError } = await supabase.from('saved_meal_items').insert(
-    items.map((item, index) => ({
-      saved_meal_id: meal.id,
+  const { data: mealId, error: createError } = await supabase.rpc('create_saved_meal_with_items', {
+    p_name: name,
+    p_items: items.map((item, sort_order) => ({
       food_item_id: item.foodItemId,
       amount_g: item.amountG,
-      sort_order: index,
+      sort_order,
     })),
-  )
-  if (itemsError) throw itemsError
+  })
+  if (createError || !mealId) throw createError ?? new Error('Kunde inte skapa sparad måltid')
+
+  const { data: meal, error: mealError } = await supabase.from('saved_meals').select('*').eq('id', mealId).single()
+  if (mealError) throw mealError
 
   return meal
 }
