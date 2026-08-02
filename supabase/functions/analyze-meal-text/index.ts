@@ -109,9 +109,15 @@ Deno.serve(async (req) => {
           role: 'user',
           content: `Uppskatta kalorier och makronutrienter (protein, kolhydrater, fett) för följande måltid, beskriven av användaren: "${description.trim()}".
 
-Dela först upp måltiden i sina beståndsdelar (t.ex. bas, pålägg, tillbehör, tillagningsfett) och uppskatta varje del för sig baserat på typiska portionsstorlekar och eventuella mängdledtrådar i texten (dl, msk, antal, "stor"/"liten" etc). Glöm inte tillagningsmetod och tillsatt fett (t.ex. stekt i olja/smör) som ofta ger stora kaloritillskott. Summera sedan delarna till totalen — totalen ska vara summan av ingredienserna, inte en separat gissning.
+Dela först upp måltiden i sina beståndsdelar (t.ex. bas, pålägg, tillbehör, tillagningsfett) och uppskatta varje del för sig baserat på typiska portionsstorlekar och eventuella mängdledtrådar i texten (dl, msk, antal, "stor"/"liten" etc).
 
-Svara på svenska. Om beskrivningen är vag på portionsstorlek, gör en rimlig bästa gissning för en normalportion men sätt confidence till "low".${correctionsSection}`,
+Använd dessa som ankare för rimliga värden per 100 g istället för att gissa fritt: kokt ris/pasta/potatis ~110-160 kcal, gröt/havregryn (kokt) ~60-90 kcal, magert kött/fisk/kyckling (tillagat, utan tillsatt fett) ~120-200 kcal, fet fisk/rött kött ~200-280 kcal, grönsaker ~20-60 kcal, bröd ~230-280 kcal, hushållsost/ost ~250-350 kcal, matlagningsolja/smör ~700-900 kcal. Använd dessa för att sanity-checka totalen — om din uppskattning avviker kraftigt uppåt från vad ingredienserna borde ge, räkna om.
+
+Lägg bara till tillagningsfett (olja/smör) i uppskattningen om det uttryckligen nämns eller tydligt antyds av tillagningssättet (t.ex. "stekt", "wokad", "i smör"). Anta INTE tillsatt fett som standard bara för att det är en varm rätt — många rätter tillagas utan, eller med minimal mängd. Om fett nämns men mängden är oklar, räkna med en måttlig mängd (ca 1 tsk-1 msk), inte en generös mängd.
+
+Summera sedan delarna till totalen — totalen ska vara summan av ingredienserna, inte en separat gissning.
+
+Svara på svenska. Om beskrivningen är vag på portionsstorlek, gör en rimlig bästa gissning för en NORMAL portion (inte en stor/generös portion) men sätt confidence till "low". Vid osäkerhet, luta åt en försiktig/konservativ uppskattning snarare än en hög — överskattning är ett känt problem, så gissa inte i överkant "för säkerhets skull".${correctionsSection}`,
         },
       ],
     })

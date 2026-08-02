@@ -124,8 +124,11 @@ Deno.serve(async (req) => {
   const promptText =
     'Uppskatta kalorier och makronutrienter (protein, kolhydrater, fett) för maten på bilden. ' +
     'Titta noga på bilden först och beskriv vad som faktiskt syns (form, färg, textur, sås, garnering, tillagningsmetod) innan du namnger rätten — gissa inte på en rätt som inte stöds av det du ser. ' +
-    'Dela sedan upp maten i sina synliga beståndsdelar och uppskatta varje del för sig utifrån dess synliga portionsstorlek, inklusive synligt tillagningsfett (t.ex. olja/smör om maten ser stekt/friterad ut). Summera delarna till totalen. ' +
-    'Svara på svenska. Om bilden inte tydligt visar mat, eller om identifieringen är osäker, gör en rimlig bästa gissning ändå men sätt confidence till "low".' +
+    'Dela sedan upp maten i sina synliga beståndsdelar och uppskatta varje del för sig utifrån dess synliga portionsstorlek. ' +
+    'Använd dessa som ankare för rimliga värden per 100 g istället för att gissa fritt: kokt ris/pasta/potatis ~110-160 kcal, gröt/havregryn (kokt) ~60-90 kcal, magert kött/fisk/kyckling (tillagat, utan tillsatt fett) ~120-200 kcal, fet fisk/rött kött ~200-280 kcal, grönsaker ~20-60 kcal, bröd ~230-280 kcal, hushållsost/ost ~250-350 kcal, matlagningsolja/smör ~700-900 kcal. ' +
+    'Lägg bara till tillagningsfett (olja/smör) i uppskattningen om det syns tydligt i bilden (glansig yta, synlig olja/smör, friteringsskorpa) — anta INTE tillsatt fett som standard bara för att maten ser tillagad ut. Om fett syns men mängden är oklar, räkna med en måttlig mängd, inte en generös. ' +
+    'Summera delarna till totalen. ' +
+    'Svara på svenska. Om bilden inte tydligt visar mat, eller om identifieringen är osäker, gör en rimlig bästa gissning ändå men sätt confidence till "low". Vid osäkerhet om portionsstorlek, luta åt en NORMAL, försiktig uppskattning snarare än en stor/generös — överskattning är ett känt problem, gissa inte i överkant "för säkerhets skull".' +
     (description ? ` Användarens egen beskrivning av rätten (använd som hjälp, bilden väger tyngst): "${description}"` : '') +
     correctionsSection
 
