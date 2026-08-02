@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Projektbeskrivning
 
-Kost- och träningsapp (webbapp/PWA, mobil-först), produktnamn **Strikt**. MVP = kost-spårning: onboarding med auto-beräknat kalori-/makromål, dagsöversikt, kalender, fyra loggningssätt (sökning, streckkod, fotoanalys, textbeskrivning), måltidshistorik, profilinställningar. Fullständig spec: `app-spec-mvp.md`.
+Kost- och träningsapp (webbapp/PWA, mobil-först), produktnamn **Strikt**. MVP = kost-spårning: onboarding med auto-beräknat kalori-/makromål, dagsöversikt, kalender, fyra loggningssätt (sökning, streckkod, fotoanalys, textbeskrivning), måltidshistorik, profilinställningar.
 
-Träningsdelen byggs som ett tillägg ovanpå MVP:t: automatisk Strava-synk (webhook, ej manuell loggning i huvudflödet), AI-schemagenerator, AI-utvärdering av pass, och en osynlig kalori-koppling till kost-målet. Spec: `app-spec-training.md` + `app-spec-training-addendum.md` (läs båda, addendumet är tillägg/ändringar, inte ersättning).
+Träningsdelen byggs som ett tillägg ovanpå MVP:t: automatisk Strava-synk (webhook, ej manuell loggning i huvudflödet), AI-schemagenerator, AI-utvärdering av pass, och en osynlig kalori-koppling till kost-målet.
 
 ## Tech-stack
 
@@ -21,11 +21,10 @@ Träningsdelen byggs som ett tillägg ovanpå MVP:t: automatisk Strava-synk (web
 - Claude API (text/tool-use) för AI-schema (`generate-training-plan`, med föregående uppföljningsfrågor via `training-plan-questions`) och pass-utvärdering (`evaluate-workout`, alltid manuellt triggad — inte längre automatisk vid Strava-synk, se kostnadskontroll) — delad system-prompt med säkerhetsramar i `supabase/functions/_shared/safetyPrompt.ts`, delad träningshistorik-sammanfattning i `supabase/functions/_shared/trainingHistory.ts`
 - Strava API (OAuth + push-webhook) för automatisk träningssynk — `strava-oauth-start`/`strava-oauth-callback` (anslutning), `strava-webhook` (push-events, huvudflöde), `strava-manual-sync` (diskret fallback-knapp i Profil). Delad mappnings-/upsert-logik i `supabase/functions/_shared/stravaActivity.ts`
 - `barcode-detector` (native + WASM-fallback för Safari/iOS)
-- Dexie installerat men **oanvänt** (relik från tidigare lokal-first-idé) — kan tas bort ur `package.json`
 
 ## Arkitekturbeslut
 
-Ursprungligt scaffold var lokalt (IndexedDB/Dexie, ingen auth). Nu gäller istället Supabase-arkitekturen i `app-spec-mvp.md`, med Edge Function som proxy för Claude vision-anrop. Fullständigt planeringsdokument: `/Users/hugoback/.claude/plans/groovy-booping-neumann.md`.
+Ursprungligt scaffold var lokalt (IndexedDB/Dexie, ingen auth). Nu används Supabase-arkitektur med Edge Functions som proxy för Claude vision-anrop.
 
 ## Konventioner
 
