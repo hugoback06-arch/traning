@@ -2,17 +2,15 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
-import { Calendar, CalendarDays, Dumbbell, Plus, Sparkles, UtensilsCrossed } from 'lucide-react'
+import { CalendarDays, Plus, Sparkles, UtensilsCrossed } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { StreakBadge } from '../components/overview/StreakBadge'
 import { StreakMilestoneModal } from '../components/overview/StreakMilestoneModal'
 import { MealSuggestionsModal } from '../components/overview/MealSuggestionsModal'
-import { TrainingStatusCard } from '../components/training/TrainingStatusCard'
 import { AddMealModal } from '../components/meals/AddMealModal'
 import { useProfile } from '../hooks/useProfile'
 import { useTodayMealLogs } from '../hooks/useTodayMealLogs'
 import { useStreak } from '../hooks/useStreak'
-import { useActiveTrainingPlan } from '../hooks/useActiveTrainingPlan'
 import { sumMealTotals } from '../lib/dailyTotals'
 import { getStreakMilestone } from '../lib/streaks'
 import { getActiveMealType } from '../lib/activeMealType'
@@ -31,7 +29,6 @@ export function Home() {
   const { data: profile } = useProfile()
   const { data: mealLogs } = useTodayMealLogs()
   const streakDays = useStreak()
-  const { data: activePlan } = useActiveTrainingPlan()
 
   const totals = sumMealTotals(mealLogs ?? [])
   const goalKcal = profile?.daily_calorie_goal ?? 0
@@ -118,43 +115,6 @@ export function Home() {
 
       <div className="space-y-2">
         <div className="px-1">
-          <Link to="/training" className="flex items-center gap-1.5 font-display text-base font-semibold text-ink-primary">
-            <Dumbbell size={17} /> Träning
-          </Link>
-        </div>
-        <Link to="/training" className="press block">
-          <TrainingStatusCard />
-        </Link>
-      </div>
-
-      <div className="space-y-2">
-        <div className="px-1">
-          <Link
-            to="/training/schedule"
-            className="flex items-center gap-1.5 font-display text-base font-semibold text-ink-primary"
-          >
-            <Calendar size={17} /> Schema
-          </Link>
-        </div>
-        <Link to="/training/schedule" className="press block">
-          <Card>
-            {activePlan ? (
-              <div className="min-w-0">
-                <p className="font-display text-base font-semibold text-ink-primary">{activePlan.name}</p>
-                <p className="text-xs text-ink-secondary">{activePlan.goal ?? 'Se hela ditt träningsschema'}</p>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center gap-1 py-2 text-center">
-                <p className="text-sm font-medium text-ink-primary">Inget schema ännu</p>
-                <p className="text-xs text-ink-secondary">Skapa ett AI-genererat träningsschema</p>
-              </div>
-            )}
-          </Card>
-        </Link>
-      </div>
-
-      <div className="space-y-2">
-        <div className="px-1">
           <Link
             to="/nutrition/calendar"
             className="flex items-center gap-1.5 font-display text-base font-semibold text-ink-primary"
@@ -165,7 +125,7 @@ export function Home() {
         <Link to="/nutrition/calendar" className="press block">
           <Card>
             <div className="flex flex-col items-center gap-1 py-2 text-center">
-              <p className="text-sm font-medium text-ink-primary">Kost & träning i en vy</p>
+              <p className="text-sm font-medium text-ink-primary">Se vad du ätit tidigare</p>
               <p className="text-xs text-ink-secondary">Bläddra bland tidigare dagar</p>
             </div>
           </Card>

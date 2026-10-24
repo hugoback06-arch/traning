@@ -18,10 +18,6 @@ const DailyOverviewPage = lazy(() => import('./routes/DailyOverviewPage').then((
 const CalendarPage = lazy(() => import('./routes/CalendarPage').then((module) => ({ default: module.CalendarPage })))
 const SavedMealsPage = lazy(() => import('./routes/SavedMealsPage').then((module) => ({ default: module.SavedMealsPage })))
 const ProfileSettingsPage = lazy(() => import('./routes/ProfileSettingsPage').then((module) => ({ default: module.ProfileSettingsPage })))
-const TrainingPage = lazy(() => import('./routes/training/TrainingPage').then((module) => ({ default: module.TrainingPage })))
-const SchedulePage = lazy(() => import('./routes/training/SchedulePage').then((module) => ({ default: module.SchedulePage })))
-const History = lazy(() => import('./routes/training/History').then((module) => ({ default: module.History })))
-const WorkoutDetailPage = lazy(() => import('./routes/training/WorkoutDetailPage').then((module) => ({ default: module.WorkoutDetailPage })))
 const AdminFeedbackPage = lazy(() => import('./routes/AdminFeedbackPage').then((module) => ({ default: module.AdminFeedbackPage })))
 
 function RouteLoadingFallback() {
@@ -45,10 +41,9 @@ function App() {
                     <Route path="/nutrition" element={<DailyOverviewPage />} />
                     <Route path="/nutrition/calendar" element={<CalendarPage />} />
                     <Route path="/nutrition/saved-meals" element={<SavedMealsPage />} />
-                    <Route path="/training" element={<TrainingPage />} />
-                    <Route path="/training/schedule" element={<SchedulePage />} />
-                    <Route path="/training/history" element={<History />} />
-                    <Route path="/training/workout/:workoutId" element={<WorkoutDetailPage />} />
+
+
+
                     <Route path="/profile" element={<ProfileSettingsPage />} />
                     <Route element={<RequireOwner />}>
                       <Route path="/admin/feedback" element={<AdminFeedbackPage />} />

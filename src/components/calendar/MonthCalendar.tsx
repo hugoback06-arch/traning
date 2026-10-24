@@ -1,13 +1,10 @@
 import { format, isSameDay, isSameMonth, isToday } from 'date-fns'
 import { monthGridDays, WEEKDAY_LABELS } from '../../lib/monthGrid'
-import { ACTIVITY_BG_CLASS } from '../../lib/activityTypes'
-import type { PlanActivityType } from '../../types/domain'
 
 interface MonthCalendarProps {
   visibleMonth: Date
   selectedDate: Date
   loggedDates: Date[]
-  trainingByDate?: Map<string, PlanActivityType>
   onSelectDate: (date: Date) => void
 }
 
@@ -15,7 +12,6 @@ export function MonthCalendar({
   visibleMonth,
   selectedDate,
   loggedDates,
-  trainingByDate,
   onSelectDate,
 }: MonthCalendarProps) {
   const days = monthGridDays(visibleMonth)
@@ -35,7 +31,6 @@ export function MonthCalendar({
           const selected = isSameDay(day, selectedDate)
           const today = isToday(day)
           const hasLog = loggedDayKeys.has(dayKey)
-          const trainingType = trainingByDate?.get(dayKey)
 
           return (
             <button
@@ -56,11 +51,6 @@ export function MonthCalendar({
                 <span
                   className={`h-1 w-1 rounded-full ${
                     hasLog ? (selected ? 'bg-accent-foreground' : 'bg-accent') : 'bg-transparent'
-                  }`}
-                />
-                <span
-                  className={`h-1 w-1 rounded-full ${
-                    trainingType ? (selected ? 'bg-accent-foreground' : ACTIVITY_BG_CLASS[trainingType]) : 'bg-transparent'
                   }`}
                 />
               </span>

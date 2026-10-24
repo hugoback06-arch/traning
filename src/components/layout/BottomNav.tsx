@@ -1,10 +1,9 @@
 import { NavLink } from 'react-router'
-import { House, UtensilsCrossed, Dumbbell, User } from 'lucide-react'
+import { House, UtensilsCrossed, User } from 'lucide-react'
 
 const navItems = [
   { to: '/', label: 'Hem', end: true, Icon: House },
   { to: '/nutrition', label: 'Kost', end: false, Icon: UtensilsCrossed },
-  { to: '/training', label: 'Träning', end: false, Icon: Dumbbell },
   { to: '/profile', label: 'Profil', end: false, Icon: User },
 ]
 

@@ -1,22 +1,15 @@
-import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useState } from 'react'
+import { Link } from 'react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { Bell, Lightbulb, Palette, User, Utensils } from 'lucide-react'
+import { Lightbulb, Palette, User, Utensils } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { Button } from '../components/common/Button'
 import { Spinner } from '../components/common/Spinner'
-import { Switch } from '../components/common/Switch'
 import { SegmentedControl } from '../components/common/SegmentedControl'
-import { StravaConnectionCard } from '../components/profile/StravaConnectionCard'
 import { useAuth } from '../hooks/useAuth'
 import { useProfile } from '../hooks/useProfile'
-import { useFinalizeStrava } from '../hooks/useFinalizeStrava'
 import { useTheme } from '../hooks/useTheme'
-import { useUpdateNotificationsEnabled } from '../hooks/useUpdateNotificationsEnabled'
 import { useUpdateDietaryPreference } from '../hooks/useUpdateDietaryPreference'
-import { useSavePushSubscription } from '../hooks/useSavePushSubscription'
-import { useDeletePushSubscription } from '../hooks/useDeletePushSubscription'
-import { isPushSupported, subscribeToPush, unsubscribeFromPush } from '../lib/pushSubscription'
 import { useSubmitFeedbackSuggestion } from '../hooks/useFeedbackSuggestions'
 import { supabase } from '../lib/supabase'
 import { queryKeys } from '../lib/queryKeys'
@@ -34,13 +27,6 @@ const DIETARY_OPTIONS: { value: DietaryPreference; label: string }[] = [
   { value: 'vegetarian', label: 'Vegetariskt' },
   { value: 'vegan', label: 'Veganskt' },
 ]
-
-const STRAVA_STATUS_MESSAGES: Record<string, string> = {
-  pending: 'Ansluter Strava…',
-  connected: 'Strava anslutet!',
-  denied: 'Strava-anslutningen avbröts.',
-  error: 'Något gick fel vid anslutning till Strava.',
-}
 
 function NumberField({
   label,
@@ -70,50 +56,12 @@ export function ProfileSettingsPage() {
   const { session } = useAuth()
   const { data: profile, isLoading } = useProfile()
   const queryClient = useQueryClient()
-  const [searchParams, setSearchParams] = useSearchParams()
   const [editing, setEditing] = useState(false)
-  const finalizeStrava = useFinalizeStrava()
-  const [displayStravaStatus, setDisplayStravaStatus] = useState<string | null>(null)
   const { preference, setPreference } = useTheme()
-  const updateNotificationsEnabled = useUpdateNotificationsEnabled()
   const updateDietaryPreference = useUpdateDietaryPreference()
-  const savePushSubscription = useSavePushSubscription()
-  const deletePushSubscription = useDeletePushSubscription()
-  const [notificationsMessage, setNotificationsMessage] = useState<string | null>(null)
   const submitSuggestion = useSubmitFeedbackSuggestion()
   const [suggestionText, setSuggestionText] = useState('')
 
-  const stravaStatus = searchParams.get('strava')
-  const stravaState = searchParams.get('state')
-
-  useEffect(() => {
-    if (!stravaStatus) return
-
-    if (stravaStatus === 'pending' && stravaState) {
-      // The callback only stashed tokens — this call, made with our own
-      // session's JWT, is what actually claims them via RLS-checked ownership
-      // (see strava-oauth-finalize). See CLAUDE.md / oauth_pending_link migration.
-      setDisplayStravaStatus('pending')
-      finalizeStrava.mutate(stravaState, {
-        onSuccess: () => {
-          queryClient.invalidateQueries({ queryKey: ['fitness-connection'] })
-          setDisplayStravaStatus('connected')
-        },
-        onError: () => setDisplayStravaStatus('error'),
-      })
-    } else {
-      queryClient.invalidateQueries({ queryKey: ['fitness-connection'] })
-      setDisplayStravaStatus(stravaStatus)
-    }
-
-    setSearchParams((params) => {
-      params.delete('strava')
-      params.delete('state')
-      params.delete('message')
-      return params
-    })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [stravaStatus, stravaState, queryClient, setSearchParams])
   const [calorieGoal, setCalorieGoal] = useState(0)
   const [proteinG, setProteinG] = useState(0)
   const [carbsG, setCarbsG] = useState(0)
@@ -140,32 +88,6 @@ export function ProfileSettingsPage() {
 
   if (isLoading || !profile) return <Spinner />
 
-  async function handleNotificationsToggle(next: boolean) {
-    setNotificationsMessage(null)
-    if (!next) {
-      updateNotificationsEnabled.mutate(false)
-      const subscription = await unsubscribeFromPush().catch(() => null)
-      if (subscription) deletePushSubscription.mutate(subscription.endpoint)
-      return
-    }
-    if (!('Notification' in window) || !isPushSupported()) {
-      setNotificationsMessage('Notiser stöds inte i den här webbläsaren.')
-      return
-    }
-    const permission = await Notification.requestPermission()
-    if (permission !== 'granted') {
-      setNotificationsMessage('Tillåt notiser i webbläsaren för att slå på.')
-      return
-    }
-    try {
-      const subscription = await subscribeToPush()
-      await savePushSubscription.mutateAsync(subscription)
-      updateNotificationsEnabled.mutate(true)
-    } catch {
-      setNotificationsMessage('Kunde inte aktivera notiser, försök igen.')
-    }
-  }
-
   function handleSubmitSuggestion() {
     const message = suggestionText.trim()
     if (!message) return
@@ -186,14 +108,6 @@ export function ProfileSettingsPage() {
       <h1 className="flex items-center gap-2 font-display text-lg font-semibold">
         <User size={20} /> Profil
       </h1>
-
-      {displayStravaStatus && (
-        <p className="rounded-lg bg-accent-light px-3 py-2 text-sm text-accent">
-          {STRAVA_STATUS_MESSAGES[displayStravaStatus] ?? 'Klart.'}
-        </p>
-      )}
-
-      <StravaConnectionCard />
 
       <Card className="space-y-4">
         <div className="flex items-center justify-between">
@@ -279,19 +193,6 @@ export function ProfileSettingsPage() {
             </button>
           ))}
         </div>
-      </Card>
-
-      <Card className="space-y-2">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <h2 className="flex items-center gap-1.5 text-sm font-medium text-ink-primary">
-              <Bell size={16} /> Notiser
-            </h2>
-            <p className="text-xs text-ink-secondary">Påminnelser och uppdateringar från appen.</p>
-          </div>
-          <Switch checked={profile.notifications_enabled} onChange={handleNotificationsToggle} label="Notiser" />
-        </div>
-        {notificationsMessage && <p className="text-xs text-warning">{notificationsMessage}</p>}
       </Card>
 
       <Card className="space-y-3">
