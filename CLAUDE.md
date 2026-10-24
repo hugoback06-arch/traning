@@ -44,6 +44,7 @@ Engångssteg per Supabase-projekt: `ANTHROPIC_API_KEY` (och valfria `CLAUDE_*_MO
 - `npm run build` — type-check + prod build (genererar PWA service worker)
 - `npm run preview` — förhandsgranska prod-build
 - `npm run lint` — oxlint
+- `npm run foods:migration` — validerar `src/data/genericFoods.ts` (enda källan för kurerade livsmedel/restaurangprodukter) och genererar en ny migration som upsertar hela listan till `food_items`. Kör efter varje ändring i datafilen, sedan `npx supabase db push --linked --yes`
 
 ## Arkitektur (filstruktur)
 

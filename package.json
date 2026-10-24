@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "foods:migration": "node scripts/generate-generic-foods-migration.ts"
   },
   "dependencies": {
     "@fontsource-variable/manrope": "^5.3.0",

@@ -1,6 +1,6 @@
+import { useEffect } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { searchFoodItems } from '../../lib/openFoodFacts'
-import { searchGenericFoods } from '../../lib/genericFoods'
 import { useDebouncedValue } from '../../hooks/useDebouncedValue'
 import { useFoodItemFrequencyMap } from '../../hooks/useFoodItemFrequencyMap'
 import { Spinner } from '../common/Spinner'
@@ -17,6 +17,10 @@ function byLogFrequency(frequencyMap: Map<string, number> | undefined) {
     return countB - countA
   }
 }
+
+// The curated food list is a few hundred kB of data, so it's code-split out of
+// the main bundle and only fetched once a search UI is opened.
+const loadGenericFoods = () => import('../../lib/genericFoods')
 
 interface FoodSearchListProps {
   query: string
@@ -45,7 +49,18 @@ function ResultRow({ result, onSelect }: { result: FoodSearchResult; onSelect: (
 export function FoodSearchList({ query, onSelect }: FoodSearchListProps) {
   const debouncedQuery = useDebouncedValue(query.trim(), 400)
   const { data: frequencyMap } = useFoodItemFrequencyMap()
-  const genericResults = [...searchGenericFoods(debouncedQuery)].sort(byLogFrequency(frequencyMap))
+
+  useEffect(() => {
+    void loadGenericFoods()
+  }, [])
+
+  const { data: genericMatches } = useQuery({
+    queryKey: ['generic-search', debouncedQuery],
+    queryFn: async () => (await loadGenericFoods()).searchGenericFoods(debouncedQuery),
+    enabled: debouncedQuery.length >= 2,
+    staleTime: Infinity,
+  })
+  const genericResults = [...(genericMatches ?? [])].sort(byLogFrequency(frequencyMap))
 
   const {
     data: offResults,

@@ -9,7 +9,7 @@ const UNIQUE_VIOLATION = '23505'
  * same barcode, the unique constraint rejects the loser — refetch the winner's row.
  *
  * Generic-food results (source 'generic') are expected to already exist, pre-seeded
- * via supabase/migrations/0002_generic_foods.sql — a client-side insert would need
+ * from src/data/genericFoods.ts via `npm run foods:migration` — a client-side insert would need
  * created_by = auth.uid(), misattributing a shared staple food to whoever searched
  * it first, so we fail loudly instead if the seed is missing.
  */
