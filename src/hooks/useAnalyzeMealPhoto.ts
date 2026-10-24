@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { toFunctionError } from '../lib/functionError'
 import { compressImage } from '../lib/imageCompression'
 
 export interface MealEstimateIngredient {
@@ -36,7 +37,7 @@ export function useAnalyzeMealPhoto() {
         { body: { image_base64: base64, mime_type: mimeType, description } },
       )
 
-      if (error) throw error
+      if (error) throw await toFunctionError(error, 'Kunde inte analysera bilden')
       if (!data || 'error' in data) throw new Error(data?.error ?? 'Kunde inte analysera bilden')
       return data
     },

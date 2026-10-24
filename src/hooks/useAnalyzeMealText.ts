@@ -1,5 +1,6 @@
 import { useMutation } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { toFunctionError } from '../lib/functionError'
 import type { MealPhotoEstimate } from './useAnalyzeMealPhoto'
 
 interface MealTextErrorBody {
@@ -15,7 +16,7 @@ export function useAnalyzeMealText() {
         { body: { description } },
       )
 
-      if (error) throw error
+      if (error) throw await toFunctionError(error, 'Kunde inte analysera beskrivningen')
       if (!data || 'error' in data) throw new Error(data?.error ?? 'Kunde inte analysera beskrivningen')
       return data
     },

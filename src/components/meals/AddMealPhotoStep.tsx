@@ -49,6 +49,7 @@ export function AddMealPhotoStep({ initialMealType, onBack, onSaved }: AddMealPh
           <p className="text-sm text-warning">
             Kunde inte analysera bilden. Försök igen, eller använd sök/skanna istället.
           </p>
+          {analyze.error && <p className="text-xs text-ink-secondary">{analyze.error.message}</p>}
           <Button variant="secondary" onClick={reset}>
             Försök igen
           </Button>

@@ -2,7 +2,7 @@
 // so the ANTHROPIC_API_KEY never reaches the browser. Auth is enforced by the
 // platform (verify_jwt = true in supabase/config.toml) before this code runs.
 // Mirrors analyze-meal-photo/index.ts, swapping the image content block for text.
-import Anthropic from 'npm:@anthropic-ai/sdk'
+import Anthropic from 'npm:@anthropic-ai/sdk@0.137.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { buildFoodCorrectionsPromptSection } from '../_shared/foodCorrections.ts'
 

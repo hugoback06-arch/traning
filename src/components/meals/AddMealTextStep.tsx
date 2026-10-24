@@ -76,6 +76,7 @@ export function AddMealTextStep({ initialMealType, onBack, onSaved }: AddMealTex
           <p className="text-sm text-warning">
             Kunde inte tolka beskrivningen. Försök igen, eller använd sök/skanna/foto istället.
           </p>
+          {analyze.error && <p className="text-xs text-ink-secondary">{analyze.error.message}</p>}
           <Button variant="secondary" onClick={reset}>
             Försök igen
           </Button>

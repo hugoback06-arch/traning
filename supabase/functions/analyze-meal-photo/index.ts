@@ -1,7 +1,7 @@
 // Supabase Edge Function (Deno). Proxies a food photo to Claude vision so the
 // ANTHROPIC_API_KEY never reaches the browser. Auth is enforced by the platform
 // (verify_jwt = true in supabase/config.toml) before this code even runs.
-import Anthropic from 'npm:@anthropic-ai/sdk'
+import Anthropic from 'npm:@anthropic-ai/sdk@0.137.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { buildFoodCorrectionsPromptSection } from '../_shared/foodCorrections.ts'
 

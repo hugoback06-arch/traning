@@ -3,7 +3,7 @@
 // web_search server tool (scoped to Swedish recipe sites) so the recipe link
 // is real instead of a model-guessed URL. Auth is enforced by the platform
 // (verify_jwt = true in supabase/config.toml).
-import Anthropic from 'npm:@anthropic-ai/sdk'
+import Anthropic from 'npm:@anthropic-ai/sdk@0.137.0'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
