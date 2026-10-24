@@ -6,9 +6,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Projektbeskrivning
 
-Kost- och träningsapp (webbapp/PWA, mobil-först), produktnamn **Strikt**. MVP = kost-spårning: onboarding med auto-beräknat kalori-/makromål, dagsöversikt, kalender, fyra loggningssätt (sökning, streckkod, fotoanalys, textbeskrivning), måltidshistorik, profilinställningar.
+Kost- och hälsoapp (webbapp/PWA, mobil-först), produktnamn **Strikt**. Kost-spårning: onboarding med auto-beräknat kalori-/makromål, dagsöversikt, kalender, fyra loggningssätt (sökning, streckkod, fotoanalys, textbeskrivning), måltidshistorik, vatten, profilinställningar.
 
-Träningsdelen byggs som ett tillägg ovanpå MVP:t: automatisk Strava-synk (webhook, ej manuell loggning i huvudflödet), AI-schemagenerator, AI-utvärdering av pass, och en osynlig kalori-koppling till kost-målet.
+Appen har ingen träningsdel längre (Strava, AI-scheman och pass togs bort 2026-10, migration `0033_drop_training.sql`). Planerade hälsofunktioner: vikt & mått över tid, vatten, och senare en "mag-dagbok" för att spåra hur magen mår.
 
 ## Tech-stack
 
@@ -18,8 +18,7 @@ Träningsdelen byggs som ett tillägg ovanpå MVP:t: automatisk Strava-synk (web
 - **Supabase** (Postgres + Auth + Edge Functions): magic-link login, RLS per användare
 - Open Food Facts API (publik, ingen nyckel) för sökning/streckkod
 - Claude API (vision) för fotoanalys, via Edge Function `supabase/functions/analyze-meal-photo` (håller `ANTHROPIC_API_KEY` server-side)
-- Claude API (text/tool-use) för AI-schema (`generate-training-plan`, med föregående uppföljningsfrågor via `training-plan-questions`) och pass-utvärdering (`evaluate-workout`, alltid manuellt triggad — inte längre automatisk vid Strava-synk, se kostnadskontroll) — delad system-prompt med säkerhetsramar i `supabase/functions/_shared/safetyPrompt.ts`, delad träningshistorik-sammanfattning i `supabase/functions/_shared/trainingHistory.ts`
-- Strava API (OAuth + push-webhook) för automatisk träningssynk — `strava-oauth-start`/`strava-oauth-callback` (anslutning), `strava-webhook` (push-events, huvudflöde), `strava-manual-sync` (diskret fallback-knapp i Profil). Delad mappnings-/upsert-logik i `supabase/functions/_shared/stravaActivity.ts`
+- Claude API (text) för textbeskriven måltid (`analyze-meal-text`) och måltidsförslag (`suggest-meals`); `off-fuzzy-search` proxar Open Food Facts-sökning server-side (CORS)
 - `barcode-detector` (native + WASM-fallback för Safari/iOS)
 
 ## Arkitekturbeslut
@@ -33,25 +32,11 @@ Ursprungligt scaffold var lokalt (IndexedDB/Dexie, ingen auth). Nu används Supa
 
 ## Status
 
-Kost-MVP (M1–M10) klar. Träningsdelen: datamodell, `/training`-UI (Idag/Schema/Historik/passdetalj), Hem-skärm och ny nav (Hem/Kost/Träning/Profil), AI-schemagenerator (flerveckors, historik-baserad), AI-utvärdering, och Strava OAuth + webhook-synk är byggda och deployade. Adaptiv schemajustering (knapparna "För intensivt"/"Lagom"/"Vill ha mer") togs bort — schemaändringar görs istället direkt i schemabyggaren. Kvar: Garmin-synk.
+Kost-MVP (M1–M10) klar och deployad. Träningsdelen borttagen. Nästa: hälsofunktioner (vikt & mått, vatten), därefter mag-dagbok.
 
 ## Driftsättning
 
-Engångssteg per Supabase-projekt/Strava-app (inte något som görs i UI:t):
-
-- **Strava-app:** registrerad på strava.com/settings/api. Authorization Callback Domain måste vara `<project-ref>.supabase.co` (Supabase-projektets domän, inte Vercel-domänen — OAuth-callbacken är en Edge Function).
-- **Secrets:** `STRAVA_CLIENT_ID`, `STRAVA_CLIENT_SECRET`, `STRAVA_WEBHOOK_VERIFY_TOKEN` satta via `supabase secrets set` (utöver `ANTHROPIC_API_KEY` som redan krävdes för fotoanalysen).
-- **Webhook-subscription:** ett engångsanrop till Stravas `push_subscriptions`-endpoint pekar mot `strava-webhook`-funktionen. Görs en gång per Strava-app, inte per användare:
-
-  ```bash
-  curl -X POST https://www.strava.com/api/v3/push_subscriptions \
-    -F client_id=<STRAVA_CLIENT_ID> \
-    -F client_secret=<STRAVA_CLIENT_SECRET> \
-    -F callback_url=https://<project-ref>.supabase.co/functions/v1/strava-webhook \
-    -F verify_token=<STRAVA_WEBHOOK_VERIFY_TOKEN>
-  ```
-
-  Strava svarar med ett GET-anrop mot `strava-webhook` (`hub.challenge`) som funktionen ekar tillbaka automatiskt — inget mer att göra. Kontrollera aktiv subscription med samma URL som GET (utan `-F`-flaggorna, som query-params).
+Engångssteg per Supabase-projekt: `ANTHROPIC_API_KEY` (och valfria `CLAUDE_*_MODEL`) satta via `supabase secrets set`. Supabase gratisplan pausar projektet efter inaktivitet — återställs i dashboarden.
 
 ## Commands
 
@@ -63,14 +48,13 @@ Engångssteg per Supabase-projekt/Strava-app (inte något som görs i UI:t):
 ## Arkitektur (filstruktur)
 
 - `src/main.tsx` — entry point
-- `src/App.tsx` — router + `QueryClientProvider`, routes: `/` (Hem), `/nutrition`, `/nutrition/calendar`, `/training` (+ `/training/*`-vyer inuti `TrainingPage`), `/profile` (i `AppShell`) samt `/login`, `/onboarding`
+- `src/App.tsx` — router + `QueryClientProvider`, routes: `/` (Hem), `/nutrition`, `/nutrition/calendar`, `/nutrition/saved-meals`, `/profile`, `/admin/feedback` (i `AppShell`) samt `/login`, `/onboarding`
 - `vite.config.ts` — plugins: react, tailwind, pwa
-- `src/index.css` — Tailwind + design tokens (teal accent `#1D9E75`, makro-färger, aktivitetstyp-färger, surface/ink/border/warning)
+- `src/index.css` — Tailwind + design tokens (teal accent `#1D9E75`, makro-färger, surface/ink/border/warning)
 - `src/components/layout/` — `AppShell`, `BottomNav`
-- `src/components/training/` — träningsdelens UI-byggstenar (vecko-vy, passdetalj-sheet, AI-schemagenerator)
-- `src/routes/` — en fil per toppnivå-sida, `src/routes/training/` för Idag/Schema/Historik
+- `src/routes/` — en fil per toppnivå-sida
 - `src/lib/queryClient.ts` — delad `QueryClient`
-- `supabase/` — migrations + Edge Functions (`_shared/` för kod som delas mellan flera funktioner, t.ex. säkerhets-system-prompten och Strava-mappningen)
+- `supabase/` — migrations + Edge Functions (`_shared/` för kod som delas mellan flera funktioner, t.ex. matkorrigeringar)
 
 ## Effektiv token-användning
 
