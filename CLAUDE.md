@@ -36,7 +36,7 @@ Kost-MVP (M1–M10) klar och deployad. Träningsdelen borttagen. Nästa: hälsof
 
 ## Driftsättning
 
-Engångssteg per Supabase-projekt: `ANTHROPIC_API_KEY` (och valfria `CLAUDE_*_MODEL`) satta via `supabase secrets set`. Supabase gratisplan pausar projektet efter inaktivitet — återställs i dashboarden.
+Webbappen deployas av Vercel vid push till `main`. Migrationer och Edge Functions deployas av GitHub Action `.github/workflows/supabase-deploy.yml` vid push som rör `supabase/` (kräver repo-secrets `SUPABASE_ACCESS_TOKEN` och `SUPABASE_DB_PASSWORD`; kan också köras manuellt under Actions). Engångssteg per Supabase-projekt: `ANTHROPIC_API_KEY` (och valfria `CLAUDE_*_MODEL`) satta via `supabase secrets set` — Edge Functions läser exakt det namnet. Supabase gratisplan pausar projektet efter inaktivitet — återställs i dashboarden.
 
 ## Commands
 

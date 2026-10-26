@@ -1,0 +1,41 @@
+# Håller Supabase i takt med main: kör nya migrationer och deployar alla
+# Edge Functions vid varje push som rör supabase/. Webbappen deployas separat
+# av Vercels GitHub-integration.
+#
+# Kräver repo-secrets SUPABASE_ACCESS_TOKEN och SUPABASE_DB_PASSWORD.
+# Hemligheter som funktionerna själva läser (t.ex. ANTHROPIC_API_KEY) sätts
+# fortfarande i Supabase, inte här.
+name: Deploy Supabase
+
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/**']
+  workflow_dispatch:
+
+concurrency:
+  group: supabase-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+      SUPABASE_DB_PASSWORD: ${{ secrets.SUPABASE_DB_PASSWORD }}
+      PROJECT_REF: tjavowbbdkbpnrbnictr
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.122.0
+
+      - name: Link project
+        run: supabase link --project-ref "$PROJECT_REF" --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Apply migrations
+        run: supabase db push --linked --yes --password "$SUPABASE_DB_PASSWORD"
+
+      - name: Deploy Edge Functions
+        run: supabase functions deploy --project-ref "$PROJECT_REF" --use-api
