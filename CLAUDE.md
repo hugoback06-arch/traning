@@ -18,7 +18,8 @@ Appen har ingen träningsdel längre (Strava, AI-scheman och pass togs bort 2026
 - **Supabase** (Postgres + Auth + Edge Functions): magic-link login, RLS per användare
 - Open Food Facts API (publik, ingen nyckel) för sökning/streckkod
 - Claude API (vision) för fotoanalys, via Edge Function `supabase/functions/analyze-meal-photo` (håller `ANTHROPIC_API_KEY` server-side)
-- Claude API (text) för textbeskriven måltid (`analyze-meal-text`) och måltidsförslag (`suggest-meals`); `off-fuzzy-search` proxar Open Food Facts-sökning server-side (CORS)
+- Kalori-uppskattning från text/foto (`analyze-meal-text`, `analyze-meal-photo`) är "grundad": `supabase/functions/_shared/mealEstimate.ts` låter Claude (Haiku 5.5, `CLAUDE_MEAL_MODEL`) dela upp måltiden och uppskatta gram, men näringsvärden per 100 g hämtas via verktyget `search_foods` ur de kurerade livsmedlen i `food_items`, och totalen summeras i koden. `/admin/ai-eval` (ägarkonto) jämför mot facit i `src/data/mealEvalCases.ts`. Textfunktionen har tillfälligt kvar en `engine: 'legacy'`-väg för jämförelsen
+- Claude API (text) för måltidsförslag (`suggest-meals`); `off-fuzzy-search` proxar Open Food Facts-sökning server-side (CORS)
 - `barcode-detector` (native + WASM-fallback för Safari/iOS)
 
 ## Arkitekturbeslut

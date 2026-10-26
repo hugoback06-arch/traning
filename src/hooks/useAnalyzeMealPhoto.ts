@@ -10,6 +10,12 @@ export interface MealEstimateIngredient {
   protein_g: number
   carbs_g: number
   fat_g: number
+  // Set by the grounded estimator (_shared/mealEstimate.ts); absent on older responses.
+  calories_per_100g?: number
+  protein_per_100g?: number
+  carbs_per_100g?: number
+  fat_per_100g?: number
+  matched_food?: string | null
 }
 
 export interface MealPhotoEstimate {

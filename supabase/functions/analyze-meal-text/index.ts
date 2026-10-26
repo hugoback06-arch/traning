@@ -1,14 +1,17 @@
 // Supabase Edge Function (Deno). Proxies a free-text meal description to Claude
 // so the ANTHROPIC_API_KEY never reaches the browser. Auth is enforced by the
 // platform (verify_jwt = true in supabase/config.toml) before this code runs.
-// Mirrors analyze-meal-photo/index.ts, swapping the image content block for text.
+// The estimate itself is grounded in the food database — see _shared/mealEstimate.ts.
 import Anthropic from 'npm:@anthropic-ai/sdk@0.137.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { buildFoodCorrectionsPromptSection } from '../_shared/foodCorrections.ts'
+import { estimateMeal, loadCatalog, MealEstimateError } from '../_shared/mealEstimate.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
-const MODEL = Deno.env.get('CLAUDE_TEXT_MODEL') ?? 'claude-opus-4-8'
+// Only the legacy engine (kept temporarily so /admin/ai-eval can compare it
+// against the grounded one) reads this; the grounded engine uses MEAL_MODEL.
+const LEGACY_MODEL = Deno.env.get('CLAUDE_TEXT_MODEL') ?? 'claude-haiku-4-5'
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -73,8 +76,9 @@ Deno.serve(async (req) => {
   }
 
   let description: unknown
+  let engine: unknown
   try {
-    ;({ description } = await req.json())
+    ;({ description, engine } = await req.json())
   } catch {
     return jsonResponse({ error: 'Ogiltig begäran', code: 'INVALID_TEXT' }, 400)
   }
@@ -98,9 +102,28 @@ Deno.serve(async (req) => {
   }
   const correctionsSection = await buildFoodCorrectionsPromptSection(supabase, user.id)
 
+  if (engine !== 'legacy') {
+    try {
+      const catalog = await loadCatalog(supabase)
+      const estimate = await estimateMeal({
+        anthropic,
+        catalog,
+        userContent: [
+          { type: 'text', text: `Måltiden, beskriven av användaren: "${description.trim()}"${correctionsSection}` },
+        ],
+      })
+      return jsonResponse(estimate)
+    } catch (error) {
+      const isRateLimit = error instanceof Anthropic.RateLimitError
+      const message = error instanceof Error ? error.message : 'Okänt fel'
+      const status = isRateLimit ? 429 : error instanceof MealEstimateError ? 422 : 502
+      return jsonResponse({ error: message, code: isRateLimit ? 'RATE_LIMITED' : 'TEXT_API_ERROR' }, status)
+    }
+  }
+
   try {
     const message = await anthropic.messages.create({
-      model: MODEL,
+      model: LEGACY_MODEL,
       max_tokens: 1536,
       tools: [ESTIMATE_TOOL],
       tool_choice: { type: 'tool', name: 'record_meal_estimate' },
