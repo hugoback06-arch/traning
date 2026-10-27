@@ -393,7 +393,7 @@ verify_jwt = true
 [functions.analyze-meal-text]
 verify_jwt = true
 
-[functions.suggest-meals]
+[functions.generate-recipes]
 verify_jwt = true
 
 [functions.off-fuzzy-search]

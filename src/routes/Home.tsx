@@ -2,11 +2,10 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { format } from 'date-fns'
 import { sv } from 'date-fns/locale'
-import { CalendarDays, Plus, Sparkles, UtensilsCrossed } from 'lucide-react'
+import { CalendarDays, ChefHat, Plus, UtensilsCrossed } from 'lucide-react'
 import { Card } from '../components/common/Card'
 import { StreakBadge } from '../components/overview/StreakBadge'
 import { StreakMilestoneModal } from '../components/overview/StreakMilestoneModal'
-import { MealSuggestionsModal } from '../components/overview/MealSuggestionsModal'
 import { AddMealModal } from '../components/meals/AddMealModal'
 import { useProfile } from '../hooks/useProfile'
 import { useTodayMealLogs } from '../hooks/useTodayMealLogs'
@@ -25,7 +24,6 @@ const MILESTONE_STORAGE_KEY = 'strikt:streak-milestone-celebrated'
 export function Home() {
   const [addingMeal, setAddingMeal] = useState(false)
   const [celebratingMilestone, setCelebratingMilestone] = useState<number | null>(null)
-  const [suggestingMeals, setSuggestingMeals] = useState(false)
   const { data: profile } = useProfile()
   const { data: mealLogs } = useTodayMealLogs()
   const streakDays = useStreak()
@@ -33,9 +31,6 @@ export function Home() {
   const totals = sumMealTotals(mealLogs ?? [])
   const goalKcal = profile?.daily_calorie_goal ?? 0
   const remainingKcal = Math.max(0, Math.round(goalKcal - totals.kcal))
-  const remainingProteinG = Math.max(0, Math.round((profile?.protein_goal_g ?? 0) - totals.proteinG))
-  const remainingCarbsG = Math.max(0, Math.round((profile?.carbs_goal_g ?? 0) - totals.carbsG))
-  const remainingFatG = Math.max(0, Math.round((profile?.fat_goal_g ?? 0) - totals.fatG))
   const fraction = goalKcal > 0 ? Math.min(totals.kcal / goalKcal, 1) : 0
   const activeMealType = getActiveMealType()
 
@@ -104,14 +99,23 @@ export function Home() {
             <Plus size={13} /> Lägg till
           </button>
         </div>
-
-        <button
-          onClick={() => setSuggestingMeals(true)}
-          className="press flex w-full items-center justify-center gap-1.5 text-sm font-medium text-accent"
-        >
-          <Sparkles size={15} /> Förslag på måltid
-        </button>
       </Card>
+
+      <div className="space-y-2">
+        <div className="px-1">
+          <Link to="/recipes" className="flex items-center gap-1.5 font-display text-base font-semibold text-ink-primary">
+            <ChefHat size={17} /> Recept
+          </Link>
+        </div>
+        <Link to="/recipes" className="press block">
+          <Card>
+            <div className="flex flex-col items-center gap-1 py-2 text-center">
+              <p className="text-sm font-medium text-ink-primary">Vad ska du laga idag?</p>
+              <p className="text-xs text-ink-secondary">Proteinrika och enkla recept till frukost, lunch och middag</p>
+            </div>
+          </Card>
+        </Link>
+      </div>
 
       <div className="space-y-2">
         <div className="px-1">
@@ -135,15 +139,6 @@ export function Home() {
       {addingMeal && <AddMealModal mealType={activeMealType} onClose={() => setAddingMeal(false)} />}
       {celebratingMilestone && (
         <StreakMilestoneModal days={celebratingMilestone} onClose={() => setCelebratingMilestone(null)} />
-      )}
-      {suggestingMeals && (
-        <MealSuggestionsModal
-          remainingKcal={remainingKcal}
-          remainingProteinG={remainingProteinG}
-          remainingCarbsG={remainingCarbsG}
-          remainingFatG={remainingFatG}
-          onClose={() => setSuggestingMeals(false)}
-        />
       )}
     </div>
   )

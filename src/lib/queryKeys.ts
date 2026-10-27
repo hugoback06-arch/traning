@@ -12,6 +12,8 @@ export const queryKeys = {
     ['meal-logs', 'weekly', startIso, endIsoExclusive, userId] as const,
   frequentFoodItems: (userId: string | undefined) => ['meal-logs', 'frequent', userId] as const,
   savedMeals: (userId: string | undefined) => ['saved-meals', userId] as const,
+  savedRecipes: (userId: string | undefined) => ['saved-recipes', userId] as const,
+  generatedRecipes: (mealType: string) => ['generated-recipes', mealType] as const,
 
   allFeedbackSuggestions: ['feedback-suggestions', 'all'] as const,
 }

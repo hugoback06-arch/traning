@@ -14,7 +14,7 @@ const MAX_TURNS = 6
 const SEARCH_LIMIT = 6
 const CATALOG_TTL_MS = 10 * 60 * 1000
 
-interface CatalogFood {
+export interface CatalogFood {
   id: string
   name: string
   brand: string | null

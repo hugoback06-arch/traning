@@ -18,6 +18,7 @@ const DailyOverviewPage = lazy(() => import('./routes/DailyOverviewPage').then((
 const CalendarPage = lazy(() => import('./routes/CalendarPage').then((module) => ({ default: module.CalendarPage })))
 const SavedMealsPage = lazy(() => import('./routes/SavedMealsPage').then((module) => ({ default: module.SavedMealsPage })))
 const ProfileSettingsPage = lazy(() => import('./routes/ProfileSettingsPage').then((module) => ({ default: module.ProfileSettingsPage })))
+const RecipesPage = lazy(() => import('./routes/RecipesPage').then((module) => ({ default: module.RecipesPage })))
 const AdminAiEvalPage = lazy(() => import('./routes/AdminAiEvalPage').then((module) => ({ default: module.AdminAiEvalPage })))
 const AdminFeedbackPage = lazy(() => import('./routes/AdminFeedbackPage').then((module) => ({ default: module.AdminFeedbackPage })))
 
@@ -45,6 +46,7 @@ function App() {
 
 
 
+                    <Route path="/recipes" element={<RecipesPage />} />
                     <Route path="/profile" element={<ProfileSettingsPage />} />
                     <Route element={<RequireOwner />}>
                       <Route path="/admin/feedback" element={<AdminFeedbackPage />} />

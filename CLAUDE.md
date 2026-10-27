@@ -19,7 +19,8 @@ Appen har ingen träningsdel längre (Strava, AI-scheman och pass togs bort 2026
 - Open Food Facts API (publik, ingen nyckel) för sökning/streckkod
 - Claude API (vision) för fotoanalys, via Edge Function `supabase/functions/analyze-meal-photo` (håller `ANTHROPIC_API_KEY` server-side)
 - Kalori-uppskattning från text/foto (`analyze-meal-text`, `analyze-meal-photo`) är "grundad": `supabase/functions/_shared/mealEstimate.ts` låter Claude (Haiku 5.5, `CLAUDE_MEAL_MODEL`) dela upp måltiden och uppskatta gram, men näringsvärden per 100 g hämtas via verktyget `search_foods` ur de kurerade livsmedlen i `food_items`, och totalen summeras i koden. `/admin/ai-eval` (ägarkonto) jämför mot facit i `src/data/mealEvalCases.ts`. Textfunktionen har tillfälligt kvar en `engine: 'legacy'`-väg för jämförelsen
-- Claude API (text) för måltidsförslag (`suggest-meals`); `off-fuzzy-search` proxar Open Food Facts-sökning server-side (CORS)
+- Recept-fliken (`/recipes`): `generate-recipes` låter Claude (Opus 5.5, `CLAUDE_RECIPE_MODEL`, server-side fallbacks på) skriva 3 proteinrika recept per måltidstyp via structured output; näring per portion räknas mot `food_items` med samma `searchCatalog` som uppskattningen. Sparade recept i `saved_recipes` (jsonb-ögonblicksbild)
+- `off-fuzzy-search` proxar Open Food Facts-sökning server-side (CORS)
 - `barcode-detector` (native + WASM-fallback för Safari/iOS)
 
 ## Arkitekturbeslut
@@ -50,7 +51,7 @@ Webbappen deployas av Vercel vid push till `main`. Migrationer och Edge Function
 ## Arkitektur (filstruktur)
 
 - `src/main.tsx` — entry point
-- `src/App.tsx` — router + `QueryClientProvider`, routes: `/` (Hem), `/nutrition`, `/nutrition/calendar`, `/nutrition/saved-meals`, `/profile`, `/admin/feedback` (i `AppShell`) samt `/login`, `/onboarding`
+- `src/App.tsx` — router + `QueryClientProvider`, routes: `/` (Hem), `/nutrition`, `/nutrition/calendar`, `/nutrition/saved-meals`, `/recipes`, `/profile`, `/admin/feedback`, `/admin/ai-eval` (i `AppShell`) samt `/login`, `/onboarding`
 - `vite.config.ts` — plugins: react, tailwind, pwa
 - `src/index.css` — Tailwind + design tokens (teal accent `#1D9E75`, makro-färger, surface/ink/border/warning)
 - `src/components/layout/` — `AppShell`, `BottomNav`
