@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { supabase } from '../lib/supabase'
+import { env } from '../lib/env'
 import { queryKeys } from '../lib/queryKeys'
-import { toFunctionError } from '../lib/functionError'
+import { FunctionError } from '../lib/functionError'
 import { useAuth } from './useAuth'
 import type { MealEstimateIngredient } from './useAnalyzeMealPhoto'
 import type { DietaryPreference } from '../types/domain'
@@ -35,35 +36,118 @@ interface GenerateRecipesInput {
   mealType: RecipeMealType
   dietaryPreference: DietaryPreference
   wish?: string
+  pantry?: string
   remaining?: { kcal: number; proteinG: number }
 }
 
-// Generated recipes live in the query cache (not refetched on their own) so
-// switching tabs or leaving the page doesn't throw away — and re-pay for — a batch.
+type RecipeStreamLine = { type: 'recipe'; recipe: Recipe } | { type: 'done' } | { type: 'error'; error: string }
+
+// The latest batch per meal type is kept in localStorage too, so a reload
+// doesn't throw away — and re-pay for — recipes the user hasn't saved.
+function storageKey(userId: string, mealType: RecipeMealType) {
+  return `strikt.generatedRecipes.${userId}.${mealType}`
+}
+
+function readStoredRecipes(userId: string, mealType: RecipeMealType): Recipe[] {
+  try {
+    const raw = localStorage.getItem(storageKey(userId, mealType))
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed : []
+  } catch {
+    return []
+  }
+}
+
+function writeStoredRecipes(userId: string, mealType: RecipeMealType, recipes: Recipe[]) {
+  try {
+    localStorage.setItem(storageKey(userId, mealType), JSON.stringify(recipes))
+  } catch {
+    // Storage full or blocked — the in-memory cache still works.
+  }
+}
+
 export function useGeneratedRecipes(mealType: RecipeMealType) {
+  const { session } = useAuth()
+  const userId = session?.user.id
+
   return useQuery({
-    queryKey: queryKeys.generatedRecipes(mealType),
-    queryFn: () => [] as Recipe[],
+    queryKey: queryKeys.generatedRecipes(userId, mealType),
+    queryFn: () => readStoredRecipes(userId as string, mealType),
+    enabled: !!userId,
     staleTime: Infinity,
     gcTime: Infinity,
   })
 }
 
+// generate-recipes streams NDJSON (one line per finished recipe), which
+// supabase.functions.invoke can't hand over incrementally, so this calls the
+// function URL directly with the user's token.
+async function streamRecipes(body: unknown, onRecipe: (recipe: Recipe) => void): Promise<void> {
+  const { data } = await supabase.auth.getSession()
+  if (!data.session) throw new FunctionError('Du är inte inloggad', 'UNAUTHORIZED')
+
+  const response = await fetch(`${env.VITE_SUPABASE_URL}/functions/v1/generate-recipes`, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${data.session.access_token}`,
+      apikey: env.VITE_SUPABASE_ANON_KEY,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
+  if (!response.ok || !response.body) {
+    const errorBody = await response.json().catch(() => null)
+    throw new FunctionError(errorBody?.error ?? 'Kunde inte ta fram recept', errorBody?.code)
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+  const state = { received: 0, error: null as string | null }
+
+  const handleLine = (line: string) => {
+    if (!line.trim()) return
+    const parsed = JSON.parse(line) as RecipeStreamLine
+    if (parsed.type === 'recipe') {
+      state.received++
+      onRecipe(parsed.recipe)
+    } else if (parsed.type === 'error') {
+      state.error = parsed.error
+    }
+  }
+
+  for (;;) {
+    const { done, value } = await reader.read()
+    if (done) break
+    buffer += decoder.decode(value, { stream: true })
+    const lines = buffer.split('\n')
+    buffer = lines.pop() ?? ''
+    lines.forEach(handleLine)
+  }
+  handleLine(buffer + decoder.decode())
+
+  // A failure after some recipes arrived still leaves a usable batch.
+  if (state.received === 0) throw new FunctionError(state.error ?? 'Kunde inte ta fram recept', 'RECIPE_API_ERROR')
+}
+
 export function useGenerateRecipes() {
+  const { session } = useAuth()
+  const userId = session?.user.id
   const queryClient = useQueryClient()
 
   return useMutation({
     mutationFn: async (input: GenerateRecipesInput): Promise<Recipe[]> => {
-      const previous = queryClient.getQueryData<Recipe[]>(queryKeys.generatedRecipes(input.mealType)) ?? []
-      const { data, error } = await supabase.functions.invoke<{ recipes: Recipe[] }>('generate-recipes', {
-        body: { ...input, exclude: previous.map((recipe) => recipe.title) },
+      const key = queryKeys.generatedRecipes(userId, input.mealType)
+      const previous = queryClient.getQueryData<Recipe[]>(key) ?? []
+      const batch: Recipe[] = []
+
+      await streamRecipes({ ...input, exclude: previous.map((recipe) => recipe.title) }, (recipe) => {
+        // The old batch stays visible until the first new recipe replaces it.
+        batch.push(recipe)
+        queryClient.setQueryData(key, [...batch])
+        if (userId) writeStoredRecipes(userId, input.mealType, batch)
       })
-      if (error) throw await toFunctionError(error, 'Kunde inte ta fram recept')
-      if (!data?.recipes) throw new Error('Kunde inte ta fram recept')
-      return data.recipes
-    },
-    onSuccess: (recipes, input) => {
-      queryClient.setQueryData(queryKeys.generatedRecipes(input.mealType), recipes)
+      return batch
     },
   })
 }

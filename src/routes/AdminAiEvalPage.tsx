@@ -8,17 +8,12 @@ import { GENERIC_FOODS } from '../data/genericFoods'
 import { MEAL_EVAL_CASES } from '../data/mealEvalCases'
 import type { MealPhotoEstimate } from '../hooks/useAnalyzeMealPhoto'
 
-type Engine = 'legacy' | 'grounded'
-const ENGINES: { id: Engine; label: string }[] = [
-  { id: 'legacy', label: 'Gammal' },
-  { id: 'grounded', label: 'Ny' },
-]
 const CONCURRENCY = 3
 
 interface CaseResult {
   expectedKcal: number
-  kcal: Partial<Record<Engine, number>>
-  errors: Partial<Record<Engine, string>>
+  kcal?: number
+  error?: string
 }
 
 const foodsBySlug = new Map(GENERIC_FOODS.map((food) => [food.slug, food]))
@@ -31,9 +26,9 @@ function expectedKcal(index: number): number {
   }, 0)
 }
 
-async function runEstimate(description: string, engine: Engine): Promise<number> {
+async function runEstimate(description: string): Promise<number> {
   const { data, error } = await supabase.functions.invoke<MealPhotoEstimate>('analyze-meal-text', {
-    body: { description, engine },
+    body: { description },
   })
   if (error) throw await toFunctionError(error, 'Okänt fel')
   if (!data) throw new Error('Tomt svar')
@@ -44,10 +39,10 @@ function percentError(estimate: number, expected: number): number {
   return ((estimate - expected) / expected) * 100
 }
 
-function summarize(results: CaseResult[], engine: Engine) {
+function summarize(results: CaseResult[]) {
   const errors = results
-    .filter((result) => result.kcal[engine] !== undefined)
-    .map((result) => percentError(result.kcal[engine]!, result.expectedKcal))
+    .filter((result) => result.kcal !== undefined)
+    .map((result) => percentError(result.kcal!, result.expectedKcal))
   if (errors.length === 0) return null
   const mean = (values: number[]) => values.reduce((a, b) => a + b, 0) / values.length
   return {
@@ -64,7 +59,7 @@ function formatSigned(value: number): string {
 
 export function AdminAiEvalPage() {
   const [results, setResults] = useState<CaseResult[]>(() =>
-    MEAL_EVAL_CASES.map((_, index) => ({ expectedKcal: expectedKcal(index), kcal: {}, errors: {} })),
+    MEAL_EVAL_CASES.map((_, index) => ({ expectedKcal: expectedKcal(index) })),
   )
   const [running, setRunning] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -72,27 +67,18 @@ export function AdminAiEvalPage() {
   async function runAll() {
     setRunning(true)
     setCopied(false)
-    setResults((current) => current.map((result) => ({ ...result, kcal: {}, errors: {} })))
+    setResults((current) => current.map(({ expectedKcal }) => ({ expectedKcal })))
 
-    const jobs = MEAL_EVAL_CASES.flatMap((evalCase, index) =>
-      ENGINES.map(({ id }) => ({ index, engine: id, description: evalCase.description })),
-    )
     let next = 0
     async function worker() {
-      while (next < jobs.length) {
-        const job = jobs[next++]
+      while (next < MEAL_EVAL_CASES.length) {
+        const index = next++
         try {
-          const kcal = await runEstimate(job.description, job.engine)
-          setResults((current) =>
-            current.map((result, i) => (i === job.index ? { ...result, kcal: { ...result.kcal, [job.engine]: kcal } } : result)),
-          )
+          const kcal = await runEstimate(MEAL_EVAL_CASES[index].description)
+          setResults((current) => current.map((result, i) => (i === index ? { ...result, kcal } : result)))
         } catch (error) {
           const message = error instanceof Error ? error.message : 'Okänt fel'
-          setResults((current) =>
-            current.map((result, i) =>
-              i === job.index ? { ...result, errors: { ...result.errors, [job.engine]: message } } : result,
-            ),
-          )
+          setResults((current) => current.map((result, i) => (i === index ? { ...result, error: message } : result)))
         }
       }
     }
@@ -100,20 +86,18 @@ export function AdminAiEvalPage() {
     setRunning(false)
   }
 
-  const summaries = ENGINES.map(({ id, label }) => ({ id, label, summary: summarize(results, id) }))
+  const summary = summarize(results)
 
   async function copySummary() {
-    const lines = summaries.map(({ label, summary }) =>
-      summary
-        ? `${label}: medelfel ${Math.round(summary.meanAbsolute)} %, bias ${formatSigned(summary.bias)}, inom ±15 %: ${summary.within15}/${summary.count}`
-        : `${label}: inga resultat`,
-    )
+    const headline = summary
+      ? `Medelfel ${Math.round(summary.meanAbsolute)} %, bias ${formatSigned(summary.bias)}, inom ±15 %: ${summary.within15}/${summary.count}`
+      : 'Inga resultat'
     const rows = MEAL_EVAL_CASES.map((evalCase, index) => {
       const result = results[index]
-      const cells = ENGINES.map(({ id }) => result.errors[id] ?? (result.kcal[id] !== undefined ? Math.round(result.kcal[id]!) : '–'))
-      return `${evalCase.description} | facit ${Math.round(result.expectedKcal)} | ${cells.join(' | ')}`
+      const cell = result.error ?? (result.kcal !== undefined ? Math.round(result.kcal) : '–')
+      return `${evalCase.description} | facit ${Math.round(result.expectedKcal)} | ${cell}`
     })
-    await navigator.clipboard.writeText([...lines, '', 'fall | facit | gammal | ny', ...rows].join('\n'))
+    await navigator.clipboard.writeText([headline, '', 'fall | facit | uppskattning', ...rows].join('\n'))
     setCopied(true)
   }
 
@@ -123,7 +107,7 @@ export function AdminAiEvalPage() {
         <BackButton to="/profile" label="Profil" />
         <h1 className="font-display text-lg font-semibold">AI-uppskattning: test</h1>
         <p className="text-xs text-ink-secondary">
-          Kör {MEAL_EVAL_CASES.length} beskrivningar genom gammal och ny metod och jämför mot facit från livsmedelsdatabasen.
+          Kör {MEAL_EVAL_CASES.length} beskrivningar genom uppskattningen och jämför mot facit från livsmedelsdatabasen.
         </p>
       </div>
 
@@ -131,30 +115,25 @@ export function AdminAiEvalPage() {
         <Button className="flex-1" disabled={running} onClick={runAll}>
           {running ? 'Kör…' : 'Kör testet'}
         </Button>
-        <Button variant="secondary" disabled={running || summaries.every(({ summary }) => !summary)} onClick={copySummary}>
+        <Button variant="secondary" disabled={running || !summary} onClick={copySummary}>
           {copied ? 'Kopierat!' : 'Kopiera'}
         </Button>
       </div>
 
-      <div className="grid grid-cols-2 gap-2">
-        {summaries.map(({ id, label, summary }) => (
-          <Card key={id} className="space-y-1">
-            <p className="text-sm font-medium text-ink-primary">{label} metod</p>
-            {summary ? (
-              <>
-                <p className="font-display text-2xl font-semibold text-ink-primary">{Math.round(summary.meanAbsolute)} %</p>
-                <p className="text-xs text-ink-secondary">medelfel</p>
-                <p className="text-xs text-ink-secondary">bias {formatSigned(summary.bias)}</p>
-                <p className="text-xs text-ink-secondary">
-                  inom ±15 %: {summary.within15}/{summary.count}
-                </p>
-              </>
-            ) : (
-              <p className="text-xs text-ink-secondary">Inga resultat än</p>
-            )}
-          </Card>
-        ))}
-      </div>
+      <Card className="space-y-1">
+        {summary ? (
+          <>
+            <p className="font-display text-2xl font-semibold text-ink-primary">{Math.round(summary.meanAbsolute)} %</p>
+            <p className="text-xs text-ink-secondary">medelfel</p>
+            <p className="text-xs text-ink-secondary">bias {formatSigned(summary.bias)}</p>
+            <p className="text-xs text-ink-secondary">
+              inom ±15 %: {summary.within15}/{summary.count}
+            </p>
+          </>
+        ) : (
+          <p className="text-xs text-ink-secondary">Inga resultat än</p>
+        )}
+      </Card>
 
       <Card className="overflow-x-auto">
         <table className="w-full text-left text-xs">
@@ -162,11 +141,7 @@ export function AdminAiEvalPage() {
             <tr>
               <th className="py-1 pr-2 font-medium">Beskrivning</th>
               <th className="py-1 pr-2 text-right font-medium">Facit</th>
-              {ENGINES.map(({ id, label }) => (
-                <th key={id} className="py-1 pl-2 text-right font-medium">
-                  {label}
-                </th>
-              ))}
+              <th className="py-1 pl-2 text-right font-medium">Uppskattning</th>
             </tr>
           </thead>
           <tbody className="text-ink-primary">
@@ -176,24 +151,18 @@ export function AdminAiEvalPage() {
                 <tr key={evalCase.description} className="border-t border-border align-top">
                   <td className="py-1.5 pr-2">{evalCase.description}</td>
                   <td className="py-1.5 pr-2 text-right">{Math.round(result.expectedKcal)}</td>
-                  {ENGINES.map(({ id }) => {
-                    const kcal = result.kcal[id]
-                    const error = result.errors[id]
-                    return (
-                      <td key={id} className="py-1.5 pl-2 text-right">
-                        {error ? (
-                          <span className="block max-w-28 break-words text-warning">{error}</span>
-                        ) : kcal === undefined ? (
-                          <span className="text-ink-secondary">–</span>
-                        ) : (
-                          <>
-                            {Math.round(kcal)}
-                            <span className="block text-ink-secondary">{formatSigned(percentError(kcal, result.expectedKcal))}</span>
-                          </>
-                        )}
-                      </td>
-                    )
-                  })}
+                  <td className="py-1.5 pl-2 text-right">
+                    {result.error ? (
+                      <span className="block max-w-28 break-words text-warning">{result.error}</span>
+                    ) : result.kcal === undefined ? (
+                      <span className="text-ink-secondary">–</span>
+                    ) : (
+                      <>
+                        {Math.round(result.kcal)}
+                        <span className="block text-ink-secondary">{formatSigned(percentError(result.kcal, result.expectedKcal))}</span>
+                      </>
+                    )}
+                  </td>
                 </tr>
               )
             })}

@@ -3,14 +3,22 @@
 // serving is then computed here from each ingredient's grams and the curated
 // food database — the same grounding as _shared/mealEstimate.ts — so the kcal
 // and protein shown on a recipe can be trusted and logged.
+// The response is streamed as NDJSON, one line per finished recipe
+// ({"type":"recipe"}, then {"type":"done"} or {"type":"error"}), so the first
+// recipe shows up while Claude is still writing the others.
 // Auth is enforced by the platform (verify_jwt = true in supabase/config.toml).
 import Anthropic from 'npm:@anthropic-ai/sdk@0.137.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { loadCatalog, searchCatalog, type CatalogFood } from '../_shared/mealEstimate.ts'
+import { consumeAiQuota } from '../_shared/aiQuota.ts'
+import { logFunctionError } from '../_shared/errorLog.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
-const MODEL = Deno.env.get('CLAUDE_RECIPE_MODEL') ?? 'claude-opus-5-5'
+const MODEL = Deno.env.get('CLAUDE_RECIPE_MODEL') ?? 'claude-sonnet-5-5'
+// Haiku has no server-side fallback (the parameter would 400 or do nothing),
+// so it's only sent for Sonnet/Opus.
+const FALLBACK_PARAMS = MODEL.includes('haiku') ? {} : { betas: ['server-side-fallback-2026-07-01'], fallbacks: 'default' }
 
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
@@ -165,10 +173,55 @@ function buildRecipe(raw: Record<string, unknown>, mealType: RecipeMealType, cat
   }
 }
 
+// Pulls each complete recipe object out of the streamed JSON
+// ({"recipes":[{...},{...}]}) as soon as its closing brace arrives. Tracks
+// nesting depth outside strings; recipe objects sit at depth 3
+// (outer object → recipes array → recipe).
+class RecipeObjectScanner {
+  private buffer = ''
+  private pos = 0
+  private depth = 0
+  private inString = false
+  private escaped = false
+  private start = -1
+
+  push(chunk: string): Record<string, unknown>[] {
+    this.buffer += chunk
+    const found: Record<string, unknown>[] = []
+    for (; this.pos < this.buffer.length; this.pos++) {
+      const ch = this.buffer[this.pos]
+      if (this.inString) {
+        if (this.escaped) this.escaped = false
+        else if (ch === '\\') this.escaped = true
+        else if (ch === '"') this.inString = false
+        continue
+      }
+      if (ch === '"') {
+        this.inString = true
+      } else if (ch === '{' || ch === '[') {
+        this.depth++
+        if (ch === '{' && this.depth === 3) this.start = this.pos
+      } else if (ch === '}' || ch === ']') {
+        if (ch === '}' && this.depth === 3 && this.start >= 0) {
+          try {
+            found.push(JSON.parse(this.buffer.slice(this.start, this.pos + 1)))
+          } catch {
+            // Malformed object — skip it rather than fail the whole batch.
+          }
+          this.start = -1
+        }
+        this.depth--
+      }
+    }
+    return found
+  }
+}
+
 interface GenerateRecipesRequest {
   mealType: RecipeMealType
   dietaryPreference?: DietaryPreference
   wish?: string
+  pantry?: string
   exclude?: string[]
   remaining?: { kcal: number; proteinG: number }
 }
@@ -204,13 +257,22 @@ Deno.serve(async (req) => {
     return jsonResponse({ error: 'Saknar autentisering', code: 'UNAUTHORIZED' }, 401)
   }
 
+  const quotaError = await consumeAiQuota(supabase, 'recipes')
+  if (quotaError) {
+    return jsonResponse({ error: quotaError, code: 'QUOTA_EXCEEDED' }, 429)
+  }
+
   const wish = typeof body.wish === 'string' ? body.wish.trim().slice(0, 200) : ''
+  const pantry = typeof body.pantry === 'string' ? body.pantry.trim().slice(0, 400) : ''
   const exclude = Array.isArray(body.exclude) ? body.exclude.filter((t) => typeof t === 'string').slice(0, 30) : []
   const remaining = body.remaining
   const prompt = [
     `Skriv 3 olika recept för ${MEAL_TYPE_LABELS[mealType]}, med minst ${MIN_PROTEIN_G[mealType]} g protein per portion.`,
     DIETARY_INSTRUCTIONS[body.dietaryPreference ?? 'any'] ?? '',
     wish ? `Användarens önskemål: "${wish}".` : '',
+    pantry
+      ? `Användaren har hemma: "${pantry}". Bygg recepten främst på det, och lägg bara till ett fåtal vanliga baslivsmedel utöver (t.ex. olja, kryddor, lök, buljong).`
+      : '',
     remaining && typeof remaining.kcal === 'number'
       ? `En portion ska rymmas inom ungefär ${Math.max(150, Math.round(remaining.kcal))} kcal, och ge gärna närmare ${Math.max(0, Math.round(remaining.proteinG))} g protein.`
       : '',
@@ -219,34 +281,59 @@ Deno.serve(async (req) => {
     .filter(Boolean)
     .join(' ')
 
-  try {
-    const catalog = await loadCatalog(supabase)
-    const response = await anthropic.beta.messages.create({
-      model: MODEL,
-      max_tokens: 12000,
-      betas: ['server-side-fallback-2026-07-01'],
-      fallbacks: 'default',
-      output_config: { effort: 'low', format: { type: 'json_schema', schema: RECIPES_SCHEMA } },
-      system: SYSTEM_PROMPT,
-      messages: [{ role: 'user', content: prompt }],
-    } as unknown as Anthropic.Beta.MessageCreateParamsNonStreaming)
+  const encoder = new TextEncoder()
+  const stream = new ReadableStream<Uint8Array>({
+    async start(controller) {
+      const send = (line: unknown) => controller.enqueue(encoder.encode(`${JSON.stringify(line)}\n`))
+      const sentTitles = new Set<string>()
+      try {
+        const catalog = await loadCatalog(supabase)
+        const messageStream = anthropic.beta.messages.stream({
+          model: MODEL,
+          max_tokens: 12000,
+          ...FALLBACK_PARAMS,
+          output_config: { effort: 'low', format: { type: 'json_schema', schema: RECIPES_SCHEMA } },
+          system: SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: prompt }],
+        } as unknown as Parameters<typeof anthropic.beta.messages.stream>[0])
 
-    if (response.stop_reason === 'refusal') {
-      return jsonResponse({ error: 'Kunde inte skapa recept för den önskan', code: 'RECIPE_API_ERROR' }, 422)
-    }
-    const text = response.content
-      .filter((block): block is Anthropic.Beta.BetaTextBlock => block.type === 'text')
-      .map((block) => block.text)
-      .join('')
-    const parsed = JSON.parse(text) as { recipes?: Record<string, unknown>[] }
-    const recipes = (parsed.recipes ?? []).map((recipe) => buildRecipe(recipe, mealType, catalog))
-    if (recipes.length === 0) {
-      return jsonResponse({ error: 'Inga recept kom tillbaka, försök igen', code: 'RECIPE_API_ERROR' }, 502)
-    }
-    return jsonResponse({ recipes })
-  } catch (error) {
-    const isRateLimit = error instanceof Anthropic.RateLimitError
-    const message = error instanceof Error ? error.message : 'Okänt fel'
-    return jsonResponse({ error: message, code: isRateLimit ? 'RATE_LIMITED' : 'RECIPE_API_ERROR' }, isRateLimit ? 429 : 502)
-  }
+        // One scanner per text block: if a refusal hands the request to a
+        // fallback model, its output starts in a new block.
+        let scanner = new RecipeObjectScanner()
+        for await (const event of messageStream) {
+          if (event.type === 'content_block_start' && event.content_block.type === 'text') {
+            scanner = new RecipeObjectScanner()
+          } else if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
+            for (const raw of scanner.push(event.delta.text)) {
+              const recipe = buildRecipe(raw, mealType, catalog)
+              const key = recipe.title.toLowerCase()
+              if (sentTitles.has(key)) continue
+              sentTitles.add(key)
+              send({ type: 'recipe', recipe })
+            }
+          }
+        }
+
+        const final = await messageStream.finalMessage()
+        if (sentTitles.size === 0) {
+          const error =
+            final.stop_reason === 'refusal' ? 'Kunde inte skapa recept för den önskan' : 'Inga recept kom tillbaka, försök igen'
+          send({ type: 'error', error })
+        } else {
+          send({ type: 'done' })
+        }
+      } catch (error) {
+        const isRateLimit = error instanceof Anthropic.RateLimitError
+        const message = error instanceof Error ? error.message : 'Okänt fel'
+        await logFunctionError(supabase, 'generate-recipes', error, { mealType, model: MODEL })
+        send({ type: 'error', error: isRateLimit ? 'AI-tjänsten är överbelastad just nu, försök igen om en stund' : message })
+      } finally {
+        controller.close()
+      }
+    },
+  })
+
+  return new Response(stream, {
+    headers: { ...CORS_HEADERS, 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-cache' },
+  })
 })

@@ -8,6 +8,7 @@ import { RequireAuth } from './components/layout/RequireAuth'
 import { RequireOwner } from './components/layout/RequireOwner'
 import { OnboardingGate } from './components/layout/OnboardingGate'
 import { AppShell } from './components/layout/AppShell'
+import { ErrorBoundary } from './components/layout/ErrorBoundary'
 import { LoginPage } from './routes/LoginPage'
 import { Home } from './routes/Home'
 
@@ -21,6 +22,8 @@ const ProfileSettingsPage = lazy(() => import('./routes/ProfileSettingsPage').th
 const RecipesPage = lazy(() => import('./routes/RecipesPage').then((module) => ({ default: module.RecipesPage })))
 const AdminAiEvalPage = lazy(() => import('./routes/AdminAiEvalPage').then((module) => ({ default: module.AdminAiEvalPage })))
 const AdminFeedbackPage = lazy(() => import('./routes/AdminFeedbackPage').then((module) => ({ default: module.AdminFeedbackPage })))
+const AdminErrorsPage = lazy(() => import('./routes/AdminErrorsPage').then((module) => ({ default: module.AdminErrorsPage })))
+const ShoppingListPage = lazy(() => import('./routes/ShoppingListPage').then((module) => ({ default: module.ShoppingListPage })))
 
 function RouteLoadingFallback() {
   return <div className="min-h-32" aria-label="Laddar sida" />
@@ -28,6 +31,7 @@ function RouteLoadingFallback() {
 
 function App() {
   return (
+    <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <AuthProvider>
@@ -43,14 +47,13 @@ function App() {
                     <Route path="/nutrition" element={<DailyOverviewPage />} />
                     <Route path="/nutrition/calendar" element={<CalendarPage />} />
                     <Route path="/nutrition/saved-meals" element={<SavedMealsPage />} />
-
-
-
                     <Route path="/recipes" element={<RecipesPage />} />
+                    <Route path="/recipes/shopping" element={<ShoppingListPage />} />
                     <Route path="/profile" element={<ProfileSettingsPage />} />
                     <Route element={<RequireOwner />}>
                       <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
                       <Route path="/admin/ai-eval" element={<AdminAiEvalPage />} />
+                      <Route path="/admin/errors" element={<AdminErrorsPage />} />
                     </Route>
                   </Route>
                 </Route>
@@ -61,6 +64,7 @@ function App() {
         </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
+    </ErrorBoundary>
   )
 }
 

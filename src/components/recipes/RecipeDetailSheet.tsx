@@ -1,9 +1,15 @@
 import { useState } from 'react'
-import { Bookmark, BookmarkCheck, Clock, Lightbulb, Plus, Users, X } from 'lucide-react'
+import { Bookmark, BookmarkCheck, Check, Clock, Lightbulb, Minus, Plus, ShoppingCart, X } from 'lucide-react'
+import { Link } from 'react-router'
 import { Button } from '../common/Button'
 import { AiEstimateReviewForm } from '../meals/AiEstimateReviewForm'
 import { useDeleteSavedRecipe, useSaveRecipe, type Recipe } from '../../hooks/useRecipes'
+import { useAddToShoppingList } from '../../hooks/useShoppingList'
+import { scaleAmount } from '../../lib/recipeAmounts'
 import type { MealPhotoEstimate } from '../../hooks/useAnalyzeMealPhoto'
+
+const MIN_SERVINGS = 1
+const MAX_SERVINGS = 12
 
 const MACROS = [
   { key: 'protein_g', label: 'Protein', dot: 'bg-macro-protein' },
@@ -34,13 +40,26 @@ interface RecipeDetailSheetProps {
 
 export function RecipeDetailSheet({ recipe, savedRecipeId, onClose }: RecipeDetailSheetProps) {
   const [logging, setLogging] = useState(false)
+  const [servings, setServings] = useState(recipe.servings)
   const saveRecipe = useSaveRecipe()
   const deleteSavedRecipe = useDeleteSavedRecipe()
+  const addToShoppingList = useAddToShoppingList()
   const savePending = saveRecipe.isPending || deleteSavedRecipe.isPending
+  const scale = servings / recipe.servings
 
   function toggleSaved() {
     if (savedRecipeId) deleteSavedRecipe.mutate(savedRecipeId)
     else saveRecipe.mutate(recipe)
+  }
+
+  function handleAddToShoppingList() {
+    addToShoppingList.mutate(
+      recipe.ingredients.map((ingredient) => ({
+        name: ingredient.name,
+        amount: scaleAmount(ingredient.amount, scale),
+        recipeTitle: recipe.title,
+      })),
+    )
   }
 
   return (
@@ -50,7 +69,7 @@ export function RecipeDetailSheet({ recipe, savedRecipeId, onClose }: RecipeDeta
         {logging ? (
           <AiEstimateReviewForm
             estimate={toServingEstimate(recipe)}
-            source="ai_text_estimate"
+            source="recipe"
             backLabel="Tillbaka till receptet"
             initialMealType={recipe.meal_type}
             onBack={() => setLogging(false)}
@@ -70,9 +89,6 @@ export function RecipeDetailSheet({ recipe, savedRecipeId, onClose }: RecipeDeta
               <div className="flex flex-wrap gap-2 text-xs text-ink-secondary">
                 <span className="flex items-center gap-1 rounded-full bg-surface-muted px-2.5 py-1">
                   <Clock size={13} /> {recipe.time_minutes} min
-                </span>
-                <span className="flex items-center gap-1 rounded-full bg-surface-muted px-2.5 py-1">
-                  <Users size={13} /> {recipe.servings} {recipe.servings === 1 ? 'portion' : 'portioner'}
                 </span>
               </div>
             </div>
@@ -110,15 +126,56 @@ export function RecipeDetailSheet({ recipe, savedRecipeId, onClose }: RecipeDeta
             </div>
 
             <section className="space-y-2">
-              <h3 className="font-display text-base font-semibold text-ink-primary">Ingredienser</h3>
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="font-display text-base font-semibold text-ink-primary">Ingredienser</h3>
+                <div className="flex items-center gap-2 text-sm text-ink-primary">
+                  <button
+                    onClick={() => setServings((n) => Math.max(MIN_SERVINGS, n - 1))}
+                    disabled={servings <= MIN_SERVINGS}
+                    aria-label="Färre portioner"
+                    className="press flex h-7 w-7 items-center justify-center rounded-full border border-border disabled:opacity-40"
+                  >
+                    <Minus size={14} />
+                  </button>
+                  <span className="min-w-20 text-center">
+                    {servings} {servings === 1 ? 'portion' : 'portioner'}
+                  </span>
+                  <button
+                    onClick={() => setServings((n) => Math.min(MAX_SERVINGS, n + 1))}
+                    disabled={servings >= MAX_SERVINGS}
+                    aria-label="Fler portioner"
+                    className="press flex h-7 w-7 items-center justify-center rounded-full border border-border disabled:opacity-40"
+                  >
+                    <Plus size={14} />
+                  </button>
+                </div>
+              </div>
               <ul className="divide-y divide-border rounded-xl border border-border">
                 {recipe.ingredients.map((ingredient, index) => (
                   <li key={index} className="flex items-baseline gap-3 px-3 py-2 text-sm">
-                    <span className="w-20 shrink-0 text-ink-secondary">{ingredient.amount}</span>
+                    <span className="w-20 shrink-0 text-ink-secondary">{scaleAmount(ingredient.amount, scale)}</span>
                     <span className="text-ink-primary">{ingredient.name}</span>
                   </li>
                 ))}
               </ul>
+              {addToShoppingList.isSuccess ? (
+                <Link
+                  to="/recipes/shopping"
+                  className="flex w-full items-center justify-center gap-1.5 rounded-lg bg-accent-light py-2 text-sm text-accent"
+                >
+                  <Check size={15} /> Tillagd · Visa inköpslistan
+                </Link>
+              ) : (
+                <button
+                  onClick={handleAddToShoppingList}
+                  disabled={addToShoppingList.isPending}
+                  className="press flex w-full items-center justify-center gap-1.5 rounded-lg bg-surface-muted py-2 text-sm text-ink-secondary"
+                >
+                  <ShoppingCart size={15} />
+                  {addToShoppingList.isPending ? 'Lägger till…' : `Lägg i inköpslistan (${servings} ${servings === 1 ? 'portion' : 'portioner'})`}
+                </button>
+              )}
+              {addToShoppingList.isError && <p className="text-xs text-warning">Kunde inte lägga till, försök igen.</p>}
             </section>
 
             <section className="space-y-2">

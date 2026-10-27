@@ -7,6 +7,7 @@ import { AddMealPhotoStep } from './AddMealPhotoStep'
 import { AddMealTextStep } from './AddMealTextStep'
 import { LogMealForm } from './LogMealForm'
 import { QuickFoodPicks } from './QuickFoodPicks'
+import { CopyYesterdayMeal } from './CopyYesterdayMeal'
 import { SavedMealPicks } from './SavedMealPicks'
 import { SavedMealBuilder } from './SavedMealBuilder'
 import { SavedMealConfirmStep } from './SavedMealConfirmStep'
@@ -50,6 +51,7 @@ export function AddMealModal({ mealType, onClose }: AddMealModalProps) {
 
         {mode === 'choose' && (
           <div className="space-y-4">
+            <CopyYesterdayMeal mealType={mealType} onSaved={onClose} />
             <QuickFoodPicks onSelect={openQuick} />
             <SavedMealPicks onSelect={openSavedMeal} />
             <button

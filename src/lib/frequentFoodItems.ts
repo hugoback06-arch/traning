@@ -22,6 +22,22 @@ export function topFrequentFoodItems(logs: MealLogWithFood[], limit: number): Fo
     .map((entry) => entry.item)
 }
 
+/** Distinct foods in the order they were last logged (logs is newest-first) —
+ * the "you just had this" set shown before the user starts typing a search. */
+export function recentFoodItems(logs: MealLogWithFood[], limit: number): FoodItem[] {
+  const seen = new Set<string>()
+  const items: FoodItem[] = []
+
+  for (const log of logs) {
+    if (seen.has(log.food_item_id)) continue
+    seen.add(log.food_item_id)
+    items.push(log.food_item)
+    if (items.length >= limit) break
+  }
+
+  return items
+}
+
 /** Log count per "source:externalId", for ranking search results by how often
  * the user has actually logged that specific food before — e.g. searching
  * "kvarg" should surface their usual brand over one they've never picked. */

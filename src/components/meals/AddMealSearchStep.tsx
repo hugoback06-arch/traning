@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { FoodSearchList } from './FoodSearchList'
 import { LogMealForm } from './LogMealForm'
+import { RecentFoodList } from './RecentFoodList'
 import { BackButton } from '../common/BackButton'
 import type { FoodSearchResult, MealType } from '../../types/domain'
 
@@ -36,6 +37,7 @@ export function AddMealSearchStep({ initialMealType, onBack, onSaved }: AddMealS
         autoFocus
         className="w-full rounded-lg border border-border px-3 py-2 text-sm outline-none focus:border-accent"
       />
+      {query.trim().length < 2 && <RecentFoodList onSelect={setSelected} />}
       <FoodSearchList query={query} onSelect={setSelected} />
     </div>
   )

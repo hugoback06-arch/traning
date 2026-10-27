@@ -6,6 +6,8 @@ import Anthropic from 'npm:@anthropic-ai/sdk@0.137.0'
 import { createClient } from 'npm:@supabase/supabase-js@2'
 import { buildFoodCorrectionsPromptSection } from '../_shared/foodCorrections.ts'
 import { estimateMeal, loadCatalog, MealEstimateError } from '../_shared/mealEstimate.ts'
+import { consumeAiQuota } from '../_shared/aiQuota.ts'
+import { logFunctionError } from '../_shared/errorLog.ts'
 
 const anthropic = new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY') })
 
@@ -55,6 +57,10 @@ Deno.serve(async (req) => {
   if (!user) {
     return jsonResponse({ error: 'Saknar autentisering', code: 'UNAUTHORIZED' }, 401)
   }
+  const quotaError = await consumeAiQuota(supabase, 'meal_photo')
+  if (quotaError) {
+    return jsonResponse({ error: quotaError, code: 'QUOTA_EXCEEDED' }, 429)
+  }
   const correctionsSection = await buildFoodCorrectionsPromptSection(supabase, user.id)
 
   const promptText =
@@ -81,6 +87,7 @@ Deno.serve(async (req) => {
     const isRateLimit = error instanceof Anthropic.RateLimitError
     const message = error instanceof Error ? error.message : 'Okänt fel'
     const status = isRateLimit ? 429 : error instanceof MealEstimateError ? 422 : 502
+    await logFunctionError(supabase, 'analyze-meal-photo', error, { mime_type })
     return jsonResponse({ error: message, code: isRateLimit ? 'RATE_LIMITED' : 'VISION_API_ERROR' }, status)
   }
 })

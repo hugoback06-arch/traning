@@ -233,6 +233,11 @@ export function ProfileSettingsPage() {
           Testa AI-uppskattningen (admin)
         </Link>
       )}
+      {session?.user.email === 'hugoback06@gmail.com' && (
+        <Link to="/admin/errors" className="block text-center text-sm text-ink-secondary underline">
+          Fellogg (admin)
+        </Link>
+      )}
     </div>
   )
 }

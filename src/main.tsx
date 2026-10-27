@@ -6,6 +6,9 @@ import { SpeedInsights } from '@vercel/speed-insights/react'
 import '@fontsource-variable/manrope'
 import './index.css'
 import App from './App.tsx'
+import { installGlobalErrorHandlers } from './lib/errorReporting'
+
+installGlobalErrorHandlers()
 
 // Detects new deployments, tells the waiting service worker (src/sw.ts) to
 // activate via SKIP_WAITING, and reloads the page once it takes over — so

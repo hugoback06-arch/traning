@@ -13,7 +13,9 @@ export const queryKeys = {
   frequentFoodItems: (userId: string | undefined) => ['meal-logs', 'frequent', userId] as const,
   savedMeals: (userId: string | undefined) => ['saved-meals', userId] as const,
   savedRecipes: (userId: string | undefined) => ['saved-recipes', userId] as const,
-  generatedRecipes: (mealType: string) => ['generated-recipes', mealType] as const,
+  generatedRecipes: (userId: string | undefined, mealType: string) => ['generated-recipes', mealType, userId] as const,
+  shoppingList: (userId: string | undefined) => ['shopping-list', userId] as const,
+  errorLogs: ['error-logs'] as const,
 
   allFeedbackSuggestions: ['feedback-suggestions', 'all'] as const,
 }

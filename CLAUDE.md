@@ -18,8 +18,10 @@ Appen har ingen träningsdel längre (Strava, AI-scheman och pass togs bort 2026
 - **Supabase** (Postgres + Auth + Edge Functions): magic-link login, RLS per användare
 - Open Food Facts API (publik, ingen nyckel) för sökning/streckkod
 - Claude API (vision) för fotoanalys, via Edge Function `supabase/functions/analyze-meal-photo` (håller `ANTHROPIC_API_KEY` server-side)
-- Kalori-uppskattning från text/foto (`analyze-meal-text`, `analyze-meal-photo`) är "grundad": `supabase/functions/_shared/mealEstimate.ts` låter Claude (Haiku 5.5, `CLAUDE_MEAL_MODEL`) dela upp måltiden och uppskatta gram, men näringsvärden per 100 g hämtas via verktyget `search_foods` ur de kurerade livsmedlen i `food_items`, och totalen summeras i koden. `/admin/ai-eval` (ägarkonto) jämför mot facit i `src/data/mealEvalCases.ts`. Textfunktionen har tillfälligt kvar en `engine: 'legacy'`-väg för jämförelsen
-- Recept-fliken (`/recipes`): `generate-recipes` låter Claude (Opus 5.5, `CLAUDE_RECIPE_MODEL`, server-side fallbacks på) skriva 3 proteinrika recept per måltidstyp via structured output; näring per portion räknas mot `food_items` med samma `searchCatalog` som uppskattningen. Sparade recept i `saved_recipes` (jsonb-ögonblicksbild)
+- Kalori-uppskattning från text/foto (`analyze-meal-text`, `analyze-meal-photo`) är "grundad": `supabase/functions/_shared/mealEstimate.ts` låter Claude (Haiku 5.5, `CLAUDE_MEAL_MODEL`) dela upp måltiden och uppskatta gram, men näringsvärden per 100 g hämtas via verktyget `search_foods` ur de kurerade livsmedlen i `food_items`, och totalen summeras i koden. `/admin/ai-eval` (ägarkonto) mäter uppskattningen mot facit i `src/data/mealEvalCases.ts`
+- Recept-fliken (`/recipes`): `generate-recipes` låter Claude (Sonnet 5.5, `CLAUDE_RECIPE_MODEL`, server-side fallbacks på utom för Haiku) skriva 3 proteinrika recept per måltidstyp via structured output, strömmat som NDJSON (en rad per färdigt recept — klienten läser via `fetch`, inte `functions.invoke`). Näring per portion räknas mot `food_items` med samma `searchCatalog` som uppskattningen. Valfritt "har hemma"-fält styr ingredienserna. Sparade recept i `saved_recipes` (jsonb-ögonblicksbild), senaste genererade omgången i localStorage. Inköpslista i `shopping_list_items` (`/recipes/shopping`). Måltider loggade från recept får `food_source` `recipe`
+- AI-kvot: alla AI-funktioner anropar `consume_ai_quota` (rullande 24 h per användare) via `_shared/aiQuota.ts`, där taken per typ står. Över taket → 429 `QUOTA_EXCEEDED`
+- Fellogg: webbappen (`src/lib/errorReporting.ts` — globala handlers, React Query-cachar, `ErrorBoundary`) och Edge Functions (`_shared/errorLog.ts`) skriver till `error_logs`; ägaren läser på `/admin/errors`
 - `off-fuzzy-search` proxar Open Food Facts-sökning server-side (CORS)
 - `barcode-detector` (native + WASM-fallback för Safari/iOS)
 
@@ -51,7 +53,7 @@ Webbappen deployas av Vercel vid push till `main`. Migrationer och Edge Function
 ## Arkitektur (filstruktur)
 
 - `src/main.tsx` — entry point
-- `src/App.tsx` — router + `QueryClientProvider`, routes: `/` (Hem), `/nutrition`, `/nutrition/calendar`, `/nutrition/saved-meals`, `/recipes`, `/profile`, `/admin/feedback`, `/admin/ai-eval` (i `AppShell`) samt `/login`, `/onboarding`
+- `src/App.tsx` — router + `QueryClientProvider`, routes: `/` (Hem), `/nutrition`, `/nutrition/calendar`, `/nutrition/saved-meals`, `/recipes`, `/recipes/shopping`, `/profile`, `/admin/feedback`, `/admin/ai-eval`, `/admin/errors` (i `AppShell`) samt `/login`, `/onboarding`
 - `vite.config.ts` — plugins: react, tailwind, pwa
 - `src/index.css` — Tailwind + design tokens (teal accent `#1D9E75`, makro-färger, surface/ink/border/warning)
 - `src/components/layout/` — `AppShell`, `BottomNav`

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Save } from 'lucide-react'
+import { ChefHat, Save } from 'lucide-react'
 import { Button } from '../common/Button'
 import { AmountInput } from './AmountInput'
 import { MealTypeSelect } from './MealTypeSelect'
@@ -47,7 +47,12 @@ export function MealListItem({ log }: MealListItemProps) {
       >
         <div className="min-w-0">
           <p className="truncate text-sm font-medium text-ink-primary">{log.food_item.name}</p>
-          <p className="text-xs text-ink-secondary">
+          <p className="flex items-center gap-1 text-xs text-ink-secondary">
+            {log.food_item.source === 'recipe' && (
+              <span className="flex items-center gap-0.5 text-accent">
+                <ChefHat size={12} /> Recept ·
+              </span>
+            )}
             {MEAL_TYPE_LABELS[log.meal_type]} · {log.amount_g} g
           </p>
         </div>
